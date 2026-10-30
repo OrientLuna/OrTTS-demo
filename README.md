@@ -38,6 +38,8 @@ P3／P5为流式生成，原版为优化 CPU 的离线对照；以上不含播�
 
 原生运行时基于 audio.cpp，当前使用 CPU。后续计划包括 Apple Core ML／Metal、高通 QNN、iOS Demo、更多音色及音质改善。
 
-## 许可
+## 致谢与许可
 
-运行时代码与依赖见 [NOTICE.md](NOTICE.md)。模型权重遵循模型仓库中的组件许可。
+感谢 [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)、[Liquid AI LFM](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B)、[audio.cpp](https://github.com/0xShug0/audio.cpp)、[ggml](https://github.com/ggml-org/ggml)、[speech.cpp](https://github.com/nyosegawa/speech.cpp) 和 [Vocos](https://github.com/gemelo-ai/vocos) 的开源工作。
+
+OrTTS 集成代码采用 Apache-2.0；第三方组件保留各自许可，详见 [NOTICE.md](NOTICE.md)。模型权重适用模型仓库中的组件许可，不能统一视为 Apache-2.0。

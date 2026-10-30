@@ -4,6 +4,7 @@ android {
  compileSdk 34
  defaultConfig { applicationId (project.hasProperty('qa') ? 'com.orient.ortts.qa' : project.hasProperty('bundled') ? 'com.orient.ortts.bundled' : 'com.orient.ortts'); resValue 'string', 'app_name', (project.hasProperty('qa') ? 'OrTTS 测试' : project.hasProperty('bundled') ? 'OrTTS · 内置权重' : 'OrTTS'); minSdk 28; targetSdk 34; versionCode 23; versionName '0.2.3-preview'; ndk { abiFilters 'arm64-v8a' } }
  sourceSets { main {
+  assets.srcDirs += layout.buildDirectory.dir('generated/licenseAssets')
   if (project.findProperty('nativeLibsDir')) jniLibs.srcDirs += file(project.property('nativeLibsDir'))
   if (project.findProperty('modelAssetsDir')) assets.srcDirs += file(project.property('modelAssetsDir'))
  } }
@@ -14,3 +15,12 @@ android {
  buildTypes { release { minifyEnabled false } }
 }
 dependencies {}
+
+// Distribute third-party notices with the native libraries in every APK.
+def prepareLicenseAssets = tasks.register('prepareLicenseAssets', Copy) {
+ from(rootProject.file('../licenses')) { into 'licenses' }
+ from(rootProject.file('../NOTICE.md')) { into 'licenses' }
+ from(rootProject.file('../LICENSE')) { into 'licenses'; rename { 'OrTTS-Apache-2.0.txt' } }
+ into layout.buildDirectory.dir('generated/licenseAssets')
+}
+tasks.named('preBuild').configure { dependsOn prepareLicenseAssets }
