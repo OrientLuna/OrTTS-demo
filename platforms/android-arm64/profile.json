@@ -1,0 +1,11 @@
+{
+  "platform": "android-arm64",
+  "abi": "arm64-v8a",
+  "minimum_api": 28,
+  "default_isa": "armv8.2-a+dotprod+i8mm+fp16",
+  "stl": "c++_shared",
+  "page_size_alignment": 16384,
+  "backend": "CPU",
+  "artifact": "native CLI, not APK",
+  "validation": "historical implementation lineage; newly assembled source configure and entry syntax only"
+}

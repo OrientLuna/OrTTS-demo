@@ -1,0 +1,13 @@
+[package]
+name = "ortts-engine"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Small Rust binding to the OrTTS CPU engine C ABI"
+
+[lib]
+path = "src/lib.rs"
+
+[[example]]
+name = "synthesize"
+path = "examples/synthesize.rs"

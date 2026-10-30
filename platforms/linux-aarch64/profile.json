@@ -1,0 +1,9 @@
+{
+  "platform": "linux-aarch64",
+  "abi": "aarch64-linux-gnu",
+  "libc": "glibc, target version from supplied toolchain/sysroot",
+  "default_isa": "armv8.2-a+dotprod+fp16",
+  "i8mm_required": false,
+  "backend": "CPU",
+  "validation": "historical QCS9075 implementation lineage; unified source configure only"
+}

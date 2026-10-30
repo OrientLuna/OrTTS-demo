@@ -1,0 +1,33 @@
+{
+  "schema": "ortts-standard-voices-v1",
+  "default": "female",
+  "voices": [
+    {
+      "id": "female",
+      "label": "female",
+      "reference": "voices/female.wav",
+      "vector": "voices/female.f32",
+      "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+      "vector_sha256": "844fe50aec6fdc09d4015e0a21f1cb10065ca234a87154a53e892d1dadcc7415",
+      "dims": 1024,
+      "dtype": "F32_LE",
+      "conditioning": "fixed model-native xvector-only; no reference codes/text",
+      "reason": "Most existing fixed-reference release/phone regression; user historical female preference",
+      "provenance_name": "最早c7"
+    },
+    {
+      "id": "male",
+      "label": "male",
+      "reference": "voices/male.wav",
+      "vector": "voices/male.f32",
+      "reference_sha256": "67713e91d3cb4018bcd3fbc461b85f6adc56ad813484b3606763aa11c99190fb",
+      "vector_sha256": "d63ebf18d2de0e62c1c1dc67b850ce13a5323c36be60fb6ac32a04882bc5bd7e",
+      "dims": 1024,
+      "dtype": "F32_LE",
+      "conditioning": "fixed model-native xvector-only; no reference codes/text",
+      "reason": "Existing core male reference, neutral request, no fullscale samples; final grafted P3/P5 regression still pending",
+      "provenance_name": "龙寒·中性"
+    }
+  ],
+  "vectors_external": true
+}

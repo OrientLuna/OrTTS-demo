@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "family": "Qwen3-LFM-0.6B",
+  "variant": "P3",
+  "predictor": {
+    "kind": "distilled",
+    "layers": 3,
+    "residual_calls": 15,
+    "RVQ_codebooks": 16,
+    "vocab_per_codebook": 2048,
+    "precision": "Q8 dense, F16embedding, F32vectors"
+  },
+  "decoder": {
+    "kind": "B260K_FULL_FAST_ADAPTED",
+    "update": 260000,
+    "fast_mapping_tensors": 76,
+    "bundle_tensors": 28,
+    "precision": "MIXED_Q4_0",
+    "bridge_sha256": "2441a7a4212c90b83d1c349bc9184462d846ac35255438561b9b031534cd3312",
+    "fast_sha256": "feeb2cb66807bcf76ac24a6a7e9f94f1cb71fbf25aa1c12cda79aa50a01f8a8d"
+  },
+  "voices": "voices.json",
+  "defaults": {
+    "backend": "CPU",
+    "threads": 4,
+    "streaming": false,
+    "packed": false,
+    "pipeline": false,
+    "GEMM": true,
+    "outer_sample": true,
+    "temperature": 0.9,
+    "top_p": 0.9,
+    "top_k": 50,
+    "repetition_penalty": 1.05,
+    "residual_greedy": true
+  },
+  "sample_rate": 24000,
+  "samples_per_frame": 1920,
+  "version": "0.2.0-preview"
+}

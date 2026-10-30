@@ -1,0 +1,145 @@
+{
+  "model_repository": "OrientLuna/OrTTS-Qwen3-LFM-0.6B",
+  "model_revision": "v0.2.0-preview",
+  "runtime_backend": "ARM CPU",
+  "threads": 4,
+  "seed": 20261029,
+  "voice": "female",
+  "sample_rate": 24000,
+  "measurement": "Native C API without AudioTrack; one first request and one measured warm request per case; unlocked CPU frequency",
+  "modes": {
+    "P3": "streaming",
+    "P5": "streaming",
+    "Qwen3-TTS": "optimized offline CPU"
+  },
+  "short_text": "你好，很高兴认识你。",
+  "long_text": "清晨的阳光洒在安静的街道上，早餐店已经开始营业。小朋友背着书包走向学校，大人们匆匆赶往车站。请把这份重要的文件交给银行工作人员，并确认会议将在下周三上午九点半准时开始。",
+  "devices": [
+    {
+      "device": "OPPO Find N5 卫星通信版",
+      "model": "PKH120",
+      "SoC": "SM8750",
+      "RAM_GB": 16,
+      "Android": "16",
+      "results": {
+        "P3-short": {
+          "RTF": 0.52513,
+          "api_ms": 1050.26,
+          "audio_s": 2.0,
+          "first_pcm_ms": 106.335469,
+          "frames": 25,
+          "codes_sha256": "0a6281375cb4e08b5ed67a3f0470fee920f6fa298a97d9edff723c505e790121",
+          "pcm_sha256": "7f26f8d9f38e8cd764bfc59f7c743dec05db0fe29ba1a2e755ef022c4ac06851"
+        },
+        "P5-short": {
+          "RTF": 0.6359947916666666,
+          "api_ms": 1221.11,
+          "audio_s": 1.92,
+          "first_pcm_ms": 136.736094,
+          "frames": 24,
+          "codes_sha256": "d3b6699037aeeae6b2c5d728515e556d868cf625a76311dcea660f7e803e0873",
+          "pcm_sha256": "1a564f7ed536ae16453ad8a3c8057ab51b0f8c43826153511f8d4f573cf553ab"
+        },
+        "Qwen3-TTS-short": {
+          "RTF": 1.6190520833333333,
+          "api_ms": 3108.58,
+          "audio_s": 1.92,
+          "first_pcm_ms": null,
+          "frames": 24,
+          "codes_sha256": "d3b6699037aeeae6b2c5d728515e556d868cf625a76311dcea660f7e803e0873",
+          "pcm_sha256": "f4df311272511c8b83d0325d55738e811528d8d91d30b08a7837d93906c7ae6a"
+        },
+        "P5-long": {
+          "RTF": 0.8874131944444444,
+          "api_ms": 15334.5,
+          "audio_s": 17.28,
+          "first_pcm_ms": 156.855677,
+          "frames": 216,
+          "codes_sha256": "0cdfe485fc5eb6246eb55adde1331163e578fe913d70aae7221aeb604f4e6211",
+          "pcm_sha256": "7c50952ab03cde0569b3c603d3335829ac73b76b877c9bac9394c3a674e18818"
+        },
+        "P3-long": {
+          "RTF": 0.7742367788461538,
+          "api_ms": 12883.3,
+          "audio_s": 16.64,
+          "first_pcm_ms": 121.962813,
+          "frames": 208,
+          "codes_sha256": "b288bec4ebb40fafe1ddd693a5924adcc8c5b8a8474d41e18463e2544cf0d4c8",
+          "pcm_sha256": "cd25985e1b6a80ae0ef77a41bc3239d8876c2c5e2d7dbb4c737b29d7cd81b810"
+        },
+        "Qwen3-TTS-long": {
+          "RTF": 2.5011979166666665,
+          "api_ms": 43220.7,
+          "audio_s": 17.28,
+          "first_pcm_ms": null,
+          "frames": 216,
+          "codes_sha256": "0cdfe485fc5eb6246eb55adde1331163e578fe913d70aae7221aeb604f4e6211",
+          "pcm_sha256": "f2f7c779d8df1089bbc5f67ca9f8f75b1e655cc060144cdd26f0e6f93bf36d69"
+        }
+      }
+    },
+    {
+      "device": "荣耀90 Pro",
+      "model": "REP-AN00",
+      "SoC": "SM8475",
+      "RAM_GB": 16,
+      "Android": "15",
+      "results": {
+        "P3-short": {
+          "RTF": 1.0145650000000002,
+          "api_ms": 2029.13,
+          "audio_s": 2.0,
+          "first_pcm_ms": 191.217552,
+          "frames": 25,
+          "codes_sha256": "0a6281375cb4e08b5ed67a3f0470fee920f6fa298a97d9edff723c505e790121",
+          "pcm_sha256": "7f26f8d9f38e8cd764bfc59f7c743dec05db0fe29ba1a2e755ef022c4ac06851"
+        },
+        "P5-short": {
+          "RTF": 1.23459375,
+          "api_ms": 2370.42,
+          "audio_s": 1.92,
+          "first_pcm_ms": 288.735833,
+          "frames": 24,
+          "codes_sha256": "d3b6699037aeeae6b2c5d728515e556d868cf625a76311dcea660f7e803e0873",
+          "pcm_sha256": "1a564f7ed536ae16453ad8a3c8057ab51b0f8c43826153511f8d4f573cf553ab"
+        },
+        "Qwen3-TTS-short": {
+          "RTF": 2.23321875,
+          "api_ms": 4287.78,
+          "audio_s": 1.92,
+          "first_pcm_ms": null,
+          "frames": 24,
+          "codes_sha256": "d3b6699037aeeae6b2c5d728515e556d868cf625a76311dcea660f7e803e0873",
+          "pcm_sha256": "f4df311272511c8b83d0325d55738e811528d8d91d30b08a7837d93906c7ae6a"
+        },
+        "P5-long": {
+          "RTF": 1.3556655092592593,
+          "api_ms": 23425.9,
+          "audio_s": 17.28,
+          "first_pcm_ms": 303.400886,
+          "frames": 216,
+          "codes_sha256": "0cdfe485fc5eb6246eb55adde1331163e578fe913d70aae7221aeb604f4e6211",
+          "pcm_sha256": "7c50952ab03cde0569b3c603d3335829ac73b76b877c9bac9394c3a674e18818"
+        },
+        "P3-long": {
+          "RTF": 1.1042007211538463,
+          "api_ms": 18373.9,
+          "audio_s": 16.64,
+          "first_pcm_ms": 220.526198,
+          "frames": 208,
+          "codes_sha256": "b288bec4ebb40fafe1ddd693a5924adcc8c5b8a8474d41e18463e2544cf0d4c8",
+          "pcm_sha256": "cd25985e1b6a80ae0ef77a41bc3239d8876c2c5e2d7dbb4c737b29d7cd81b810"
+        },
+        "Qwen3-TTS-long": {
+          "RTF": 2.4340046296296296,
+          "api_ms": 42059.6,
+          "audio_s": 17.28,
+          "first_pcm_ms": null,
+          "frames": 216,
+          "codes_sha256": "0cdfe485fc5eb6246eb55adde1331163e578fe913d70aae7221aeb604f4e6211",
+          "pcm_sha256": "f2f7c779d8df1089bbc5f67ca9f8f75b1e655cc060144cdd26f0e6f93bf36d69"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'com.orient.ortts.demo'
+ compileSdk 34
+ defaultConfig { applicationId (project.hasProperty('qa') ? 'com.orient.ortts.qa' : project.hasProperty('bundled') ? 'com.orient.ortts.bundled' : 'com.orient.ortts'); resValue 'string', 'app_name', (project.hasProperty('qa') ? 'OrTTS 测试' : project.hasProperty('bundled') ? 'OrTTS · 内置权重' : 'OrTTS'); minSdk 28; targetSdk 34; versionCode 23; versionName '0.2.3-preview'; ndk { abiFilters 'arm64-v8a' } }
+ sourceSets { main {
+  if (project.findProperty('nativeLibsDir')) jniLibs.srcDirs += file(project.property('nativeLibsDir'))
+  if (project.findProperty('modelAssetsDir')) assets.srcDirs += file(project.property('modelAssetsDir'))
+ } }
+ compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+ buildFeatures { buildConfig true }
+ androidResources { noCompress += ['zip','gguf','f32','safetensors'] }
+ packagingOptions { jniLibs { useLegacyPackaging false } }
+ buildTypes { release { minifyEnabled false } }
+}
+dependencies {}

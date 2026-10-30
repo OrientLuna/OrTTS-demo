@@ -1,0 +1,61 @@
+{
+  "schema": "ortts-demo-assets-v1",
+  "variant": "P3",
+  "acoustic_update": 260000,
+  "default_voice": "female",
+  "voices": {
+    "female": {
+      "path": "voices/female.f32",
+      "bytes": 4096,
+      "sha256": "844fe50aec6fdc09d4015e0a21f1cb10065ca234a87154a53e892d1dadcc7415"
+    },
+    "male": {
+      "path": "voices/male.f32",
+      "bytes": 4096,
+      "sha256": "d63ebf18d2de0e62c1c1dc67b850ce13a5323c36be60fb6ac32a04882bc5bd7e"
+    }
+  },
+  "files": {
+    "model": {
+      "path": "native/model.gguf",
+      "bytes": 1728156640,
+      "sha256": "f6c24a57047dbb3ee8445232fc934958e32b5f156fa4d1dd3551b9455dfa776c"
+    },
+    "bridge_manifest": {
+      "path": "native/bridge/MANIFEST.json",
+      "sha256": "a4202fc2d5ba0352cd847b02e83fd7382b0a2ba54e3e3aefdc4c82c7aa068228"
+    },
+    "decoder": {
+      "path": "native/tokenizer-b260k-MIXED_Q4_0.gguf",
+      "sha256": "5d3a38adcad19877c5154d9b8c9b5f66b49ac000a1806043da6e55f4bf89aa79"
+    },
+    "base_decoder": {
+      "path": "native/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf",
+      "sha256": "01ec6afe4578bb1e02a4d43d87e7e5827d6b3d94d2d36912ee931b9c3050f1c1"
+    },
+    "vocoder": {
+      "path": "native/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf",
+      "sha256": "423cfcb054f41b69a5706226c243abc96d2531c3aff1121f7a2ed17149b79c95"
+    },
+    "speaker": {
+      "path": "voices/female.f32",
+      "bytes": 4096,
+      "sha256": "844fe50aec6fdc09d4015e0a21f1cb10065ca234a87154a53e892d1dadcc7415"
+    },
+    "p3_weights": {
+      "path": "P3/predictor/predictor.safetensors",
+      "bytes": 220223680,
+      "sha256": "4ceda3676f118048724d92a01238d9d3cdbe453e08e4619469bea536568f0de2"
+    },
+    "p3_config": {
+      "path": "P3/predictor/config.json",
+      "bytes": 2176,
+      "sha256": "f50a994ae5c2c6464dc1c6b1552a87de99b3ef1db52a35e0331906336ad29ff7"
+    },
+    "p3_talker_config": {
+      "path": "P3/predictor/talker_config.json",
+      "bytes": 3610,
+      "sha256": "208d1cde89594634aec814b4509d46fea5ada80a8d444ac743739084e72f9729"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+diff --git a/src/models/qwen3_tts/ortts_joint/binding_checks.h b/src/models/qwen3_tts/ortts_joint/binding_checks.h
+--- a/src/models/qwen3_tts/ortts_joint/binding_checks.h
++++ b/src/models/qwen3_tts/ortts_joint/binding_checks.h
+@@ -21,7 +21,17 @@
+ inline void match(const std::filesystem::path&p,const std::string&expected){if(expected.size()!=64||sha(p)!=expected)throw std::runtime_error("SHA binding mismatch: "+p.string());}
+ inline void validate(const j::Value&m,const std::string&bundle,const std::string&detok,const std::string&voc,const std::string&base,const std::string&trusted_manifest){
+  match(std::filesystem::path(bundle)/"MANIFEST.json",trusted_manifest);const auto&kind=m.require("checkpoint_kind").as_string();
+- if(kind=="JOINT_FAST_ADAPTED"){
++ if(kind=="JOINT_FAST_ADAPTED" || kind=="B260K_FULL_FAST_ADAPTED"){
++ const bool b260=kind=="B260K_FULL_FAST_ADAPTED";
++ if(b260){
++  const auto &sid=m.require("source_identity");
++  if(m.require("schema").as_string()!="ortts-qwen-lfm-b260k-v1" || m.require("selected_update").as_i64()!=260000 || m.require("fast_learned_empty").as_bool() || !m.require("fast_learned_applied").as_bool() ||
++   sid.require("bridge_sha256").as_string()!="2441a7a4212c90b83d1c349bc9184462d846ac35255438561b9b031534cd3312" ||
++   sid.require("fast_sha256").as_string()!="feeb2cb66807bcf76ac24a6a7e9f94f1cb71fbf25aa1c12cda79aa50a01f8a8d" ||
++   sid.require("qwen_model_sha256").as_string()!="180b3b10eb1c9f1b4db7806d5475bae3071c0243c299d49926bab1da3b6946f6" ||
++   sid.require("qwen_tokenizer_sha256").as_string()!="836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258")throw std::runtime_error("explicit B260k source/update required");
++ }else
++
+  if(m.require("schema").as_string()!="ortts-qwen-lfm-joint160k-v1" || m.require("selected_update").as_i64()!=160000 || m.require("source_identity").require("checkpoint_sha256").as_string()!="6903c0be5af960ab714c144b537e85ef6f0274fac2af693aa9ff1ef8054b50b9" || m.require("fast_learned_empty").as_bool() || !m.require("fast_learned_applied").as_bool()) throw std::runtime_error("joint160k source/update/full-state required");
+  const auto&r=m.require("resolved_detokenizer");if(!r.require("all76_applied").as_bool()||r.require("untouched_tensor_count").as_i64()!=1||!r.require("all_non76_dtype_shape_rawbytes_exact").as_bool()||!r.require("metadata_raw_records_exact").as_bool())throw std::runtime_error("joint76 repack contract");
+  if(std::filesystem::weakly_canonical(std::filesystem::path(bundle)/r.require("path").as_string())!=std::filesystem::canonical(detok))throw std::runtime_error("joint resolved path");
+diff --git a/src/models/qwen3_tts/ortts_joint/session_private.cpp b/src/models/qwen3_tts/ortts_joint/session_private.cpp
+--- a/src/models/qwen3_tts/ortts_joint/session_private.cpp
++++ b/src/models/qwen3_tts/ortts_joint/session_private.cpp
+@@ -581,7 +581,8 @@
+             options.options.at("qwen3_tts.lfm_b0_detokenizer_gguf"), options.options.at("qwen3_tts.lfm_b0_vocoder_gguf"),base,manifest_sha,options.backend.threads);
+         debug::timing_log_scalar("qwen3_tts.lfm_b0.load_ms", engine::debug::elapsed_ms(start));
+         const auto manifest = engine::io::json::parse_file(std::filesystem::path(it->second)/"MANIFEST.json");
+-        debug::trace_log_scalar("qwen3_tts.codec_backend", manifest.require("checkpoint_kind").as_string() == "JOINT_FAST_ADAPTED" ? std::string_view("joint160k_full76") : manifest.require("checkpoint_kind").as_string() == "B_TAIL_ADAPTED" ? std::string_view("lfm_tail256_adapted_mixed") : (manifest.require("checkpoint_kind").as_string() == "A_FROZEN_DETOK" ? std::string_view("lfm_A15000_frozen_q4") : std::string_view("lfm_b0_frozen_q4")));
++        debug::trace_log_scalar("qwen3_tts.codec_backend", manifest.require("checkpoint_kind").as_string() == "B260K_FULL_FAST_ADAPTED" ? std::string_view("b260k_full76") : manifest.require("checkpoint_kind").as_string() == "JOINT_FAST_ADAPTED" ? std::string_view("joint160k_full76") : manifest.require("checkpoint_kind").as_string() == "B_TAIL_ADAPTED" ? std::string_view("lfm_tail256_adapted_mixed") : (manifest.require("checkpoint_kind").as_string() == "A_FROZEN_DETOK" ? std::string_view("lfm_A15000_frozen_q4") : std::string_view("lfm_b0_frozen_q4")));
++        if(manifest.require("checkpoint_kind").as_string()=="B260K_FULL_FAST_ADAPTED") debug::trace_log_scalar("ortts.acoustic.selected_update",manifest.require("selected_update").as_i64());
+     } else {
+     speech_decoder_ = std::make_unique<Qwen3SpeechTokenizerDecoderRuntime>(
+         assets_,

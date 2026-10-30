@@ -1,0 +1,11 @@
+_ortts_abi_version
+_ortts_last_error
+_ortts_engine_create
+_ortts_engine_synthesize
+_ortts_engine_cancel
+_ortts_engine_free
+_ortts_audio_samples
+_ortts_audio_sample_count
+_ortts_audio_sample_rate
+_ortts_audio_metrics
+_ortts_audio_free

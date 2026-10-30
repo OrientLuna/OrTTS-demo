@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "upstream_url": "https://github.com/0xShug0/audio.cpp",
+  "base_commit": "e9303b76983993cc59576bf6d16d8a0635ae4d85",
+  "integration_commit": "9bd7965969eab8e628b1af24a4e2bbc9fb376079",
+  "uncommitted_change_in_snapshot": "native predictor-only packing selector; default remainsoff",
+  "patch": "vendor/patches/audio-cpp-ortts-cpu.patch",
+  "patch_sha256": "e5c279e11748d3104ffc7a399933b9e6af4def80922f34b7d178659d9255bac0",
+  "selected_files": [
+    {
+      "path": "CMakeLists.txt",
+      "sha256": "2bc27310964f924d53dc2e1f10f5261952f677f509350820de4801aa0d8fb4d7"
+    },
+    {
+      "path": "app/cli/main.cpp",
+      "sha256": "fb9e8d3fda83991b9246ce8df691f880541b9716d04f633681e21b1c4202b9ca"
+    },
+    {
+      "path": "include/audiocpp.h",
+      "sha256": "cb59dd27a4486a7cdea4ccaa69cf705ea7451aa1c69be726cb4ee9becf9f1c5a"
+    },
+    {
+      "path": "include/engine/community_models/lfm2_audio/detokenizer.h",
+      "sha256": "0b96ca351b454a1c45e13ed7969ec39906fb6d1815eab3f9523a48ab5f91f3e0"
+    },
+    {
+      "path": "include/engine/framework/core/execution_context.h",
+      "sha256": "eb30b5bedc675704b698f80cbef6a27329e83ebf63a20e04987aa713bb1e59bc"
+    },
+    {
+      "path": "include/engine/framework/modules/transformers/causal_decoder.h",
+      "sha256": "a81cfe3b91fb97d2717d2fed56fab1a8894c17df1d5b614ffecf82035dff35a3"
+    },
+    {
+      "path": "include/engine/models/qwen3_tts/cpu_codec_worker.h",
+      "sha256": "e10687d18a9e1ef2f117968cc75c6fa6f3ffc35bc5869b27ccabb282cd013b5b"
+    },
+    {
+      "path": "include/engine/models/qwen3_tts/session.h",
+      "sha256": "3b270a97b3f50989748a79a6cb7b651deb43f7c176e5aa88441105e8455f31f8"
+    },
+    {
+      "path": "src/capi/audiocpp.cpp",
+      "sha256": "9ae9a5b133ff02e1dfafafb3a93af00760af17bdfc1b1404c7b3a7c58f657dfe"
+    },
+    {
+      "path": "src/community_models/lfm2_audio/detokenizer.cpp",
+      "sha256": "b174abcd036c1cca12d736ce5f84f43faf52840f412797052f8170be8ad2d6fc"
+    },
+    {
+      "path": "src/community_models/lfm2_audio/lfm2_blocks.cpp",
+      "sha256": "d1ed7a47d09c54b6c086aa67ddd1baee8eca54278fafa98b8a4f8f0e21b7a366"
+    },
+    {
+      "path": "src/community_models/lfm2_audio/lfm2_blocks.h",
+      "sha256": "6d25359554f12b8e0afb97e4497de41e0bb8b2810ddc91041da30405f53bcf2d"
+    },
+    {
+      "path": "src/framework/core/execution_context.cpp",
+      "sha256": "1b9f1e2788e13b53280cfc66a6efd89d23706c77e5ab44d28e619348922586c3"
+    },
+    {
+      "path": "src/framework/modules/conv_modules.cpp",
+      "sha256": "7ac51a1608f03e09dbf8c0b0f7844b8bbdc79a8cb1594686d37f1b060d29a411"
+    },
+    {
+      "path": "src/framework/modules/ortts_tconv_LICENSE.MIT",
+      "sha256": "688f8aca0abe167966d277ed00bd594a5a51b028a4fbc1516ff9de7ef05c521a"
+    },
+    {
+      "path": "src/framework/modules/ortts_tconv_raw_gemm.h",
+      "sha256": "89143043751ca9df7013bcdc46f423706163b531da17ef0a5e8d3e94c4e1694d"
+    },
+    {
+      "path": "src/framework/modules/transformers/causal_decoder.cpp",
+      "sha256": "5aab44f1f322eb5ffa1681162373647b2adaeadc9a88df32ae9878d890a93acb"
+    },
+    {
+      "path": "src/framework/modules/transformers/decoder.cpp",
+      "sha256": "8d049d7ff02504abfa7fb8dacd0e6567122d64a66e9629e3f0c3673dfeda8fa4"
+    },
+    {
+      "path": "src/models/qwen3_tts/assets.cpp",
+      "sha256": "133de0bad32ebdcb2b7f3cf674eb21362bd240a0bb9f24c2adc423c186c7ef2a"
+    },
+    {
+      "path": "src/models/qwen3_tts/loader.cpp",
+      "sha256": "fe4d2afebb8c3c8e5f697c21128305ec1706c20be0db3232bcabb0266aa05f4a"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/binding_checks.h",
+      "sha256": "2ed1b694159223cad86f1ef198fb09d9a11af74d3f7584476ad154926ec93d1a"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/bridge_graph.h",
+      "sha256": "2ad2938671be5c53ee9e0aef0a7a4e2c91d62af110d53b1f6e9728666c453f7b"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/file_sha256.h",
+      "sha256": "9ff078e035e9aa37c9c09de6519b12e771dd1b4f80a16055e8d412a089820b01"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/fixed_speaker_io.h",
+      "sha256": "28ea1bfcf08002621e1ceb9c523800409740ad189c3ffcb6c9ea1bb2902a04ef"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/private_adapter.cpp",
+      "sha256": "44913f9de1a2fbef307ce9aa617790c214fe8afe22fd173029d6407f4999b361"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/private_adapter.h",
+      "sha256": "cc179e7ce4e234c629665ff7c83e8a69b1c169c20a75174f339aa6bc205bfc8d"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/session_private.cpp",
+      "sha256": "e101678720d5fca1973a2775892956ac9bb8ac14eea1762d4f1a552e1894258a"
+    },
+    {
+      "path": "src/models/qwen3_tts/prompt_tts_voice_clone.cpp",
+      "sha256": "541c5b9a13f09796b128a2240c2ad13250abbd6e4f06a4f3c71fe072f3bfab14"
+    },
+    {
+      "path": "src/models/qwen3_tts/speaker_encoder.cpp",
+      "sha256": "20e15bc4b82618bb11bf45223d5e8c0dfd57b72ebc7d2341843582f40e04cecf"
+    },
+    {
+      "path": "src/models/qwen3_tts/talker.cpp",
+      "sha256": "9aa0f47527795a8617c2e14477deacecd43eebfeedd802226c0d577986d48e54"
+    },
+    {
+      "path": "src/models/qwen3_tts/tokenizer_speech_decoder.cpp",
+      "sha256": "e7352250e65cc9467d8916ff4b2920db866e6a418bb63c2708780d8812f69cbd"
+    },
+    {
+      "path": "src/models/qwen3_tts/tokenizer_speech_encoder.cpp",
+      "sha256": "c025c1113c743042981ac4c3345dc890636c33b0a99867deb9a693aa9daddb9f"
+    },
+    {
+      "path": "tests/qwen3_tts/b0_decode_dump.cpp",
+      "sha256": "2c7f5ff2a65c545cea6c01d63291bcb777e70a1b53ac4403ba62cb6c7c58d92f"
+    },
+    {
+      "path": "tests/qwen3_tts/b0_stream_capi.cpp",
+      "sha256": "ab4b018824ef65fd05f5feb6db145ce6007a57ea7fd86ac4b9dddad0569049aa"
+    },
+    {
+      "path": "tests/qwen3_tts/decode_codes_dump.cpp",
+      "sha256": "ebcbc2b3c10880a023d9091fff7009ba61b6413f2718f04402199eaab14bb8c6"
+    },
+    {
+      "path": "tests/unittests/test_causal_decoder_chunked_prefill.cpp",
+      "sha256": "6592719a0cd412d7fc25c522ba6a561f8a90cd5a1d99e2f946761cb2ba13126d"
+    }
+  ],
+  "excluded": [
+    "legacy src/models/qwen3_tts/session.cpp: unselected implementation with private absolute include paths; upstream base retained, AUDIOCPP_ORTTS_JOINT=ON required"
+  ],
+  "snapshot_status": "B260k full76 binding plus original P3 source loader; offline demo candidate, separate validation required",
+  "additional_patches": [
+    {
+      "path": "vendor/patches/b260k-source-binding.patch",
+      "sha256": "7eb1b1b6a303c80b3de030230c75ac5f757caf2454cf707dfd0ff404370b2344"
+    }
+  ]
+}
