@@ -23,8 +23,8 @@ def main():
         if not (path/'Modules/module.modulemap').is_file():raise ValueError('Missing Swift module map: '+str(path))
     subprocess.run(cmd,check=True)
     sdk=subprocess.check_output(['xcrun','--sdk','iphoneos','--show-sdk-path'],text=True).strip()
-    subprocess.run(['xcrun','swiftc','-typecheck','-target','arm64-apple-ios16.0',
-                    '-sdk',sdk,'-F',str(device.parent),
+    subprocess.run(['xcrun','swiftc','-typecheck','-target','arm64-apple-ios16.3',
+                    '-sdk',sdk,'-module-cache-path',str(out.parent/'swift-module-cache'),'-F',str(device.parent),
                     str(Path(__file__).resolve().parents[1]/'runtime/examples/ImportSmoke.swift')],check=True)
 
 if __name__=='__main__':main()

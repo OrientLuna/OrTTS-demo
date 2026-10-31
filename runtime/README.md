@@ -17,9 +17,10 @@ python3 tools/build_engine.py --target linux-x86_64 --profile x86_64-baseline \
 |---|---|
 | Linux x86-64 | `x86_64-baseline`, `x86_64-avx2` |
 | Linux ARM64, Android ARM64 | `arm64-baseline`, `arm64-dotprod`, `arm64-i8mm` |
-| macOS Apple Silicon | `arm64-baseline` |
+| macOS Apple Silicon | `arm64-baseline`, `arm64-dotprod`, `arm64-i8mm` |
 | macOS Intel | `x86_64-baseline`, `x86_64-avx2` |
-| iOS device and Apple Silicon simulator | `arm64-baseline` |
+| iOS device | `arm64-baseline`, `arm64-dotprod`, `arm64-i8mm` |
+| Apple Silicon simulator | `arm64-baseline` |
 
 Choose the profile before loading the library. AVX2 also requires SSE4.2, FMA, F16C, BMI2 and OS support for AVX state. ARM optimized profiles require the named extensions and FP16. An unsupported profile can crash before an API call; this prototype does not automatically dispatch between separate libraries. Use the baseline when uncertain. Optimized profiles are candidates until tested on the target device.
 
@@ -42,7 +43,7 @@ python3 tools/package_apple_engine.py \
   --out build/OrTTS.xcframework
 ```
 
-Apple build recipes are prepared; actual Xcode compilation and Apple-device execution must be verified on a Mac. CPU is the implemented route. These recipes do not enable Metal or Core ML.
+Apple CPU prototypes and local verification notes are in [apple/README.md](../apple/README.md). Minimum deployment targets are macOS 13.3 and iOS 16.3. Engine builds use Ninja to preserve same-basename upstream objects; app projects can use Xcode. Apple Silicon Mac and iPhone 17 model execution has been tested; this does not cover all Apple devices. See [CPU profiles and measurements](../docs/CPU_PROFILES.md). CPU is the implemented route. These recipes do not enable Metal or Core ML.
 
 ## C interface
 

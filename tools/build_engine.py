@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TARGETS = {'linux-x86_64': ('x86_64-baseline','x86_64-avx2'),
            'linux-aarch64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'),
            'android-arm64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'),
-           'macos-arm64': ('arm64-baseline',), 'macos-x86_64': ('x86_64-baseline','x86_64-avx2'),
-           'ios-arm64': ('arm64-baseline',), 'ios-simulator-arm64': ('arm64-baseline',)}
+           'macos-arm64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'), 'macos-x86_64': ('x86_64-baseline','x86_64-avx2'),
+           'ios-arm64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'), 'ios-simulator-arm64': ('arm64-baseline',)}
 
 def identity(source):
     lock = json.loads((ROOT/'vendor/runtime.lock.json').read_text())
@@ -41,16 +41,16 @@ def main():
     source=a.source.resolve();out=a.out.resolve();lock=identity(source)
     if out.exists():raise ValueError('Use a fresh build directory')
     apple=a.target.startswith(('macos','ios'))
-    cmd=[a.cmake,'-S',str(ROOT),'-B',str(out),'-G','Xcode' if a.target.startswith('ios') else 'Ninja',
+    cmd=[a.cmake,'-S',str(ROOT),'-B',str(out),'-G','Ninja',
          '-DCMAKE_BUILD_TYPE=Release','-DORTTS_AUDIOCPP_SOURCE='+str(source),
          '-DORTTS_BUILD_ENGINE_PLUGIN=ON','-DORTTS_CPU_PROFILE='+a.profile,
          '-DFETCHCONTENT_FULLY_DISCONNECTED=ON']
-    if a.ninja and not a.target.startswith('ios'):cmd+=['-DCMAKE_MAKE_PROGRAM='+str(a.ninja.resolve())]
+    if a.ninja:cmd+=['-DCMAKE_MAKE_PROGRAM='+str(a.ninja.resolve())]
     if apple:
         cmd+=['-DCMAKE_OSX_ARCHITECTURES='+('x86_64' if a.target=='macos-x86_64' else 'arm64'),'-DGGML_ACCELERATE=OFF']
         if a.target.startswith('ios'):
-            cmd+=['-DCMAKE_SYSTEM_NAME=iOS','-DCMAKE_OSX_SYSROOT='+('iphonesimulator' if 'simulator' in a.target else 'iphoneos'),'-DCMAKE_OSX_DEPLOYMENT_TARGET=16.0']
-        else:cmd+=['-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0']
+            cmd+=['-DCMAKE_SYSTEM_NAME=iOS','-DCMAKE_OSX_SYSROOT='+('iphonesimulator' if 'simulator' in a.target else 'iphoneos'),'-DCMAKE_OSX_DEPLOYMENT_TARGET=16.3']
+        else:cmd+=['-DCMAKE_OSX_DEPLOYMENT_TARGET=13.3']
     elif a.target=='android-arm64':
         if not a.ndk:p.error('--ndk is required; no SDK will be fetched')
         cmd+=['-DCMAKE_TOOLCHAIN_FILE='+str(a.ndk.resolve()/'build/cmake/android.toolchain.cmake'),'-DANDROID_ABI=arm64-v8a','-DANDROID_PLATFORM=android-28','-DANDROID_STL=c++_shared']

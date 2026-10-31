@@ -28,8 +28,8 @@ int main(int argc, char **argv) {
     } else {
         ortts_metrics metrics;
         ortts_audio_metrics(audio, &metrics);
-        printf("samples=%zu callback_samples=%zu chunks=%zu API_ms=%.3f\n",
-               ortts_audio_sample_count(audio), received, metrics.chunks, metrics.api_ms);
+        printf("samples=%zu callback_samples=%zu chunks=%zu API_ms=%.3f first_pcm_ms=%.3f generation_ms=%.3f\n",
+               ortts_audio_sample_count(audio), received, metrics.chunks, metrics.api_ms, metrics.first_pcm_ms, metrics.generation_ms);
     }
     ortts_audio_free(audio);
     ortts_engine_free(engine);

@@ -1,0 +1,63 @@
+{
+  "device": "iPhone 17 (iPhone18,3), 8 GB / 256 GB",
+  "date": "2026-10-31",
+  "mode": "streaming",
+  "variant": "P3",
+  "voice": "female",
+  "threads": 4,
+  "seed": 20261029,
+  "max_tokens": 513,
+  "text": "你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。",
+  "measurement": "One request per profile in separate app launches; i8mm then baseline; includes PCM callback time, excludes model creation and asset verification; frequency unlocked; no acoustic quality review",
+  "results": {
+    "arm64-baseline": {
+      "audio_s": 5.6,
+      "api_s": 3.21,
+      "rtf": 0.5732142857142858
+    },
+    "arm64-i8mm": {
+      "audio_s": 5.52,
+      "api_s": 2.46,
+      "rtf": 0.4456521739130435
+    }
+  },
+  "long_text_test": {
+    "profile": "arm64-i8mm",
+    "voice": "female",
+    "threads": 4,
+    "seed": 20261029,
+    "max_tokens": 513,
+    "text": "清晨的阳光洒在安静的街道上，早餐店已经开始营业。小朋友背着书包走向学校，大人们匆匆赶往车站。今天我们计划乘坐火车前往海边，沿途欣赏山川和田野。出发之前，请检查车票、身份证和随身行李，确认手机电量充足，并提前查看天气变化。如果途中遇到任何问题，请及时联系工作人员，不要独自离开车站。希望每一位旅客都能享受这段轻松愉快的旅程，平安到达目的地。",
+    "P3": {
+      "audio_s": 36.08,
+      "api_s": 23.89,
+      "rtf": 0.662139689578714
+    },
+    "P5": {
+      "audio_s": 34.0,
+      "api_s": 31.91,
+      "rtf": 0.9385294117647058
+    },
+    "limitations": "Single request per variant, P3 then P5, unlocked frequency, no baseline same-text comparison, playback queue drained; no listening review or underrun measurement"
+  },
+  "long_text_baseline_test": {
+    "profile": "arm64-baseline",
+    "voice": "female",
+    "threads": 4,
+    "seed": 20261029,
+    "max_tokens": 513,
+    "text_reference": "long_text_test.text",
+    "P3": {
+      "audio_s": 40.96,
+      "api_s": 28.9,
+      "rtf": 0.70556640625,
+      "possible_token_limit": true
+    },
+    "P5": {
+      "audio_s": 35.68,
+      "api_s": 35.37,
+      "rtf": 0.991311659192825
+    },
+    "limitations": "Single request per variant; baseline measured after optimization tests and a lock-screen pause; output lengths differ. P3 audio at generation limit; EOS and spoken completeness not verified. RTF comparison is not fixed-output throughput."
+  }
+}
