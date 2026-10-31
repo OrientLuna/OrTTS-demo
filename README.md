@@ -1,8 +1,17 @@
 # OrTTS-demo
 
-**OrTTS 的端侧语音合成应用与可嵌入运行时。**
+OrTTS 的端侧语音合成应用与可嵌入 CPU 运行时，支持 P3（速度优先）、P5（标准版）及男女音色。模型在设备本地运行。
 
-支持 P3／P5、`female`／`male` 两个音色，默认边生成边播放。模型在设备本地运行。
+## 平台支持
+
+| 平台 | 当前提供 | 使用入口 |
+|---|---|---|
+| Android ARM64 | 可安装 APK、模型下载 / ZIP 导入、流式播放 | [快速开始](#android) |
+| iOS ARM64 | UIKit Demo 源码、模型下载 / 文件夹导入、流式播放、停止、重播；已在 iPhone 17 验证 | [iOS 使用](apple/README.md#ios-使用) |
+| macOS | 命令行 Demo、离线合成与保存音频；Apple Silicon 已实测 | [macOS 使用](apple/README.md#macos-使用) |
+| Linux x64 / ARM64 | CPU 命令行构建入口、C ABI、Rust 绑定 | [运行时集成](runtime/README.md) |
+
+iOS 需要自行构建和开发签名，尚无公开 IPA / TestFlight；macOS 当前为 CLI，无图形安装包。优化档位须匹配设备能力，baseline 是保守起点。当前使用 CPU，尚未接入 Metal、Core ML 或 QNN。
 
 ## Android
 
@@ -18,27 +27,20 @@ P3 速度优先，P5 为标准版。P5 下载约 2.0 GB，P3 约 2.2 GB；共享
 
 模型与权重：[OrientLuna/OrTTS-Qwen3-LFM-0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B)
 
-## CPU 实测
+## iOS 与 macOS
 
-female 音色，原生 CPU 4线程，短句／长句热 RTF；数值越低越好。每组一次热请求，未锁频。
+iOS Demo 可选择模型和音色，下载并校验模型后边生成边播放，支持停止、重播及本地模型文件夹导入。功能和安装边界见 [Apple Demo](apple/README.md)。
 
-| 设备 | P3 | P5 | 原版 Qwen |
-|---|---:|---:|---:|
-| OPPO Find N5 · SM8750 · 16GB | 0.525／0.774 | 0.636／0.887 | 1.619／2.501 |
-| 荣耀90 Pro · SM8475 · 16GB | 1.015／1.104 | 1.235／1.356 | 2.233／2.434 |
+macOS 使用 `ortts-apple MODEL_ROOT P3|P5 TRUSTED_BRIDGE_SHA TEXT` 离线合成，输出 `~/Documents/ortts-output.caf`；完整命令见 [构建说明](docs/BUILD.md#apple)。
 
-P3／P5为流式生成，原版为优化 CPU 的离线对照；以上不含播放器等待。平均 RTF 不能单独保证持续播放无停顿。可复现输入与结果见[测试数据](benchmarks/android-cpu.json)。
+## 文档导航
 
-## 构建与集成
-
-- [构建说明](docs/BUILD.md)
-- [各平台 CPU 优化参数与验证范围](docs/CPU_PROFILES.md)
-- [模型资产格式](docs/MODEL_ASSETS.md)
-- [Android 源码](android/)
-- [iOS / macOS CPU 原型](apple/README.md)
-- [可嵌入 CPU 引擎与 Rust 接口](runtime/README.md)
-
-原生运行时基于 audio.cpp，当前使用 CPU。iOS CPU Demo 已提供源码和真机原型验证；后续计划包括 Apple Core ML／Metal、高通 QNN、更多音色及音质改善。
+- [构建与开发环境](docs/BUILD.md)：源码准备及各平台构建命令。
+- [模型准备](docs/MODEL_ASSETS.md)：下载、导入、原生目录与清单校验。
+- [CPU 优化参数](docs/CPU_PROFILES.md)：平台档位、指令集和兼容条件。
+- [实测与限制](docs/BENCHMARKS.md)：Android / iPhone 数据及测试口径。
+- [C ABI / Rust 集成](runtime/README.md)：PCM、取消及并发约束。
+- [完整文档索引](docs/README.md)。
 
 ## 许可
 

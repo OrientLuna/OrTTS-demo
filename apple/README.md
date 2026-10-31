@@ -8,32 +8,20 @@ macOS 提供命令行原型，iOS 提供 UIKit Demo。CPU 编译档位、兼容�
 
 可导入包含 `native/`、`voices/`、可选 `P3/` 的原生模型文件夹，再检查补齐；不支持ZIP，不覆盖已有同名子目录。输入后点击“合成并播放”，先缓冲约480ms音频，再边生成边播放。停止清空播放队列并在生成块边界取消。成功结果保存到应用 `Documents/ortts-output.caf`，可重播及通过文件共享获取。键盘工具栏“完成”、点击外部、滑动页面均可收起键盘。
 
-## 构建
+## 安装与构建
 
-先按 [运行时说明](../runtime/README.md) 准备锁定源码和 Apple 引擎。iOS baseline：
+完整命令统一见 [构建说明 / Apple](../docs/BUILD.md#apple)，优化版参数见 [CPU 档位](../docs/CPU_PROFILES.md)。iOS 真机需使用自己的开发证书和覆盖设备、Bundle ID 的描述文件，并签名嵌入框架。当前没有公开 IPA、TestFlight 或 App Store 版本。
 
-```sh
-cmake -S apple -B build/apple-iphone -G Ninja \
-  -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos \
-  -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 \
-  -DORTTS_ENGINE_INSTALL="$PWD/build/engine-iphone/install" \
-  -DORTTS_APP_CPU_PROFILE=arm64-baseline
-cmake --build build/apple-iphone
-```
+## macOS 使用
 
-模拟器将 sysroot 改为 `iphonesimulator`，引擎改为模拟器安装目录，用新的应用构建目录。真机需要自己配置匹配 Bundle ID 和设备的开发签名、描述文件，并签名嵌入框架；仓库不包含个人证书或描述文件。当前不提供 TestFlight、App Store 或任意手机直接安装的IPA。
-
-macOS CLI：
+macOS 为离线 CLI，构建后运行：
 
 ```sh
-cmake -S apple -B build/apple-mac -G Ninja \
-  -DORTTS_ENGINE_INSTALL="$PWD/build/engine-macos/install"
-cmake --build build/apple-mac
 build/apple-mac/ortts-apple /path/to/native-model-pack P3 TRUSTED_BRIDGE_SHA '你好。'
 afplay ~/Documents/ortts-output.caf
 ```
 
-macOS 为离线CLI，没有图形界面、签名公证DMG或自动下载模型。
+模型需手动准备，目录和可信 SHA 来源见 [模型说明](../docs/MODEL_ASSETS.md)。没有图形界面、签名公证 DMG 或模型自动下载。
 
 ## 验证
 

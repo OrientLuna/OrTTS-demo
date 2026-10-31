@@ -50,14 +50,4 @@ Linux ARM64 交叉编译需现有 toolchain，Android 需 NDK。Linux 指令集�
 
 ## 实测与限制
 
-iPhone 17 标准版 8GB/256GB，4线程、女声、CPU，分别启动应用，未锁频：
-
-| 输入 | 模型 | baseline RTF | I8MM RTF |
-|---|---|---:|---:|
-| 默认短句 | P3 | 0.573 | 0.446 |
-| 同一长文本 | P3 | 0.706 | 0.662 |
-| 同一长文本 | P5 | 0.991 | 0.939 |
-
-单次观测中短句 RTF 降低约22%，长文约5%～6%；输出长度不同，不能视为等工作量内核加速比。baseline 长文 P3 为40.96秒，疑似触及513 token限制，未验证EOS和朗读完整性。API计时不含校验、模型创建和排队播放结束，包含PCM回调；首PCM不等于听到声音。平均RTF不能保证无播放间隙。未做人工听感评审。
-
-原始输入、时长和测量口径见 [iPhone 数据](../benchmarks/iphone17-cpu.json)；Android 数据见 [Android 数据](../benchmarks/android-cpu.json)，跨设备比较必须统一输入、seed、冷热请求和参数。本轮 M5 验证包括 baseline/I8MM 的构建与实际合成；iPhone 验证包括 I8MM 能力检查、合成和流播放。尚无覆盖所有 Apple 设备的验证或通用自动回退。
+CPU 优化效果取决于文本、生成长度和设备。Apple 及 Android 实测、原始数据与比较限制统一见 [性能说明](BENCHMARKS.md)。本轮 Apple 验证不代表对 Intel、Linux 及所有 Apple 设备重新验收。
