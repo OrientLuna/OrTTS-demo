@@ -1,6 +1,6 @@
 # 构建
 
-需要已有的 Python、CMake、Ninja；Android 另需 JDK17、Android SDK、NDK27 和 Gradle。
+需要已有的 Python（准备源码建议3.12+）、CMake、Ninja；Android 另需 JDK17、Android SDK、NDK27 和 Gradle。
 
 将 OrTTS 作为应用模块使用，见[CPU 引擎与 Rust 接口](../runtime/README.md)，提供 Linux、Android、macOS 与 iOS 构建入口。
 
@@ -33,3 +33,8 @@ python3 tools/build.py --platform linux-aarch64 --source _work/runtime \
 工具链与目标系统须匹配；Android NDK 不能替代 Linux GNU 工具链。模型不随源码构建自动下载。
 
 加 `--release` 可构建未签名 release APK，再使用自己的签名密钥签名。
+
+## Apple 与平台优化
+
+- [CPU 平台、编译档位与实测限制](CPU_PROFILES.md)
+- [iOS Demo / macOS CLI 构建与使用](../apple/README.md)

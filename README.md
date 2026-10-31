@@ -32,11 +32,13 @@ P3／P5为流式生成，原版为优化 CPU 的离线对照；以上不含播�
 ## 构建与集成
 
 - [构建说明](docs/BUILD.md)
+- [各平台 CPU 优化参数与验证范围](docs/CPU_PROFILES.md)
 - [模型资产格式](docs/MODEL_ASSETS.md)
 - [Android 源码](android/)
+- [iOS / macOS CPU 原型](apple/README.md)
 - [可嵌入 CPU 引擎与 Rust 接口](runtime/README.md)
 
-原生运行时基于 audio.cpp，当前使用 CPU。后续计划包括 Apple Core ML／Metal、高通 QNN、iOS Demo、更多音色及音质改善。
+原生运行时基于 audio.cpp，当前使用 CPU。iOS CPU Demo 已提供源码和真机原型验证；后续计划包括 Apple Core ML／Metal、高通 QNN、更多音色及音质改善。
 
 ## 许可
 
