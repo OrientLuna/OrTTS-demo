@@ -11,6 +11,8 @@ final class NativeBridge {
  interface PcmSink { void onPcm(float[] pcm,int rate); }
  static String run(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha)throws java.io.IOException{ensureLoaded();return runNative(root,variant,voice,text,threads,seed,streaming,sink,out,bridgeSha);}
  static synchronized void release(){if(loaded)releaseNative();}
+ static boolean supportsLiquidCodec()throws java.io.IOException{ensureLoaded();return supportsLiquidCodecNative();}
+ private static native boolean supportsLiquidCodecNative();
  private static native String runNative(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha);
  private static native void releaseNative();
 }

@@ -8,6 +8,7 @@
 | iOS / macOS 使用 | [Apple Demo](../apple/README.md) | 应用功能、产物、安装边界及验证范围 |
 | 从源码构建 | [BUILD](BUILD.md) | 环境、准备源码、平台构建命令 |
 | 选择 CPU 优化参数 | [CPU_PROFILES](CPU_PROFILES.md) | 指令集、兼容性、优化构建示例 |
+| 选择解码器与新模型接入 | [DECODERS](DECODERS.md) | 自动选择、兼容清单与可选构建 |
 | 准备模型 | [MODEL_ASSETS](MODEL_ASSETS.md) | 清单、目录、平台导入方式 |
 | 查看性能证据 | [BENCHMARKS](BENCHMARKS.md) | RTF、测试条件、原始数据及局限 |
 | 嵌入其他应用 | [运行时](../runtime/README.md) | C ABI、Rust、PCM及取消、并发约束 |

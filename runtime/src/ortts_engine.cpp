@@ -1,6 +1,7 @@
 #include "ortts_engine.h"
 #include "audiocpp.h"
 #include "inference_defaults.h"
+#include "model_pack.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -66,6 +67,7 @@ struct OptionsOwner {
 
 struct ortts_engine {
  std::string root, variant, speaker, manifest;
+ ortts::pack::Decoder decoder;
  int threads=4;
  bool streaming=true;
  audiocpp_registry* registry=nullptr;
@@ -73,6 +75,7 @@ struct ortts_engine {
  audiocpp_session* session=nullptr;
  std::atomic<bool> running{false}, cancelled{false};
  void environment(Environment& e) const {
+  ortts::pack::environment(decoder,[&](const char*k,const char*v){e.set(k,v);});
   for(auto key:{"ORTTS_GROUPED_PREDICTOR_GGUF","ORTTS_GROUPED_PREDICTOR_PACKED",
       "ORTTS_P3_PREDICTOR_SOURCE","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK",
       "ORTTS_B0_STREAM_PREFIX_REFERENCE","ORTTS_B0_DISABLE_REPACK","ORTTS_EXPORT_GENERATED_CODES_DIR"}) e.set(key,nullptr);
@@ -145,6 +148,7 @@ ortts_status ortts_engine_create(const ortts_config* cfg,ortts_engine** out) {
   auto e=std::make_unique<ortts_engine>();
   e->root=std::filesystem::absolute(cfg->asset_root).string();e->variant=cfg->variant;
   e->speaker=cfg->speaker_f32?cfg->speaker_f32:child(e->root,"voices/female.f32");
+  e->decoder=ortts::pack::resolve(e->root);
   e->manifest=cfg->bridge_manifest_sha256;e->threads=cfg->threads;e->streaming=cfg->streaming!=0;
   if((e->variant!="P3"&&e->variant!="P5")||e->manifest.size()!=64||
      e->manifest.find_first_not_of("0123456789abcdefABCDEF")!=std::string::npos)

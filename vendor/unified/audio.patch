@@ -1,0 +1,540 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -5175,3 +5175,47 @@
+         target_link_libraries(model_spec_download_demo PRIVATE OpenMP::OpenMP_CXX)
+     endif()
+ endif()
++
++# Private migration build: pin graph bookkeeping to the selected ggml.
++target_include_directories(engine_core PRIVATE "${AUDIOCPP_GGML_SOURCE_DIR}/src")
++
++# Unified LiquidCodec integration (private migration candidate).
++get_filename_component(_ortts_llama_default "${AUDIOCPP_GGML_SOURCE_DIR}" DIRECTORY)
++set(ORTTS_LLAMA_SOURCE_DIR "${_ortts_llama_default}" CACHE PATH "Pinned llama.cpp matching unified ggml")
++set(ORTTS_MTMD_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../mtmd" CACHE PATH "Private continuous-H mtmd source")
++
++option(ORTTS_ENABLE_LIQUIDCODEC "Include in-process LiquidCodec adapter" ON)
++if(ORTTS_ENABLE_LIQUIDCODEC)
++ set(LLAMA_BUILD_COMMON OFF CACHE BOOL "No CLI helpers" FORCE)
++ set(LLAMA_BUILD_TESTS OFF CACHE BOOL "No upstream tests" FORCE)
++ set(LLAMA_BUILD_EXAMPLES OFF CACHE BOOL "No upstream examples" FORCE)
++ set(LLAMA_BUILD_TOOLS OFF CACHE BOOL "No upstream executables" FORCE)
++ set(LLAMA_BUILD_SERVER OFF CACHE BOOL "No server" FORCE)
++ set(LLAMA_BUILD_MTMD OFF CACHE BOOL "Use private patched mtmd" FORCE)
++ set(LLAMA_CURL OFF CACHE BOOL "No download dependency" FORCE)
++ set(MTMD_VIDEO OFF CACHE BOOL "No subprocess video" FORCE)
++ add_subdirectory("${ORTTS_LLAMA_SOURCE_DIR}" "llama-unified" EXCLUDE_FROM_ALL)
++ set(LLAMA_VERSION_BASE "0.8.0")
++ set(LLAMA_VERSION_MAJOR 0)
++ add_subdirectory("${ORTTS_MTMD_SOURCE_DIR}" "mtmd-unified" EXCLUDE_FROM_ALL)
++ target_sources(engine_model_qwen3_tts PRIVATE src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp)
++ target_include_directories(engine_model_qwen3_tts PRIVATE "${ORTTS_MTMD_SOURCE_DIR}" "${ORTTS_LLAMA_SOURCE_DIR}/vendor" "${ORTTS_LLAMA_SOURCE_DIR}/include")
++ target_link_libraries(engine_runtime PUBLIC mtmd)
++ add_executable(ortts-lc-fixture "${CMAKE_CURRENT_SOURCE_DIR}/../lc_fixture.cpp")
++ target_include_directories(ortts-lc-fixture PRIVATE src/models/qwen3_tts/ortts_joint)
++ target_link_libraries(ortts-lc-fixture PRIVATE engine_runtime ggml)
++else()
++ target_sources(engine_model_qwen3_tts PRIVATE src/models/qwen3_tts/ortts_joint/liquidcodec_unavailable.cpp)
++endif()
++add_executable(ortts-unified-probe "${CMAKE_CURRENT_SOURCE_DIR}/../fullchain_probe.cpp" src/capi/audiocpp.cpp)
++target_compile_definitions(ortts-unified-probe PRIVATE AUDIOCPP_ORTTS_JOINT=1 AUDIOCPP_VERSION_STRING="ortts-unified-private")
++target_include_directories(ortts-unified-probe PRIVATE include)
++target_link_libraries(ortts-unified-probe PRIVATE engine_runtime ggml)
++
++add_executable(ortts-compat-probe "${CMAKE_CURRENT_SOURCE_DIR}/../compat_probe.cpp")
++target_include_directories(ortts-compat-probe PRIVATE include "${AUDIOCPP_GGML_SOURCE_DIR}/src")
++target_link_libraries(ortts-compat-probe PRIVATE engine_runtime ggml)
++
++if(ENGINE_ENABLE_CUDA OR ENGINE_ENABLE_HIP OR ENGINE_ENABLE_VULKAN OR ENGINE_ENABLE_METAL)
++ message(FATAL_ERROR "Unified migration candidate is CPU-only; accelerator paths need separate validation")
++endif()
+--- /dev/null
++++ b/include/engine/framework/core/unified_ggml_compat.h
+@@ -0,0 +1,32 @@
++#pragma once
++#include "ggml.h"
++// Exact F32 -> BF16 rounding -> F32 storage boundary, not BF16 arithmetic.
++inline ggml_tensor * ggml_round_bf16(ggml_context *ctx, ggml_tensor *x) {
++ return ggml_cast(ctx,ggml_cast(ctx,x,GGML_TYPE_BF16),GGML_TYPE_F32);
++}
++#include <stdexcept>
++inline ggml_tensor *ggml_mul_mat_acc(ggml_context*c,ggml_tensor*a,ggml_tensor*b,ggml_tensor*acc){return ggml_add(c,ggml_mul_mat(c,a,b),acc);}
++template<class... A> inline ggml_tensor* ggml_conv_3d_concat_pad_spatial_gemm_ex(A&&...) {throw std::runtime_error("ggml_conv_3d_concat_pad_spatial_gemm_ex: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_conv_3d_concat_pad_spatial_gemm_set_lowering(A&&...) {throw std::runtime_error("ggml_conv_3d_concat_pad_spatial_gemm_set_lowering: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_im2col_2d_set_lowering(A&&...) {throw std::runtime_error("ggml_im2col_2d_set_lowering: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_im2col_3d_set_lowering(A&&...) {throw std::runtime_error("ggml_im2col_3d_set_lowering: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_rms_norm_channels(A&&...) {throw std::runtime_error("ggml_rms_norm_channels: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_rms_norm_channels_add_bias_silu(A&&...) {throw std::runtime_error("ggml_rms_norm_channels_add_bias_silu: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_rms_norm_channels_set_lowering(A&&...) {throw std::runtime_error("ggml_rms_norm_channels_set_lowering: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_rms_norm_channels_silu(A&&...) {throw std::runtime_error("ggml_rms_norm_channels_silu: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_group_norm_set_cuda_affine_f16(A&&...) {throw std::runtime_error("ggml_group_norm_set_cuda_affine_f16: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_norm_set_cuda_f16(A&&...) {throw std::runtime_error("ggml_norm_set_cuda_f16: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_conv_2d_direct_set_cudnn(A&&...) {throw std::runtime_error("ggml_conv_2d_direct_set_cudnn: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_conv_2d_direct_set_cudnn_bias(A&&...) {throw std::runtime_error("ggml_conv_2d_direct_set_cudnn_bias: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_concat_set_lowering(A&&...) {throw std::runtime_error("ggml_concat_set_lowering: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_mul_mat_pack4(A&&...) {throw std::runtime_error("ggml_mul_mat_pack4: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_conv_1d_fast_1d_im2col(A&&...) {throw std::runtime_error("ggml_conv_1d_fast_1d_im2col: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_flash_attn_f16_head40(A&&...) {throw std::runtime_error("ggml_flash_attn_f16_head40: unsupported fork-only path in unified Qwen CPU build");}
++template<class... A> inline ggml_tensor* ggml_flash_attn_ext_with_bias_mask(A&&...) {throw std::runtime_error("ggml_flash_attn_ext_with_bias_mask: unsupported fork-only path in unified Qwen CPU build");}
++inline constexpr int GGML_CONCAT_LOWERING_CUDA_CONTIGUOUS_4D=0; // only passed to rejecting compatibility function
++inline constexpr int GGML_CONV_3D_CONCAT_PAD_SPATIAL_GEMM_LOWERING_CUDA_C48=0; // only passed to rejecting compatibility function
++inline constexpr int GGML_CONV_3D_CONCAT_PAD_SPATIAL_GEMM_LOWERING_CUDA_TILED_C48=0; // only passed to rejecting compatibility function
++inline constexpr int GGML_IM2COL_2D_LOWERING_CUDA_N_K3_PAD1_X8=0; // only passed to rejecting compatibility function
++inline constexpr int GGML_IM2COL_3D_LOWERING_CUDA_N1_K3_NOPAD_X8=0; // only passed to rejecting compatibility function
++inline constexpr int GGML_RMS_NORM_CHANNELS_LOWERING_CUDA_COALESCED=0; // only passed to rejecting compatibility function
++inline ggml_tensor*ggml_gated_delta_net(ggml_context*,ggml_tensor*,ggml_tensor*,ggml_tensor*,ggml_tensor*,ggml_tensor*,ggml_tensor*){throw std::runtime_error("Legacy Qwen3.5 delta-net layout is not part of unified Qwen TTS candidate");}
+--- a/src/framework/assets/tensor_source.cpp
++++ b/src/framework/assets/tensor_source.cpp
+@@ -119,7 +119,6 @@
+            (normalized == "q5_k" && type == GGML_TYPE_Q5_K) ||
+            (normalized == "q6_k" && type == GGML_TYPE_Q6_K) ||
+            (normalized == "q8_0" && type == GGML_TYPE_Q8_0) ||
+-           (normalized == "tq2_1" && type == GGML_TYPE_TQ2_1) ||
+            (normalized == "nvfp4" && type == GGML_TYPE_NVFP4) ||
+            (normalized == "iq2_xxs" && type == GGML_TYPE_IQ2_XXS) ||
+            (normalized == "iq2_xs" && type == GGML_TYPE_IQ2_XS) ||
+@@ -145,7 +144,7 @@
+     if (normalized == "q5_0") return GGML_TYPE_Q5_0;
+     if (normalized == "q5_1") return GGML_TYPE_Q5_1;
+     if (normalized == "q8_0") return GGML_TYPE_Q8_0;
+-    if (normalized == "tq2_1") return GGML_TYPE_TQ2_1;
++    if (normalized == "tq2_1") throw std::runtime_error("TQ2_1 is not supported by the pinned unified ggml");
+     if (normalized == "q2_k") return GGML_TYPE_Q2_K;
+     if (normalized == "q3_k") return GGML_TYPE_Q3_K;
+     if (normalized == "q4_k") return GGML_TYPE_Q4_K;
+@@ -1560,7 +1559,7 @@
+         case TensorStorageType::Q8_0:
+             return GGML_TYPE_Q8_0;
+         case TensorStorageType::TQ2_1:
+-            return GGML_TYPE_TQ2_1;
++            throw std::runtime_error("TQ2_1 is not supported by the pinned unified ggml");
+         case TensorStorageType::NVFP4:
+             return GGML_TYPE_NVFP4;
+         case TensorStorageType::IQ2_XXS:
+--- a/src/framework/codecs/fish_dac_codec_runtime.cpp
++++ b/src/framework/codecs/fish_dac_codec_runtime.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/codecs/fish_dac_codec_runtime.h"
+ 
+ #include "engine/framework/audio/conversion.h"
+--- a/src/framework/codecs/wan_video_vae_runtime.cpp
++++ b/src/framework/codecs/wan_video_vae_runtime.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/codecs/wan_video_vae_runtime.h"
+ 
+ #include "engine/framework/modules/activation_modules.h"
+@@ -277,7 +278,7 @@
+                           weight_contiguous.tensor->ne[2],
+                       weight_contiguous.tensor->ne[3]));
+   if (config.cuda_tile_f16_accum_output_lowering) {
+-    ggml_mul_mat_set_lowering(mm, GGML_MUL_MAT_LOWERING_CUDA_TILE_F16_ACCUM_OUTPUT);
++    throw std::runtime_error("WAN custom CUDA lowering unavailable in unified CPU candidate");
+   }
+   auto *raw = ggml_reshape_4d(ctx.ggml, mm, im2col->ne[1], im2col->ne[2],
+                               im2col->ne[3], weight_contiguous.tensor->ne[3]);
+@@ -389,7 +390,7 @@
+                           config.in_channels,
+                       config.out_channels));
+   if (config.cuda_tile_f16_accum_output_lowering) {
+-    ggml_mul_mat_set_lowering(mm, GGML_MUL_MAT_LOWERING_CUDA_TILE_F16_ACCUM_OUTPUT);
++    throw std::runtime_error("WAN custom CUDA lowering unavailable in unified CPU candidate");
+   }
+   auto *raw = ggml_reshape_4d(ctx.ggml, mm, im2col->ne[1] * im2col->ne[2],
+                               output_shape.dims[1], batch, config.out_channels);
+--- a/src/framework/modules/activation_modules.cpp
++++ b/src/framework/modules/activation_modules.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/activation_modules.h"
+ #include "engine/framework/modules/primitive_modules.h"
+ #include "engine/framework/modules/structural_modules.h"
+--- a/src/framework/modules/attention/common_relative_attention.cpp
++++ b/src/framework/modules/attention/common_relative_attention.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "attention_internal.h"
+ 
+ namespace engine::modules::attention::internal {
+--- a/src/framework/modules/attention/scaled_dot_product_attention.cpp
++++ b/src/framework/modules/attention/scaled_dot_product_attention.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/attention/scaled_dot_product_attention.h"
+ 
+ #include "attention_internal.h"
+--- a/src/framework/modules/conv_modules.cpp
++++ b/src/framework/modules/conv_modules.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/conv_modules.h"
+ #include "tensor_layout_utils.h"
+ #include "engine/framework/core/backend.h"
+--- a/src/framework/modules/linear_module.cpp
++++ b/src/framework/modules/linear_module.cpp
+@@ -91,17 +91,17 @@
+     const core::TensorShape matrix_input_shape = flatten_to_matrix_shape(contiguous_input.shape);
+     core::TensorValue matrix_input = core::reshape_tensor(ctx, contiguous_input, matrix_input_shape);
+ 
+-    ggml_tensor * projected_raw = config_.cuda_f16_output
+-        ? ggml_mul_mat_f16(ctx.ggml, weights.weight.tensor, matrix_input.tensor)
+-        : ggml_mul_mat(ctx.ggml, weights.weight.tensor, matrix_input.tensor);
++    if (config_.cuda_f16_output || config_.cuda_nvfp4_f16_activation_lowering || config_.vulkan_f32_activation_lowering)
++        throw std::runtime_error("Custom GPU linear lowering is unsupported in the unified CPU candidate");
++    ggml_tensor * projected_raw = ggml_mul_mat(ctx.ggml, weights.weight.tensor, matrix_input.tensor);
+     if (config_.precision != GGML_PREC_DEFAULT) {
+         ggml_mul_mat_set_prec(projected_raw, config_.precision);
+     }
+     if (config_.cuda_nvfp4_f16_activation_lowering) {
+-        ggml_mul_mat_set_lowering(projected_raw, GGML_MUL_MAT_LOWERING_CUDA_NVFP4_F16_ACTIVATION);
++        throw std::runtime_error("Unsupported CUDA lowering");
+     }
+     if (config_.vulkan_f32_activation_lowering) {
+-        ggml_mul_mat_set_lowering(projected_raw, GGML_MUL_MAT_LOWERING_VULKAN_F32_INPUTS);
++        throw std::runtime_error("Unsupported Vulkan lowering");
+     }
+     core::TensorValue projected = core::wrap_tensor(
+         projected_raw,
+--- a/src/framework/modules/norm_modules.cpp
++++ b/src/framework/modules/norm_modules.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/norm_modules.h"
+ #include "engine/framework/modules/primitive_modules.h"
+ #include "tensor_layout_utils.h"
+--- a/src/framework/modules/optimizations/fast_conv_modules.cpp
++++ b/src/framework/modules/optimizations/fast_conv_modules.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/optimizations/fast_conv_modules.h"
+ 
+ #include "../tensor_layout_utils.h"
+--- a/src/framework/modules/optimizations/fast_projection_modules.cpp
++++ b/src/framework/modules/optimizations/fast_projection_modules.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/optimizations/fast_projection_modules.h"
+ 
+ #include <stdexcept>
+--- a/src/framework/modules/positional_modules.cpp
++++ b/src/framework/modules/positional_modules.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/positional_modules.h"
+ 
+ #include "engine/framework/modules/structural_modules.h"
+--- a/src/framework/modules/primitive_modules.cpp
++++ b/src/framework/modules/primitive_modules.cpp
+@@ -333,10 +333,7 @@
+ 
+     core::TensorShape output_shape = even.shape;
+     output_shape.dims[output_shape.rank - 1] = 2;
+-    return core::wrap_tensor(
+-        ggml_rope_interleaved_pairs(ctx.ggml, even.tensor, odd.tensor, cos.tensor, sin.tensor),
+-        output_shape,
+-        even.type);
++    throw std::runtime_error("Custom interleaved-pairs operator unavailable in unified Qwen CPU build");
+ }
+ 
+ const core::ModuleSchema & RopeInterleavedPairsModule::static_schema() noexcept {
+--- a/src/framework/modules/structural_modules.cpp
++++ b/src/framework/modules/structural_modules.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/structural_modules.h"
+ 
+ #include <algorithm>
+--- a/src/framework/modules/transformers/causal_decoder_runtime.cpp
++++ b/src/framework/modules/transformers/causal_decoder_runtime.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/transformers/causal_decoder_runtime.h"
+ 
+ #include "engine/framework/core/backend.h"
+--- a/src/framework/modules/transformers/decoder.cpp
++++ b/src/framework/modules/transformers/decoder.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/transformers/decoder.h"
+ 
+ #include "engine/framework/modules/activation_modules.h"
+--- a/src/framework/modules/transformers/qwen35_decoder_runtime.cpp
++++ b/src/framework/modules/transformers/qwen35_decoder_runtime.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/transformers/qwen35_decoder_runtime.h"
+ 
+ #include "engine/framework/core/backend.h"
+--- a/src/framework/modules/vocoders/bigvgan_vocoder.cpp
++++ b/src/framework/modules/vocoders/bigvgan_vocoder.cpp
+@@ -1,3 +1,4 @@
++#include "engine/framework/core/unified_ggml_compat.h"
+ #include "engine/framework/modules/vocoders/bigvgan_vocoder.h"
+ 
+ #include "engine/framework/assets/tensor_source.h"
+--- a/src/framework/runtime/graph_optimizer.cpp
++++ b/src/framework/runtime/graph_optimizer.cpp
+@@ -1,3 +1,4 @@
++#include "ggml-impl.h" // pinned unified ggml graph bookkeeping
+ #include "engine/framework/runtime/graph_optimizer.h"
+ 
+ #include <algorithm>
+@@ -574,7 +575,20 @@
+         nodes[i] = nullptr;
+     }
+ 
+-    ggml_graph_set_n_nodes(&graph, write_index);
++    // Compaction also changes edge use counts in modern ggml. Preserve the
++    // existing optimizer rewrites, then refresh the backend's fusion metadata.
++    graph.n_nodes = write_index;
++    graph.uid = 0;
++    std::fill(graph.use_counts, graph.use_counts + graph.visited_hash_set.size, 0);
++    for (int i = 0; i < write_index; ++i) {
++        for (auto * src : nodes[i]->src) {
++            if (!src) continue;
++            const size_t slot = ggml_hash_find(&graph.visited_hash_set, src);
++            GGML_ASSERT(slot != GGML_HASHSET_FULL);
++            GGML_ASSERT(ggml_bitset_get(graph.visited_hash_set.used, slot));
++            ++graph.use_counts[slot];
++        }
++    }
+     report.nodes_after = ggml_graph_n_nodes(&graph);
+     return report;
+ }
+--- /dev/null
++++ b/src/models/qwen3_tts/ortts_joint/lc_client.h
+@@ -0,0 +1,14 @@
++#pragma once
++#include <cstdint>
++#include <memory>
++#include <vector>
++struct LCReply {uint32_t magic=0x31434c4f,status=0;uint64_t samples=0;double translator_ms=0,projection_ms=0,codec_ms=0,istft_ms=0;uint64_t peak_rss_kib=0;};
++inline uint64_t lc_worker_peak_rss_kib=0; // no child process in unified runtime
++class LCClient {
++ struct Impl;std::unique_ptr<Impl> p;
++ public:
++ explicit LCClient(int threads);
++ ~LCClient();
++ void reset();
++ std::vector<float> push(const std::vector<float>& z,bool eos,LCReply& r);
++};
+--- /dev/null
++++ b/src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp
+@@ -0,0 +1,53 @@
++#include "translator.h"
++#include "file_sha256.h"
++#include "lc_client.h"
++#include "clip.h"
++#include "clip-impl.h"
++#include "mtmd-audio.h"
++#include "ggml-backend.h"
++#include <chrono>
++#include <sys/resource.h>
++#include <iostream>
++using Clock=std::chrono::steady_clock;
++static double ms(Clock::time_point t){return std::chrono::duration<double,std::milli>(Clock::now()-t).count();}
++struct Codec {
++ std::string root;Translator translator;clip_ctx*clip=nullptr;clip_gen_state*state=nullptr;mtmd_audio_streaming_istft ola{1280,320};Ctx projw{2ull<<20};ggml_tensor *pw,*pb,*fw,*fb;int threads;bool finished=false;int64_t frames_seen=0,q_seen=0,samples_seen=0;
++ Codec(const std::string&r,const std::string&variant,int nt):root(r),translator(r+"/"+variant,(variant=="expanded120k"||variant=="expanded"),nt),threads(nt){
++  if(variant!="base100k"&&variant!="expanded120k"&&variant!="base"&&variant!="expanded")throw std::runtime_error("variant");ggml_backend_load_all();
++  clip_context_params p{};p.use_gpu=false;p.flash_attn_type=CLIP_FLASH_ATTN_TYPE_DISABLED;p.image_min_tokens=-1;p.image_max_tokens=-1;p.warmup=true;
++  std::string core_file="liquidcodec-F32.gguf",precision="F32";std::ifstream config(root+"/runtime.json");
++  if(config){nlohmann::json cfg;config>>cfg;if(cfg.at("schema")!="ortts-liquidcodec-native-v1"||cfg.at("lookahead_frames")!=1||cfg.at("source_RVQ_groups")!=16||cfg.at("frame_samples")!=1920)throw std::runtime_error("LC runtime schema/geometry");core_file=cfg.at("core_file").get<std::string>();precision=cfg.at("precision").get<std::string>();if(core_file.find('/')!=std::string::npos||core_file.find("..")!=std::string::npos||(precision!="F32"&&precision!="MIXED_Q4_0"))throw std::runtime_error("LC core selector");if(ortts_sha256::file(root+"/"+core_file)!=cfg.at("core_sha256").get<std::string>())throw std::runtime_error("LC core SHA binding");}
++  fprintf(stderr,"LC_CORE_FILE=%s LC_WEIGHT_PROFILE=%s\n",core_file.c_str(),precision.c_str());
++  auto v=clip_init((root+"/"+core_file).c_str(),p);if(v.ctx_v||v.ctx_a||!v.ctx_gen_a)throw std::runtime_error("codec-only load contract");clip=v.ctx_gen_a;state=clip_gen_state_init(clip,7);if(!state)throw std::runtime_error("codec state");
++  pw=tensor(projw.c,48,256,readf(root+"/project_out.weight.f32"));pb=tensor(projw.c,256,1,readf(root+"/project_out.bias.f32"));fw=tensor(projw.c,256,512,readf(root+"/from_quantizer.weight.f32"));fb=tensor(projw.c,512,1,readf(root+"/from_quantizer.bias.f32"));reset();
++ }
++ ~Codec(){if(state)clip_gen_state_free(state);if(clip)clip_free(clip);}
++ void reset(){translator.reset();clip_gen_state_reset(state);ola.reset();finished=false;frames_seen=q_seen=samples_seen=0;}
++ V push(const V&z,bool final,LCReply&r,V*qout=nullptr,V*hout=nullptr){
++  if(finished)throw std::runtime_error("codec finalized");frames_seen+=z.size()/512;auto t=Clock::now();V q=translator.push(z,final);r.translator_ms=ms(t);if(qout)*qout=q;V pcm;
++  if(!q.empty()){
++   int T=q.size()/48;q_seen+=T;t=Clock::now();Ctx graph(16ull<<20);auto*c=graph.c;auto*h=affine(c,fw,affine(c,pw,tensor(c,48,T,q),pb),fb);auto*g=ggml_new_graph(c);ggml_build_forward_expand(g,h);compute(c,g,threads);V hv((float*)h->data,(float*)h->data+T*512);r.projection_ms=ms(t);if(hout)*hout=hv;
++   t=Clock::now();clip_image_f32 dummy;dummy.set_size({1,1},false,true);dummy.cpy_buf(V{0});clip_image_f32_batch imgs;imgs.is_audio=true;imgs.entries.push_back(std::move(dummy));V feats;clip_encode_params p;p.imgs=&imgs;p.n_threads=threads;p.gen_process=CLIP_GEN_PROCESS_GEN_WAV;p.feats=&hv;p.out_feats=&feats;p.gen_state=state;
++   if(!clip_encode(clip,&p)||feats.size()!=size_t(T*6*1282))throw std::runtime_error("continuous codec spectrum shape");r.codec_ms=ms(t);t=Clock::now();V spec(1282);
++   for(int f=0;f<T*6;f++){auto*fr=feats.data()+f*1282;for(int j=0;j<641;j++){float mag=std::exp(fr[j]);spec[2*j]=mag*std::cos(fr[641+j]);spec[2*j+1]=mag*std::sin(fr[641+j]);}auto chunk=ola.process_frame(spec.data());pcm.insert(pcm.end(),chunk.begin(),chunk.end());}r.istft_ms=ms(t);
++  }
++  if(final){auto t=Clock::now();if(q_seen){auto tail=ola.flush();if(tail.size()<480)throw std::runtime_error("OLA tail");tail.resize(tail.size()-480);pcm.insert(pcm.end(),tail.begin(),tail.end());}finished=true;r.istft_ms+=ms(t);if(q_seen!=frames_seen)throw std::runtime_error("EOF q count");}
++  for(float v:pcm)if(!std::isfinite(v))throw std::runtime_error("nonfinite PCM");samples_seen+=pcm.size();if(final&&samples_seen!=frames_seen*1920)throw std::runtime_error("EOF PCM count");r.peak_rss_kib=0;r.samples=pcm.size();return pcm;
++ }
++};
++
++struct LCClient::Impl {
++ Codec codec;bool active=false;
++ static std::string env(const char* k){const char* v=std::getenv(k);if(!v||!*v)throw std::runtime_error(std::string("Missing LiquidCodec setting: ")+k);return v;}
++ Impl(int n):codec(env("ORTTS_LC_ASSETS"),env("ORTTS_LC_VARIANT"),n){}
++};
++LCClient::LCClient(int threads):p(std::make_unique<Impl>(threads)) {
++ if(threads<1||threads>8)throw std::invalid_argument("LiquidCodec threads outside 1..8");
++ fprintf(stderr,"ORTTS_LIQUIDCODEC_TRANSPORT=inprocess ORTTS_GGML=unified CPU_THREADS=%d\n",threads);
++}
++LCClient::~LCClient()=default;
++void LCClient::reset(){p->codec.reset();p->active=true;}
++std::vector<float> LCClient::push(const std::vector<float>&z,bool eos,LCReply&r){
++ if(!p->active)throw std::runtime_error("LiquidCodec request not reset");
++ r=LCReply{};auto result=p->codec.push(z,eos,r);if(eos)p->active=false;return result;
++}
+--- /dev/null
++++ b/src/models/qwen3_tts/ortts_joint/liquidcodec_unavailable.cpp
+@@ -0,0 +1,7 @@
++#include "lc_client.h"
++#include <stdexcept>
++struct LCClient::Impl {};
++LCClient::LCClient(int){throw std::runtime_error("LiquidCodec was not compiled into this runtime");}
++LCClient::~LCClient()=default;
++void LCClient::reset(){throw std::runtime_error("LiquidCodec unavailable");}
++std::vector<float>LCClient::push(const std::vector<float>&,bool,LCReply&){throw std::runtime_error("LiquidCodec unavailable");}
+--- a/src/models/qwen3_tts/ortts_joint/private_adapter.cpp
++++ b/src/models/qwen3_tts/ortts_joint/private_adapter.cpp
+@@ -1,3 +1,4 @@
++#include "lc_client.h"
+ #include "private_adapter.h"
+ #include "binding_checks.h"
+ #include "bridge_graph.h"
+@@ -12,12 +13,15 @@
+ #include <cmath>
+ #include <cstring>
+ #include <cstdio>
++extern "C" bool ortts_lc_eos_known();
+ namespace ortts_b0 {
+ namespace q=engine::community_models::lfm2_audio;namespace b=ortts_lfm_bridge;
+ using Clock=std::chrono::steady_clock;
+ static double ms(Clock::time_point s){return std::chrono::duration<double,std::milli>(Clock::now()-s).count();}
+ struct Ctx {ggml_context*c;explicit Ctx(size_t n):c(ggml_init({n,nullptr,false})){if(!c)throw std::runtime_error("ggml alloc");}~Ctx(){ggml_free(c);}};
+ struct Adapter::Impl {
++std::unique_ptr<LCClient>liquid;
++
+ Ctx weights{48ull<<20};std::map<std::string,ggml_tensor*>ts;b::BridgeWeights bw{};b::DequantWeights dw{};
+  std::shared_ptr<const engine::assets::TensorSource>dt,vc;
+  engine::core::ExecutionContext execution;
+@@ -36,10 +40,18 @@
+  const auto&items=m.require("tensors").as_object();if(items.size()!=28)throw std::runtime_error("bundle tensors count");
+  for(const auto&kv:items){auto&s=kv.second;tail_binding::match(std::filesystem::path(bundle)/s.require("path").as_string(),s.require("sha256").as_string());auto&shape=s.require("shape").as_array();int64_t dims[4]={1,1,1,1};if(shape.empty()||shape.size()>3||s.require("dtype").as_string()!="F32")throw std::runtime_error("tensor schema");for(size_t i=0;i<shape.size();i++)dims[i]=shape[shape.size()-1-i].as_i64();auto*t=ggml_new_tensor(weights.c,GGML_TYPE_F32,shape.size(),dims);auto n=ggml_nbytes(t);if(n!=size_t(s.require("bytes").as_i64()))throw std::runtime_error("tensor size");std::ifstream f(std::filesystem::path(bundle)/s.require("path").as_string(),std::ios::binary|std::ios::ate);if(!f||f.tellg()!=std::streamoff(n))throw std::runtime_error("raw size");f.seekg(0);f.read((char*)t->data,n);if(!f)throw std::runtime_error("raw read");for(int64_t j=0;j<ggml_nelements(t);j++){float v=((float*)t->data)[j];if(!std::isfinite(v)||((kv.first=="zstd"||kv.first=="hstd")&&v<=0))throw std::runtime_error("tensor finite/std");}ts[kv.first]=t;}
+  auto at=[&](const char*n){return ts.at(n);};bw={at("zmean"),at("zstd"),at("hmean"),at("hstd"),at("ridge.weight"),at("ridge.bias"),at("context.weight"),at("context.bias"),at("up.weight"),at("up.bias")};for(int k=0;k<16;k++)dw.normalized_tables[k]=ts.at("codebook."+std::to_string(k));dw.semantic_projection=at("semantic.projection.weight");dw.acoustic_projection=at("acoustic.projection.weight");
++  if(std::getenv("ORTTS_LC_VARIANT")){liquid=std::make_unique<LCClient>(threads);return;}
+   dt=engine::assets::open_tensor_source(detok);vc=engine::assets::open_tensor_source(voc);q::GgufMetadata meta(detok);auto cfg=q::read_detokenizer_config(meta,*dt,*vc,8);if(cfg.lfm.hidden_size!=512||cfg.lfm.num_layers()!=8||cfg.upsample*cfg.hop_length!=1920)throw std::runtime_error("LFM contract");runtime=std::make_unique<q::Lfm2DetokenizerRuntime>(dt,vc,cfg,execution,128,std::getenv("ORTTS_B0_DISABLE_REPACK")==nullptr);
+ }
+  std::vector<float>compute(ggml_context*c,ggml_tensor*y)const{auto*g=ggml_new_graph_custom(c,2048,false);ggml_build_forward_expand(g,y);if(ggml_graph_compute_with_ctx(c,g,threads)!=GGML_STATUS_SUCCESS)throw std::runtime_error("bridge compute");auto*p=(float*)y->data;return {p,p+ggml_nelements(y)};}
++ Result liquid_process(const std::vector<int32_t>&codes,int64_t frames,bool eos){
++  auto begin=Clock::now();if(codes.size()!=size_t(frames*16))throw std::runtime_error("LC code shape");for(auto c:codes)if(c<0||c>=2048)throw std::runtime_error("LC codes include EOS or invalid ID");Result r;
++  if(frames){Ctx graph(64ull<<20);std::array<ggml_tensor*,16>c;for(int k=0;k<16;k++){c[k]=ggml_new_tensor_1d(graph.c,GGML_TYPE_I32,frames);for(int64_t t=0;t<frames;t++)((int32_t*)c[k]->data)[t]=codes[t*16+k];}r.z=compute(graph.c,b::dequant(graph.c,c,dw));}r.dequant_ms=ms(begin);
++  LCReply reply;r.pcm=liquid->push(r.z,eos,reply);r.bridge_ms=reply.translator_ms+reply.projection_ms;r.decode_ms=reply.codec_ms+reply.istft_ms;r.total_ms=ms(begin);
++  fprintf(stderr,"LC_STAGE {\"frames\":%lld,\"real_eos\":%s,\"dequant_ms\":%.9f,\"translator_ms\":%.9f,\"projection_ms\":%.9f,\"codec_ms\":%.9f,\"istft_ms\":%.9f,\"inclusive_wall_ms\":%.9f,\"samples\":%zu,\"worker_peak_RSS_KiB\":%llu}\n",(long long)frames,eos?"true":"false",r.dequant_ms,reply.translator_ms,reply.projection_ms,reply.codec_ms,reply.istft_ms,r.total_ms,r.pcm.size(),(unsigned long long)reply.peak_rss_kib);return r;
++ }
+  Result decode(const std::vector<int32_t>&codes,int64_t frames,bool features_only=false){
++ if(liquid){if(!ortts_lc_eos_known())throw std::runtime_error("LC requires real EOS, not LoopStop/max_tokens");liquid->reset();return liquid_process(codes,frames,true);}
+  if(frames<1||frames>4096||codes.size()!=size_t(frames*16))throw std::runtime_error("codes shape");for(auto c:codes)if(c<0||c>=2048)throw std::runtime_error("codes domain");auto begin=Clock::now();Result r;
+  {Ctx graph(64ull<<20);std::array<ggml_tensor*,16>c;for(int k=0;k<16;k++){c[k]=ggml_new_tensor_1d(graph.c,GGML_TYPE_I32,frames);for(int64_t t=0;t<frames;t++)((int32_t*)c[k]->data)[t]=codes[t*16+k];}
+   if(const char*p=std::getenv("ORTTS_B0_DUMP_SEM")){auto s=compute(graph.c,b::affine(graph.c,dw.semantic_projection,ggml_get_rows(graph.c,dw.normalized_tables[0],c[0]),dw.semantic_bias));std::ofstream f(p,std::ios::binary);f.write((char*)s.data(),s.size()*4);}
+@@ -51,12 +63,14 @@
+   start=Clock::now();r.pcm=runtime->decode_embeddings(r.h);r.decode_ms=ms(start);r.total_ms=ms(begin);if(r.pcm.size()!=size_t(frames*1920))throw std::runtime_error("PCM endpoint");return r;
+  }
+  void start_stream(){
++  if(liquid){liquid->reset();return;}
+   runtime->start_embedding_stream();
+   bridge_history.clear();
+   stream_embeddings_history.clear();
+   stream_istft=std::make_unique<q::Lfm2StreamingIstft>(runtime->window(),runtime->config().hop_length);
+  }
+  Result stream(const std::vector<int32_t>&codes,int64_t frames){
++  if(liquid)return liquid_process(codes,frames,false);
+   if(!stream_istft)throw std::runtime_error("joint stream not started");
+   if(frames<1||frames>4094||codes.size()!=size_t(frames*16))throw std::runtime_error("stream codes shape");
+   const auto begin=Clock::now();
+@@ -80,6 +94,7 @@
+   return r;
+  }
+  std::vector<float> finish_stream(){
++  if(liquid){if(!ortts_lc_eos_known())throw std::runtime_error("LC refuses synthetic EOF after max_tokens/LoopStop");return liquid_process({},0,true).pcm;}
+   if(!stream_istft)throw std::runtime_error("joint stream not started");
+   auto pcm=stream_istft->finish();stream_istft.reset();bridge_history.clear();return pcm;
+  }
+@@ -90,3 +105,5 @@
+ Result Adapter::stream(const std::vector<int32_t>&c,int64_t n){return p->stream(c,n);}
+ std::vector<float> Adapter::finish_stream(){return p->finish_stream();}
+ }
++
++extern "C" uint64_t ortts_lc_worker_peak_rss_kib(){return lc_worker_peak_rss_kib;}
+--- a/src/models/qwen3_tts/ortts_joint/session_private.cpp
++++ b/src/models/qwen3_tts/ortts_joint/session_private.cpp
+@@ -582,7 +582,9 @@
+         debug::timing_log_scalar("qwen3_tts.lfm_b0.load_ms", engine::debug::elapsed_ms(start));
+         const auto manifest = engine::io::json::parse_file(std::filesystem::path(it->second)/"MANIFEST.json");
+         debug::trace_log_scalar("qwen3_tts.codec_backend", manifest.require("checkpoint_kind").as_string() == "B260K_FULL_FAST_ADAPTED" ? std::string_view("b260k_full76") : manifest.require("checkpoint_kind").as_string() == "JOINT_FAST_ADAPTED" ? std::string_view("joint160k_full76") : manifest.require("checkpoint_kind").as_string() == "B_TAIL_ADAPTED" ? std::string_view("lfm_tail256_adapted_mixed") : (manifest.require("checkpoint_kind").as_string() == "A_FROZEN_DETOK" ? std::string_view("lfm_A15000_frozen_q4") : std::string_view("lfm_b0_frozen_q4")));
++        if(const char*v=std::getenv("ORTTS_LC_VARIANT"))debug::trace_log_scalar("qwen3_tts.codec_backend",std::string_view(v));
+         if(manifest.require("checkpoint_kind").as_string()=="B260K_FULL_FAST_ADAPTED") debug::trace_log_scalar("ortts.acoustic.selected_update",manifest.require("selected_update").as_i64());
++        if(const char*v=std::getenv("ORTTS_LC_VARIANT")){debug::trace_log_scalar("ortts.acoustic.selected_update",std::string(v)=="base100k"?int64_t(100000):int64_t(120000));debug::trace_log_scalar("ortts.dequant.source_binding",std::string_view("official_Qwen_from_published_bundle_only"));}
+     } else {
+     speech_decoder_ = std::make_unique<Qwen3SpeechTokenizerDecoderRuntime>(
+         assets_,
+--- /dev/null
++++ b/src/models/qwen3_tts/ortts_joint/translator.h
+@@ -0,0 +1,51 @@
++#pragma once
++#include "ggml.h"
++#include "ggml-cpu.h"
++#include "nlohmann/json.hpp"
++#include <fstream>
++#include <map>
++#include <vector>
++#include <cstring>
++#include <cmath>
++#include <stdexcept>
++#include <memory>
++struct Ctx {ggml_context *c;explicit Ctx(size_t n):c(ggml_init({n,nullptr,false})){if(!c)throw std::runtime_error("GGML allocation");}~Ctx(){ggml_free(c);}};
++using V=std::vector<float>;
++inline V readf(const std::string&p){std::ifstream f(p,std::ios::binary|std::ios::ate);if(!f||f.tellg()%4)throw std::runtime_error("F32 file "+p);V v(size_t(f.tellg())/4);f.seekg(0);f.read((char*)v.data(),v.size()*4);if(!f)throw std::runtime_error("F32 read");for(float x:v)if(!std::isfinite(x))throw std::runtime_error("nonfinite input");return v;}
++inline void writef(const std::string&p,const V&v){std::ofstream f(p,std::ios::binary);f.write((char*)v.data(),v.size()*4);if(!f)throw std::runtime_error("write F32");}
++inline ggml_tensor* affine(ggml_context*c,ggml_tensor*w,ggml_tensor*x,ggml_tensor*b){auto*y=ggml_mul_mat(c,w,x);ggml_mul_mat_set_prec(y,GGML_PREC_F32);return b?ggml_add(c,y,ggml_reshape_2d(c,b,y->ne[0],1)):y;}
++inline ggml_tensor* tensor(ggml_context*c,int dim,int t,const V&v){if(v.size()!=size_t(dim*t))throw std::runtime_error("tensor size");auto*x=ggml_new_tensor_2d(c,GGML_TYPE_F32,dim,t);memcpy(x->data,v.data(),v.size()*4);return x;}
++inline void compute(ggml_context*c,ggml_cgraph*g,int threads){if(ggml_graph_compute_with_ctx(c,g,threads)!=GGML_STATUS_SUCCESS)throw std::runtime_error("GGML compute");}
++struct Translator {
++ Ctx weights{32ull<<20};std::map<std::string,ggml_tensor*>w;V histu;std::vector<V>hist;int64_t seen=0;bool finished=false,expanded;int threads;
++ Translator(const std::string&root,bool exp,int nt):expanded(exp),threads(nt){
++  nlohmann::json m;std::ifstream f(root+"/tensors.json");f>>m;
++  for(auto it=m.begin();it!=m.end();++it){auto shape=it.value().at("shape").get<std::vector<int64_t>>();int64_t ne[4]={1,1,1,1};for(size_t i=0;i<shape.size();i++)ne[i]=shape[shape.size()-1-i];auto*t=ggml_new_tensor(weights.c,GGML_TYPE_F32,shape.size(),ne);auto v=readf(root+"/"+it.key()+".f32");if(v.size()!=size_t(ggml_nelements(t)))throw std::runtime_error("weight size");memcpy(t->data,v.data(),v.size()*4);w[it.key()]=t;}
++  for(int i=0;i<6;i++){auto name="blocks."+std::to_string(i)+".dw.weight";auto src=(float*)w.at(name)->data;for(int k=0;k<3;k++){auto*t=ggml_new_tensor_1d(weights.c,GGML_TYPE_F32,256);auto*p=(float*)t->data;for(int j=0;j<256;j++)p[j]=src[j*3+k];w[name+".tap"+std::to_string(k)]=t;}}
++  reset();
++ }
++ void reset(){histu.assign(2*512,0);hist.clear();for(int i=0;i<6;i++)hist.emplace_back((2<<i)*256,0);seen=0;finished=false;}
++ V push(const V&z,bool final,V*qout=nullptr){
++  if(finished||z.size()%512)throw std::runtime_error("translator state/shape");int n=z.size()/512;if(!n&&!final)return {};if(!n&&!seen){finished=final;return {};}
++  const int T=n+(final?1:0);V u(T*512,0),flags(T*514,0);auto*mean=(float*)w.at("zmean")->data;auto*stdv=(float*)w.at("zstd")->data;
++  for(int t=0;t<n;t++)for(int j=0;j<512;j++){if(!(stdv[j]>0))throw std::runtime_error("std");u[t*512+j]=(z[t*512+j]-mean[j])/stdv[j];}
++  for(int t=0;t<T;t++){std::copy(u.begin()+t*512,u.begin()+(t+1)*512,flags.begin()+t*514);flags[t*514+512]=(final&&t==n)?1:0;flags[t*514+513]=t<n?1:0;}
++  Ctx ctx(256ull<<20);auto*c=ctx.c;auto*g=ggml_new_graph_custom(c,4096,false);auto*ut=tensor(c,512,T,u);auto*past=tensor(c,512,2,histu);auto*all=ggml_concat(c,past,ut,1);
++  auto*seq=ggml_cont(c,ggml_transpose(c,all));auto*cw=w.at("context.weight");auto*cols=ggml_im2col(c,cw,seq,1,0,0,0,1,0,false,GGML_TYPE_F32);
++  auto*context=affine(c,ggml_reshape_2d(c,cw,1536,256),ggml_reshape_2d(c,cols,1536,T),w.at("context.bias"));
++  auto*base=ggml_add(c,affine(c,w.at("ridge.weight"),ut,w.at("ridge.bias")),affine(c,w.at("up.weight"),ggml_silu(c,context),w.at("up.bias")));
++  auto*x=ggml_silu(c,affine(c,ggml_reshape_2d(c,w.at("down.weight"),514,256),tensor(c,514,T,flags),w.at("down.bias")));
++  std::vector<ggml_tensor*>alls;
++  for(int i=0;i<6;i++){
++   const int d=1<<i;const auto name="blocks."+std::to_string(i)+".";auto*prev=tensor(c,256,2*d,hist[i]);auto*cat=ggml_concat(c,prev,x,1);alls.push_back(cat);
++   ggml_tensor*dw=nullptr;for(int k=0;k<3;k++){auto*slice=ggml_view_2d(c,cat,256,T,cat->nb[1],k*d*cat->nb[1]);auto*mul=ggml_mul(c,slice,w.at(name+"dw.weight.tap"+std::to_string(k)));dw=dw?ggml_add(c,dw,mul):mul;}
++   dw=ggml_add(c,dw,w.at(name+"dw.bias"));auto*y=ggml_silu(c,affine(c,ggml_reshape_2d(c,w.at(name+"pw.weight"),256,256),ggml_silu(c,dw),w.at(name+"pw.bias")));x=ggml_add(c,x,y);
++   if(expanded){auto p="capacity_mlps."+std::to_string(i)+".";x=ggml_add(c,x,affine(c,ggml_reshape_2d(c,w.at(p+"2.weight"),512,256),ggml_silu(c,affine(c,ggml_reshape_2d(c,w.at(p+"0.weight"),256,512),x,w.at(p+"0.bias"))),w.at(p+"2.bias")));}
++  }
++  auto*h=ggml_add(c,base,affine(c,ggml_reshape_2d(c,w.at("expand.weight"),256,512),x,w.at("expand.bias")));
++  auto*raw=affine(c,w.at("head.weight"),h,w.at("head.bias"));auto*q=ggml_add(c,ggml_mul(c,ggml_tanh(c,raw),w.at("half_range")),w.at("mid"));ggml_build_forward_expand(g,q);compute(c,g,threads);
++  auto*ap=(float*)all->data;histu.assign(ap+(T)*512,ap+(T+2)*512);
++  for(int i=0;i<6;i++){int d=1<<i;auto*p=(float*)alls[i]->data;hist[i].assign(p+T*256,p+(T+2*d)*256);}
++  const int skip=seen?0:1;V out((float*)q->data+skip*48,(float*)q->data+T*48);seen+=n;finished=final;if(qout)*qout=out;return out;
++ }
++};
+--- a/src/models/qwen3_tts/talker.cpp
++++ b/src/models/qwen3_tts/talker.cpp
+@@ -1,3 +1,5 @@
++static thread_local bool lc_last_eos=false;
++extern "C" bool ortts_lc_eos_known(){return lc_last_eos;}
+ #include "engine/models/qwen3_tts/talker.h"
+ 
+ #include "engine/framework/assets/tensor_source.h"
+@@ -2407,6 +2409,7 @@
+                 debug::trace_log_scalar("qwen3_tts.frame_profile.row", std::string_view(row.str()));
+             }
+         }
++        lc_last_eos=std::string_view(observed_stop_reason)=="eos";
+         debug::trace_log_scalar("qwen3_tts.talker.observed_stop_reason", std::string_view(observed_stop_reason));
+         if (request.reference_codes.has_value()) {
+             out.decoder_input_codes.codes = request.reference_codes->codes;

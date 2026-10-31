@@ -37,6 +37,7 @@ macOS 使用 `ortts-apple MODEL_ROOT P3|P5 TRUSTED_BRIDGE_SHA TEXT` 离线合成
 
 - [构建与开发环境](docs/BUILD.md)：源码准备及各平台构建命令。
 - [模型准备](docs/MODEL_ASSETS.md)：下载、导入、原生目录与清单校验。
+- [解码器兼容](docs/DECODERS.md)：模型包自动选择与可选后端构建。
 - [CPU 优化参数](docs/CPU_PROFILES.md)：平台档位、指令集和兼容条件。
 - [实测与限制](docs/BENCHMARKS.md)：Android / iPhone 数据及测试口径。
 - [C ABI / Rust 集成](runtime/README.md)：PCM、取消及并发约束。

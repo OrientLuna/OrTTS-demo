@@ -1,0 +1,86 @@
+--- a/clip.cpp
++++ b/clip.cpp
+@@ -1216,7 +1216,9 @@
+                         all_known = std::all_of(params->codes->begin(), params->codes->end(), [](int32_t c) { return c >= 0; });
+                     }
+                 }
+-                builder = std::make_unique<clip_graph_lfm3a_gen>(ctx, img, gen_process, all_known, n_frames);
++                const bool continuous_h=params && params->feats && gen_process==CLIP_GEN_PROCESS_GEN_WAV;
++                if(continuous_h){GGML_ASSERT(params->feats->size()%512==0);n_frames=params->feats->size()/512;GGML_ASSERT(n_frames>0);}
++                builder = std::make_unique<clip_graph_lfm3a_gen>(ctx, img, gen_process, all_known, n_frames,continuous_h);
+             } break;
+         case PROJECTOR_TYPE_QWEN3TTS_GEN:
+             {
+@@ -6223,6 +6225,10 @@
+                 const int64_t n_cb    = model.gen_code_embd_w->ne[2];
+                 const int64_t n_vocab = model.gen_code_embd_w->ne[1];
+                 if (params->gen_process == CLIP_GEN_PROCESS_GEN_WAV) {
++                    if(params->feats){
++                        if(params->feats->empty() || params->feats->size()%512)return false;
++                        set_input_f32("inp_continuous_h",*params->feats);
++                    }else{
+                     GGML_ASSERT(params->codes != nullptr);
+                     // codes index the FSQ table via ggml_get_rows, the end-of-audio code has no waveform
+                     const int64_t n_codes = model.c2w.quant_first_cb_w->ne[1];
+@@ -6234,6 +6240,7 @@
+                     }
+                     std::vector<int32_t> codes = *params->codes;
+                     set_input_i32("inp_codes", codes);
++                    }
+                     set_gen_state_in();
+                     // the "pos" slot leads the state
+                     float base = 0.0f;
+--- a/models/models.h
++++ b/models/models.h
+@@ -445,13 +445,14 @@
+ // GEN_WAV  = liquid-codec decoder, a window of frames -> polar STFT frames
+ //
+ struct clip_graph_lfm3a_gen : clip_graph {
+-    clip_graph_lfm3a_gen(clip_ctx * ctx, const clip_image_f32 & img, clip_gen_process_type gen_process, bool all_known, int n_frames)
+-        : clip_graph(ctx, img), gen_process(gen_process), all_known(all_known), n_frames(n_frames) {}
++    clip_graph_lfm3a_gen(clip_ctx * ctx, const clip_image_f32 & img, clip_gen_process_type gen_process, bool all_known, int n_frames, bool continuous_h = false)
++        : clip_graph(ctx, img), gen_process(gen_process), all_known(all_known), n_frames(n_frames), continuous_h(continuous_h) {}
+     ggml_cgraph * build() override;
+ 
+     clip_gen_process_type gen_process;
+     bool all_known; // GEN_CODE only
+     int  n_frames;  // GEN_WAV only
++    bool continuous_h; // private: exact continuous post-projection H, never token IDs
+ 
+     ggml_tensor * build_gen_code();
+     ggml_tensor * build_gen_wav();
+--- a/models/lfm3a-gen.cpp
++++ b/models/lfm3a-gen.cpp
+@@ -176,11 +176,6 @@
+     const int64_t n_pos  = n_fs * n_frames;
+     const int64_t prefix = hparams.wav_tfm_swa - 1;
+ 
+-    // frame-major codes
+-    ggml_tensor * inp_codes = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, n_cb * n_frames);
+-    ggml_set_name(inp_codes, "inp_codes");
+-    ggml_set_input(inp_codes);
+-
+     std::map<std::string, ggml_tensor *> state_in;
+     std::vector<std::pair<std::string, ggml_tensor *>> state_out;
+     for (const auto & slot : list_lfm3a_gen_state_slots(hparams, model)) {
+@@ -190,11 +185,19 @@
+         state_in[slot.name] = t;
+     }
+ 
++    ggml_tensor *cur=nullptr;
++    if (continuous_h) {
++        cur=ggml_new_tensor_2d(ctx0,GGML_TYPE_F32,512,n_frames);
++        ggml_set_name(cur,"inp_continuous_h");ggml_set_input(cur);
++    } else {
++        ggml_tensor *inp_codes=ggml_new_tensor_1d(ctx0,GGML_TYPE_I32,n_cb*n_frames);
++        ggml_set_name(inp_codes,"inp_codes");ggml_set_input(inp_codes);
+     // FSQ decode: every codebook shares the level table, one projection over the n_cb code vectors of a frame
+     ggml_tensor * q = ggml_get_rows(ctx0, c2w.quant_first_cb_w, inp_codes); // [n_lvl, n_cb * n_frames]
+     q = ggml_reshape_2d(ctx0, q, q->ne[0] * n_cb, n_frames);
+-    ggml_tensor * cur = ggml_add(ctx0, build_mm(c2w.quant_first_out_w, q), c2w.quant_first_out_b);
++    cur = ggml_add(ctx0, build_mm(c2w.quant_first_out_w, q), c2w.quant_first_out_b);
+     cur = ggml_add(ctx0, build_mm(c2w.tfm_in_proj_w, cur), c2w.tfm_in_proj_b); // [n_embd_dec, n_frames]
++    }
+     const int64_t n_embd_dec = cur->ne[0];
+ 
+     // nearest-exact upsampling: every frame becomes n_fs decoder positions

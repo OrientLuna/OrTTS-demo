@@ -1,6 +1,7 @@
 // OrTTS CPU offline entry point. Model assets and speaker vectors are external.
 #include "audiocpp.h"
 #include "../runtime/src/inference_defaults.h"
+#include "../runtime/src/model_pack.h"
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -33,6 +34,9 @@ int main(int argc,char**argv){try{
  int threads=std::stoi(a.at("--threads")),repeats=std::stoi(a.at("--repeats")),max_tokens=std::stoi(a.at("--max-tokens"));if(threads<1||threads>8||repeats<1||repeats>3||max_tokens<1||max_tokens>513)throw std::runtime_error("threads/repeats/max-tokens out of supported range");
  if(a.at("--text").empty()||a.at("--manifest-sha").size()!=64)throw std::runtime_error("empty text/manifest identity");
  fs::path out=a.at("--out");if(fs::exists(out)||!fs::create_directories(out))throw std::runtime_error("output must be a fresh directory");
+ auto pack_root=a.count("--pack-root")?fs::path(a.at("--pack-root")):fs::path(a.at("--model")).parent_path().parent_path();
+ auto decoder=ortts::pack::resolve(pack_root.string());
+ ortts::pack::environment(decoder,[](const char*k,const char*v){if(v)setenv(k,v,1);else unsetenv(k);});
  // Keep the validated CPU lineage; do not inherit experiment overrides.
  for(auto k:{"ORTTS_GROUPED_PREDICTOR_GGUF","ORTTS_GROUPED_PREDICTOR_PACKED","ORTTS_P3_PREDICTOR_SOURCE","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK","ORTTS_B0_DISABLE_REPACK"})unsetenv(k);
  if(a.count("--p3-source"))setenv("ORTTS_P3_PREDICTOR_SOURCE",a.at("--p3-source").c_str(),1);

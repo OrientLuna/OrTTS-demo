@@ -14,17 +14,8 @@ TARGETS = {'linux-x86_64': ('x86_64-baseline','x86_64-avx2'),
            'macos-arm64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'), 'macos-x86_64': ('x86_64-baseline','x86_64-avx2'),
            'ios-arm64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'), 'ios-simulator-arm64': ('arm64-baseline',)}
 
-def identity(source):
-    lock = json.loads((ROOT/'vendor/runtime.lock.json').read_text())
-    receipt = json.loads((source/'ORTTS_SOURCE_RECEIPT.json').read_text())
-    for key in ('base_commit','patch_sha256'):
-        if receipt[key] != lock[key]: raise ValueError('Source identity mismatch: '+key)
-    if receipt.get('additional_patches',[]) != lock.get('additional_patches',[]):
-        raise ValueError('Source patch list mismatch')
-    for item in lock['selected_files']:
-        if hashlib.sha256((source/item['path']).read_bytes()).hexdigest() != item['sha256']:
-            raise ValueError('Source modified: '+item['path'])
-    return lock
+try:from source_identity import identity
+except ModuleNotFoundError:from tools.source_identity import identity
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -34,17 +25,18 @@ def main():
     p.add_argument('--out',type=Path,required=True)
     p.add_argument('--cmake',default='cmake');p.add_argument('--ninja',type=Path)
     p.add_argument('--ndk',type=Path);p.add_argument('--toolchain',type=Path)
-    p.add_argument('--jobs',type=int,default=4);p.add_argument('--dry-run',action='store_true')
+    p.add_argument('--liquidcodec',action='store_true');p.add_argument('--jobs',type=int,default=4);p.add_argument('--dry-run',action='store_true')
     a=p.parse_args()
     if a.profile not in TARGETS[a.target]:p.error('Profile does not match target')
     if not 1<=a.jobs<=8:p.error('Use 1..8 build workers')
-    source=a.source.resolve();out=a.out.resolve();lock=identity(source)
+    source=a.source.resolve();out=a.out.resolve();lock=identity(source,a.liquidcodec)
     if out.exists():raise ValueError('Use a fresh build directory')
     apple=a.target.startswith(('macos','ios'))
     cmd=[a.cmake,'-S',str(ROOT),'-B',str(out),'-G','Ninja',
          '-DCMAKE_BUILD_TYPE=Release','-DORTTS_AUDIOCPP_SOURCE='+str(source),
          '-DORTTS_BUILD_ENGINE_PLUGIN=ON','-DORTTS_CPU_PROFILE='+a.profile,
          '-DFETCHCONTENT_FULLY_DISCONNECTED=ON']
+    if a.liquidcodec:cmd+=['-DORTTS_ENABLE_LIQUIDCODEC=ON']
     if a.ninja:cmd+=['-DCMAKE_MAKE_PROGRAM='+str(a.ninja.resolve())]
     if apple:
         cmd+=['-DCMAKE_OSX_ARCHITECTURES='+('x86_64' if a.target=='macos-x86_64' else 'arm64'),'-DGGML_ACCELERATE=OFF']
@@ -65,7 +57,8 @@ def main():
              'source_commit':lock['base_commit'],'integration_patch_sha256':lock['patch_sha256'],
              'additional_patches':lock.get('additional_patches',[]),
              'plugin_source_sha256':{str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(files)},
-             'argv':commands,'models_included':False}
+             'argv':commands,'models_included':False,'liquidcodec':a.liquidcodec,
+             'unified_source_receipt':json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text()) if a.liquidcodec else None}
     print(json.dumps(receipt,indent=2))
     if a.dry_run:return
     if apple and platform.system()!='Darwin':raise RuntimeError('Apple SDK builds require a Mac with Xcode')
