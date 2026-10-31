@@ -1,5 +1,6 @@
 // OrTTS CPU offline entry point. Model assets and speaker vectors are external.
 #include "audiocpp.h"
+#include "../runtime/src/inference_defaults.h"
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -35,17 +36,17 @@ int main(int argc,char**argv){try{
  // Keep the validated CPU lineage; do not inherit experiment overrides.
  for(auto k:{"ORTTS_GROUPED_PREDICTOR_GGUF","ORTTS_GROUPED_PREDICTOR_PACKED","ORTTS_P3_PREDICTOR_SOURCE","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK","ORTTS_B0_DISABLE_REPACK"})unsetenv(k);
  if(a.count("--p3-source"))setenv("ORTTS_P3_PREDICTOR_SOURCE",a.at("--p3-source").c_str(),1);
- setenv("ORTTS_NATIVE_PREDICTOR_PACKED","0",1);setenv("ORTTS_CPU_PERSISTENT_POOL","0",1);setenv("ORTTS_CPU_TCONV_GEMM","1",1);setenv("ORTTS_FFN_PUREC_M1","0",1);setenv("ORTTS_PRIVATE_FAST_BACKEND","cpu",1);setenv("ORTTS_PRIVATE_BASE_DETOK_GGUF",a.at("--base-decoder").c_str(),1);setenv("ORTTS_PRIVATE_BRIDGE_MANIFEST_SHA256",a.at("--manifest-sha").c_str(),1);setenv("ORTTS_EXPORT_GENERATED_CODES_DIR",out.c_str(),1);
+ for(auto kv:ortts::inference::environment_defaults)setenv(kv.first,kv.second,1);setenv("ORTTS_PRIVATE_BASE_DETOK_GGUF",a.at("--base-decoder").c_str(),1);setenv("ORTTS_PRIVATE_BRIDGE_MANIFEST_SHA256",a.at("--manifest-sha").c_str(),1);setenv("ORTTS_EXPORT_GENERATED_CODES_DIR",out.c_str(),1);
  fs::create_directory(out/"tmp");setenv("TMPDIR",(out/"tmp").c_str(),1);check(audiocpp_ortts_trace_file((out/"trace.log").c_str()));
  const auto load_start=std::chrono::steady_clock::now();Handles h;check(audiocpp_registry_create(nullptr,&h.r));audiocpp_model_config mc{"qwen3_tts",nullptr,nullptr,nullptr};check(audiocpp_model_load(h.r,a.at("--model").c_str(),&mc,nullptr,&h.m));h.o=audiocpp_options_create();if(!h.o)throw std::runtime_error("options allocation failed");
  auto option=[&](const char*k,const std::string&v){check(audiocpp_options_set(h.o,k,v.c_str()));};
  option("qwen3_tts.fixed_speaker_f32",a.at("--speaker"));option("qwen3_tts.lfm_b0_bundle",a.at("--bridge"));option("qwen3_tts.lfm_b0_detokenizer_gguf",a.at("--decoder"));option("qwen3_tts.lfm_b0_vocoder_gguf",a.at("--vocoder"));
- for(auto p:{std::pair{"qwen3_tts.perf_mode","off"},{"qwen3_tts.packed_projections","false"},{"qwen3_tts.conv_weight_type","f32"},{"qwen3_tts.speech_decoder_conv_weight_type","f16"},{"qwen3_tts.codec_pipeline","false"},{"qwen3_tts.cpu_chunk_frames","0"},{"qwen3_tts.stitch_decode","false"}})option(p.first,p.second);
+ for(auto p:ortts::inference::session_defaults)option(p.first,p.second);
  audiocpp_backend_config bc{"cpu",0,threads};check(audiocpp_session_create(h.m,"tts","offline",&bc,h.o,&h.s));double setup_ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-load_start).count();std::ofstream metrics(out/"metrics.jsonl");
  for(int i=0;i<repeats;++i){
   struct Request{audiocpp_request*p=audiocpp_request_create();~Request(){if(p)audiocpp_request_free(p);}}q;
   check(audiocpp_request_set_text(q.p,a.at("--text").c_str(),nullptr));
-  for(auto p:{std::pair{"x_vector_only_mode","true"},{"language","Chinese"},{"do_sample","true"},{"temperature","0.9"},{"top_k","50"},{"top_p","0.9"},{"repetition_penalty","1.05"},{"subtalker_do_sample","false"}})check(audiocpp_request_set_option(q.p,p.first,p.second));check(audiocpp_request_set_option(q.p,"seed",a.at("--seed").c_str()));check(audiocpp_request_set_option(q.p,"max_tokens",a.at("--max-tokens").c_str()));
+  for(auto p:ortts::inference::request_defaults)check(audiocpp_request_set_option(q.p,p.first,p.second));check(audiocpp_request_set_option(q.p,"seed",a.at("--seed").c_str()));check(audiocpp_request_set_option(q.p,"max_tokens",a.at("--max-tokens").c_str()));
   const auto start=std::chrono::steady_clock::now();struct Result{audiocpp_result*p=nullptr;~Result(){if(p)audiocpp_result_free(p);}}y;check(audiocpp_session_run(h.s,q.p,&y.p));double ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();const float*pcm=nullptr;size_t n=0;int rate=0,ch=0;check(audiocpp_result_audio(y.p,&pcm,&n,&rate,&ch));if(!n||rate!=24000||ch!=1)throw std::runtime_error("unexpected audio schema");for(size_t j=0;j<n;++j)if(!std::isfinite(pcm[j]))throw std::runtime_error("nonfinite PCM");
   save(out/("request-"+std::to_string(i)+".wav"),pcm,n,rate);std::ofstream raw(out/("request-"+std::to_string(i)+".f32"),std::ios::binary);raw.write(reinterpret_cast<const char*>(pcm),n*4);if(!raw)throw std::runtime_error("PCM write failed");
   std::ifstream trace(out/"trace.log");std::string log((std::istreambuf_iterator<char>(trace)),{}),eos="UNKNOWN";const auto pos=log.rfind("observed_stop_reason ");if(pos!=std::string::npos){auto v=log.substr(pos+21);if(v.rfind("eos",0)==0)eos="eos";else eos="NON_EOS";}

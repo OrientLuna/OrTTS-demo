@@ -1,5 +1,6 @@
 #include "ortts_engine.h"
 #include "audiocpp.h"
+#include "inference_defaults.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -76,8 +77,7 @@ struct ortts_engine {
       "ORTTS_P3_PREDICTOR_SOURCE","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK",
       "ORTTS_B0_STREAM_PREFIX_REFERENCE","ORTTS_B0_DISABLE_REPACK","ORTTS_EXPORT_GENERATED_CODES_DIR"}) e.set(key,nullptr);
   if(variant=="P3") {auto path=child(root,"P3/predictor");e.set("ORTTS_P3_PREDICTOR_SOURCE",path.c_str());}
-  for(auto kv:{std::pair{"ORTTS_FFN_PUREC_M1","0"},{"ORTTS_NATIVE_PREDICTOR_PACKED","0"},
-      {"ORTTS_CPU_PERSISTENT_POOL","0"},{"ORTTS_CPU_TCONV_GEMM","1"},{"ORTTS_PRIVATE_FAST_BACKEND","cpu"}}) e.set(kv.first,kv.second);
+  for(auto kv:ortts::inference::environment_defaults) e.set(kv.first,kv.second);
   auto base=child(root,"native/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf");
   e.set("ORTTS_PRIVATE_BASE_DETOK_GGUF",base.c_str());
   e.set("ORTTS_PRIVATE_BRIDGE_MANIFEST_SHA256",manifest.c_str());
@@ -166,9 +166,7 @@ ortts_status ortts_engine_create(const ortts_config* cfg,ortts_engine** out) {
   opt("qwen3_tts.fixed_speaker_f32",e->speaker);opt("qwen3_tts.lfm_b0_bundle",child(e->root,"native/bridge"));
   opt("qwen3_tts.lfm_b0_detokenizer_gguf",child(e->root,"native/tokenizer-b260k-MIXED_Q4_0.gguf"));
   opt("qwen3_tts.lfm_b0_vocoder_gguf",child(e->root,"native/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf"));
-  for(auto kv:{std::pair{"qwen3_tts.perf_mode","off"},{"qwen3_tts.packed_projections","false"},
-      {"qwen3_tts.conv_weight_type","f32"},{"qwen3_tts.speech_decoder_conv_weight_type","f16"},
-      {"qwen3_tts.codec_pipeline","false"},{"qwen3_tts.cpu_chunk_frames","0"},{"qwen3_tts.stitch_decode","false"}})opt(kv.first,kv.second);
+  for(auto kv:ortts::inference::session_defaults)opt(kv.first,kv.second);
   audiocpp_backend_config backend{"cpu",0,e->threads};
   check(audiocpp_session_create(e->model,"tts",e->streaming?"streaming":"offline",&backend,options.p,&e->session));
   *out=e.release();return ORTTS_OK;
@@ -190,9 +188,7 @@ ortts_status ortts_engine_synthesize(ortts_engine* e,const ortts_request* req,or
   Environment env;e->environment(env);Running running(*e);
   RequestOwner q;if(!q.p)throw std::runtime_error("Request allocation failed");
   check(audiocpp_request_set_text(q.p,req->text,nullptr));
-  for(auto kv:{std::pair{"x_vector_only_mode","true"},{"language","Chinese"},{"do_sample","true"},
-      {"temperature","0.9"},{"top_k","50"},{"top_p","0.9"},{"repetition_penalty","1.05"},
-      {"subtalker_do_sample","false"}})check(audiocpp_request_set_option(q.p,kv.first,kv.second));
+  for(auto kv:ortts::inference::request_defaults)check(audiocpp_request_set_option(q.p,kv.first,kv.second));
   check(audiocpp_request_set_option(q.p,"seed",std::to_string(req->seed).c_str()));
   check(audiocpp_request_set_option(q.p,"max_tokens",std::to_string(req->max_tokens).c_str()));
   Capture c{e,sink,user,api_start};ResultOwner result;
