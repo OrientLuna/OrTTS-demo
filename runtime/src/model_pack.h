@@ -101,7 +101,7 @@ inline void require_dependencies(const std::string&root,const Decoder&d) {
 }
 template<class Setter> inline void environment(const Decoder&d,Setter set) {
  set("ORTTS_LC_WORKER",nullptr);set("ORTTS_LC_LIBDIR",nullptr);
- set("ORTTS_LC_VARIANT",d.liquid()?d.variant.c_str():nullptr);
+ set("ORTTS_LC_VARIANT",d.liquid()?(d.variant=="base"?"base100k":"expanded120k"):nullptr);
  set("ORTTS_LC_ASSETS",d.liquid()?d.assets.c_str():nullptr);
 }
 } // namespace ortts::pack

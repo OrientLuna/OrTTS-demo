@@ -154,6 +154,7 @@ ortts_status ortts_engine_create(const ortts_config* cfg,ortts_engine** out) {
   if((e->variant!="P3"&&e->variant!="P5")||e->manifest.size()!=64||
      e->manifest.find_first_not_of("0123456789abcdefABCDEF")!=std::string::npos)
    throw std::invalid_argument("Invalid variant/manifest identity");
+  if(!e->decoder.dequant_bundle.empty() && e->manifest!=e->decoder.dequant_sha)throw std::invalid_argument("Caller dequant manifest identity mismatch");
   ortts::pack::require_dependencies(e->root,e->decoder);
   ortts::pack::validate_speaker(e->speaker,ortts::pack::speaker_dimension(e->root));
   e->predictor_sha=ortts::pack::native_predictor_hash(e->root,e->variant);

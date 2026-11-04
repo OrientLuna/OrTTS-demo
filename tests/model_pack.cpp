@@ -15,6 +15,7 @@ int main(int argc,char**argv){try{
  auto valid=manifest("liquidcodec","base","native/lc/runtime.json",h);
 #if ORTTS_WITH_LIQUIDCODEC
  save(root/"model.json",valid);auto d=ortts::pack::resolve(root.string());if(!d.liquid()||d.variant!="base"||d.identity!=h)throw std::runtime_error("valid pack failed");
+ std::string runtime_variant;ortts::pack::environment(d,[&](const char*k,const char*v){if(std::string(k)=="ORTTS_LC_VARIANT")runtime_variant=v?v:"";});if(runtime_variant!="base100k")throw std::runtime_error("base100k runtime mapping");
  save(root/"model.json",manifest("liquidcodec","expanded","native/lc/runtime.json",h));if(ortts::pack::resolve(root.string()).variant!="expanded")throw std::runtime_error("expanded failed");
  reject(manifest("liquidcodec","base","native/lc/runtime.json",std::string(64,'0')));reject(manifest("liquidcodec","oops","native/lc/runtime.json",h));reject(manifest("liquidcodec","base","../runtime.json",h));
  save(root/"native/lc/runtime.json",R"({"schema":"ortts-liquidcodec-native-v1","source_RVQ_groups":8,"frame_samples":1920,"lookahead_frames":1})");auto badHash=ortts_sha256::file((root/"native/lc/runtime.json").string());reject(manifest("liquidcodec","base","native/lc/runtime.json",badHash));

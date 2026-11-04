@@ -20,8 +20,8 @@ typedef struct ortts_config {
  uint32_t struct_size;
  const char *asset_root; /* Installed native pack; caller verifies its download manifest. */
  const char *variant; /* P3 or P5. */
- const char *speaker_f32; /* 1024 F32 values; NULL selects asset_root/voices/female.f32. */
- const char *bridge_manifest_sha256; /* Trusted 64-digit SHA, not a self-computed trust root. */
+ const char *speaker_f32; /* Own-model 1024/2048 finite F32 values; NULL selects voices/female.f32. */
+ const char *bridge_manifest_sha256; /* Trusted bridge/dequant manifest SHA (64 digits), not a self-computed trust root. */
  int32_t threads; /* 1..8. */
  int32_t streaming; /* 0 offline, 1 incremental PCM. Fixed for this engine. */
 } ortts_config;
