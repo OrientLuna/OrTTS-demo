@@ -38,3 +38,5 @@ ortts-tts --pack-root /path/to/model-pack --variant P3 \
 ```
 
 Use the C ABI's PCM callback or Android application for incremental playback. The CLI above returns a complete utterance. Preserve true EOS, one-frame lookahead and the final overlap-add flush; do not trim silence to report a lower RTF.
+
+For C ABI callers, `bridge_manifest_sha256` holds the trusted SHA of the selected bridge or dequant `MANIFEST.json`. Its field name and ABI version stay unchanged. Use the SHA from the verified download manifest.

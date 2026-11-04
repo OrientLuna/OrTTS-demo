@@ -49,7 +49,7 @@ Apple CPU prototypes and local verification notes are in [apple/README.md](../ap
 
 Include [`ortts_engine.h`](include/ortts_engine.h) and link the library. Set the configuration/request `struct_size` fields to `sizeof` their types. Create a streaming or offline engine, synthesize, copy/use the result, then release the audio and engine. Errors return a status; read `ortts_last_error()` immediately on that thread.
 
-Pass the installed asset root, P3/P5, a legitimate speaker vector, and the trusted bridge manifest SHA from your verified model manifest. The initial loader accepts the current native package layout. It does not replace download-manifest verification. Input paths must remain available for the engine lifetime.
+Pass the installed asset root, P3/P5, the model-specific speaker vector (1024 or 2048 F32 values), and the trusted selected bridge/dequant manifest SHA from your verified model manifest. The initial loader accepts the current native package layout. It does not replace download-manifest verification. Input paths must remain available for the engine lifetime.
 
 The PCM callback runs on the generating thread. Copy or enqueue each chunk and return promptly; do not block it on speaker playback. Return nonzero to cancel. The C API also permits a cancellation request from another thread while the engine remains alive. Streaming cancellation is checked at chunk boundaries; offline cancellation discards the completed result rather than interrupting an in-flight matrix operation.
 
