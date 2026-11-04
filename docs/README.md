@@ -15,3 +15,5 @@
 | 许可与历史发行 | [NOTICE](../NOTICE.md)、[发行记录](../releases/RELEASE_NOTES.md) | 依赖许可、已有 Android 发行历史 |
 
 `benchmarks/` 保存原始数据，`models/` 保存模型示例配置；模型权重和本机构建目录不纳入源码。各目录 README 解释相应模块；通用构建、模型和优化规则统一放在本目录。
+
+- [Model pack loading](model-pack-runtime.md)

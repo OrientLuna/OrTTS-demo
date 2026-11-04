@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "path": "src/models/qwen3_tts/assets.cpp",
+      "base_sha256": "133de0bad32ebdcb2b7f3cf674eb21362bd240a0bb9f24c2adc423c186c7ef2a",
+      "sha256": "2254d002e370e55f9c01765ac1408e55615d12916a832d6d38edf8ad938a4ca4"
+    },
+    {
+      "path": "src/models/qwen3_tts/p3_native_source.h",
+      "base_sha256": null,
+      "sha256": "4913ea2f0ee66dddf513f46144e92f7784c5b5bf739c399b3fb3a277865a1860"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/binding_checks.h",
+      "base_sha256": "2ed1b694159223cad86f1ef198fb09d9a11af74d3f7584476ad154926ec93d1a",
+      "sha256": "7ebe0769a16cdc0883ddb9bb36762c943e183af156296e31a5a8412e93f9c46f"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/private_adapter.cpp",
+      "base_sha256": "7a58b4dcdc503e60bc384054c4f62ce6403147f8ed981b8c4cf43e80e49569c8",
+      "sha256": "86981608e059267dc2b5b7b2284cc3f25b1527c1abf19277c73736dec3846497"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/session_private.cpp",
+      "base_sha256": "08e2bcd7a5d3329332f3aa44be51fedb261e721a4aa4aa7d92cb94a3deaa1ffc",
+      "sha256": "f2d116e546ca80814cb5e04e8fe23dd4e0166450948f8fe886ca1b26d8523b44"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp",
+      "base_sha256": "b21a405792f058c1d0e769134ff56507712b9f8fcee0b85de39ab9ce58b7ef4a",
+      "sha256": "01a7bd04f18cf1f571377962d4db9d9e4b8310faae5382615c7df4e8fffdf713"
+    }
+  ],
+  "patch_sha256": "4fd767da9546f9f88271de7e90f570bb173a2bc8dadf9ad109d82b2e9c95d0b8"
+}

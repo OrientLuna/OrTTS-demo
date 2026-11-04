@@ -30,6 +30,19 @@ int main(int argc,char**argv){try{
   std::cout<<"Use tools/run.py --assets-manifest MANIFEST --binary ortts-tts --text TEXT --out NEW_DIRECTORY\nCPU offline whole-sentence; no automatic downloads or device access.\n";return 0;
  }
  std::map<std::string,std::string>a;for(int i=1;i<argc;i+=2){if(i+1>=argc||!a.emplace(argv[i],argv[i+1]).second)throw std::runtime_error("invalid/duplicate option");}
+ if(a.count("--pack-root")) {
+  auto root=a.at("--pack-root");auto d=ortts::pack::resolve(root);ortts::pack::require_dependencies(root,d);
+  auto put=[&](const char*k,const std::string&v){if(!a.count(k))a.emplace(k,v);};
+  put("--model",root+"/native/model.gguf");put("--speaker",root+"/voices/female.f32");
+  put("--bridge",d.dequant_bundle.empty()?root+"/native/bridge":d.dequant_bundle);
+  put("--manifest-sha",d.dequant_bundle.empty()?ortts_sha256::file(a.at("--bridge")+"/MANIFEST.json"):d.dequant_sha);
+  put("--decoder",d.dequant_bundle.empty()?root+"/native/tokenizer-b260k-MIXED_Q4_0.gguf":"");
+  put("--base-decoder",d.dequant_bundle.empty()?root+"/native/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf":"");
+  put("--vocoder",d.dequant_bundle.empty()?root+"/native/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf":"");
+  auto variant=a.count("--variant")?a.at("--variant"):"P5";if(variant!="P3"&&variant!="P5")throw std::invalid_argument("Invalid predictor variant");
+  if(variant=="P3")put("--p3-source",root+"/P3/predictor");
+  ortts::pack::validate_speaker(a.at("--speaker"),ortts::pack::speaker_dimension(root));
+ }
  for(auto k:{"--model","--bridge","--decoder","--base-decoder","--vocoder","--speaker","--manifest-sha","--text","--out","--threads","--seed","--repeats","--max-tokens"})if(!a.count(k))throw std::runtime_error(std::string("missing ")+k);
  int threads=std::stoi(a.at("--threads")),repeats=std::stoi(a.at("--repeats")),max_tokens=std::stoi(a.at("--max-tokens"));if(threads<1||threads>8||repeats<1||repeats>3||max_tokens<1||max_tokens>513)throw std::runtime_error("threads/repeats/max-tokens out of supported range");
  if(a.at("--text").empty()||a.at("--manifest-sha").size()!=64)throw std::runtime_error("empty text/manifest identity");
@@ -38,8 +51,13 @@ int main(int argc,char**argv){try{
  auto decoder=ortts::pack::resolve(pack_root.string());
  ortts::pack::environment(decoder,[](const char*k,const char*v){if(v)setenv(k,v,1);else unsetenv(k);});
  // Keep the validated CPU lineage; do not inherit experiment overrides.
- for(auto k:{"ORTTS_GROUPED_PREDICTOR_GGUF","ORTTS_GROUPED_PREDICTOR_PACKED","ORTTS_P3_PREDICTOR_SOURCE","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK","ORTTS_B0_DISABLE_REPACK"})unsetenv(k);
+ for(auto k:{"ORTTS_GROUPED_PREDICTOR_GGUF","ORTTS_GROUPED_PREDICTOR_PACKED","ORTTS_P3_PREDICTOR_SOURCE","ORTTS_P3_NATIVE_SHA256","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK","ORTTS_B0_DISABLE_REPACK"})unsetenv(k);
  if(a.count("--p3-source"))setenv("ORTTS_P3_PREDICTOR_SOURCE",a.at("--p3-source").c_str(),1);
+ if(a.count("--p3-source")&&fs::exists(fs::path(a.at("--p3-source"))/"predictor.gguf")) {
+  if(fs::weakly_canonical(a.at("--p3-source"))!=fs::weakly_canonical(pack_root/"P3/predictor"))throw std::invalid_argument("Native P3 must match selected model pack");
+  auto sha=ortts::pack::native_predictor_hash(pack_root.string(),"P3");setenv("ORTTS_P3_NATIVE_SHA256",sha.c_str(),1);
+ }
+
  for(auto kv:ortts::inference::environment_defaults)setenv(kv.first,kv.second,1);setenv("ORTTS_PRIVATE_BASE_DETOK_GGUF",a.at("--base-decoder").c_str(),1);setenv("ORTTS_PRIVATE_BRIDGE_MANIFEST_SHA256",a.at("--manifest-sha").c_str(),1);setenv("ORTTS_EXPORT_GENERATED_CODES_DIR",out.c_str(),1);
  fs::create_directory(out/"tmp");setenv("TMPDIR",(out/"tmp").c_str(),1);check(audiocpp_ortts_trace_file((out/"trace.log").c_str()));
  const auto load_start=std::chrono::steady_clock::now();Handles h;check(audiocpp_registry_create(nullptr,&h.r));audiocpp_model_config mc{"qwen3_tts",nullptr,nullptr,nullptr};check(audiocpp_model_load(h.r,a.at("--model").c_str(),&mc,nullptr,&h.m));h.o=audiocpp_options_create();if(!h.o)throw std::runtime_error("options allocation failed");

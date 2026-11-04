@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.*;
 /** Decoder choice belongs to the model pack; P3/P5 remains an independent choice. */
 final class DecoderSelection {
- final String kind,variant,manifest;
+ final String kind,variant,manifest;String dequant="";
  private DecoderSelection(String k,String v,String m){kind=k;variant=v;manifest=m;}
  static DecoderSelection from(JSONObject pack)throws Exception{
   if(!pack.has("runtime"))return new DecoderSelection("qwen_lfm","","");
@@ -16,7 +16,10 @@ final class DecoderSelection {
   String variant=decoder.getString("variant"),manifest=decoder.getString("manifest");
   if(!variant.equals("base")&&!variant.equals("expanded"))throw new IOException("不支持的 LiquidCodec 类型");
   if(!manifest.endsWith("/runtime.json")||manifest.startsWith("/")||manifest.contains("\\")||Arrays.asList(manifest.split("/")).contains("..")||Arrays.asList(manifest.split("/")).contains("."))throw new IOException("无效的解码器清单路径");
-  return new DecoderSelection(kind,variant,manifest);
+  DecoderSelection result=new DecoderSelection(kind,variant,manifest);
+  result.dequant=decoder.optString("dequant_manifest","");
+  if(!result.dequant.isEmpty()&&(!result.dequant.endsWith("/MANIFEST.json")||result.dequant.startsWith("/")||result.dequant.contains("\\")||Arrays.asList(result.dequant.split("/")).contains("..")||Arrays.asList(result.dequant.split("/")).contains(".")))throw new IOException("无效的dequant清单路径");
+  return result;
  }
  boolean liquid(){return kind.equals("liquidcodec");}
  String label(){return liquid()?"LiquidCodec":"Qwen–LFM";}
@@ -26,6 +29,15 @@ final class DecoderSelection {
   String prefix=manifest.substring(0,manifest.lastIndexOf('/')+1);int count=0;
   for(String path:all.keySet())if(path.startsWith(prefix)){count++;if(!selected.containsKey(path))throw new IOException("模型下载分组缺少解码器文件："+path);}
   if(count<2)throw new IOException("解码器权重不完整");
+  if(!dequant.isEmpty()){
+   if(!selected.containsKey(dequant))throw new IOException("缺少dequant清单");
+   String dp=dequant.substring(0,dequant.lastIndexOf('/')+1);int n=0;
+   for(String path:all.keySet())if(path.startsWith(dp)){n++;if(!selected.containsKey(path))throw new IOException("缺少dequant文件："+path);}
+   if(n<19)throw new IOException("dequant文件不完整");
+  }
+  // Dequant is a separate selected component; no legacy LFM weights required.
+  // Its exact tensor list/SHA/shape is verified again by the native loader.
+
  }
  void requireSupported()throws java.io.IOException{if(liquid()&&!NativeBridge.supportsLiquidCodec())throw new IllegalStateException("此版本未包含 LiquidCodec，请使用支持该解码器的构建。");}
 }

@@ -23,8 +23,8 @@ def commands(a):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--cmake',default='cmake');p.add_argument('--ninja',type=Path);p.add_argument('--platform',choices=['android-arm64','linux-aarch64','linux-x86_64'],required=True);p.add_argument('--source',type=Path,default=ROOT/'_work/audio.cpp');p.add_argument('--out',type=Path);p.add_argument('--ndk',type=Path);p.add_argument('--android-isa',default='armv8.2-a+dotprod+i8mm+fp16',choices=['armv8-a','armv8.2-a+dotprod+i8mm+fp16']);p.add_argument('--sysroot',type=Path);p.add_argument('--cc',default='aarch64-linux-gnu-gcc');p.add_argument('--cxx',default='aarch64-linux-gnu-g++');p.add_argument('--jobs',type=int,default=4);p.add_argument('--dry-run',action='store_true');p.add_argument('--configure-only',action='store_true');p.add_argument('--android-jni',action='store_true');p.add_argument('--liquidcodec',action='store_true');a=p.parse_args()
     if not 1<=a.jobs<=16:p.error('jobs must be1..16')
-    out,cmds=commands(a);print(json.dumps({'platform':a.platform,'argv':cmds},indent=2))
+    out,cmds=commands(a);release_file=a.source.resolve()/'ORTTS_RELEASE_COMPAT_RECEIPT.json';release=json.loads(release_file.read_text()) if release_file.exists() else None;print(json.dumps({'platform':a.platform,'argv':cmds,'release_compat':release},indent=2))
     if not a.dry_run:
         out.mkdir(parents=True,exist_ok=True)
         for cmd in cmds[:1] if a.configure_only else cmds:subprocess.run(cmd,check=True)
-        (out/'ORTTS_BUILD_RECEIPT.json').write_text(json.dumps({'platform':a.platform,'configure_only':a.configure_only,'argv':cmds},indent=2)+'\n')
+        (out/'ORTTS_BUILD_RECEIPT.json').write_text(json.dumps({'platform':a.platform,'configure_only':a.configure_only,'argv':cmds,'release_compat':release},indent=2)+'\n')

@@ -20,6 +20,12 @@ def identity(source,liquidcodec=False):
   changes={x['path']:x['sha256']for x in ul['changed_files']}
  elif liquidcodec:raise ValueError('Prepare unified sources before using --liquidcodec')
  expected={x['path']:x['sha256']for x in lock['selected_files']};expected.update(changes)
+ release=source/'ORTTS_RELEASE_COMPAT_RECEIPT.json'
+ if release.exists():
+  rl=json.loads((ROOT/'vendor/release-compat/lock.json').read_text());rr=json.loads(release.read_text())
+  if rr!=rl or hashlib.sha256((ROOT/'vendor/release-compat/audio.patch').read_bytes()).hexdigest()!=rl['patch_sha256']:raise ValueError('Release source receipt mismatch')
+  expected.update({x['path']:x['sha256'] for x in rl['files']})
+  lock={**lock,'release_compat':rl}
  for rel,digest in expected.items():
   if hashlib.sha256((source/rel).read_bytes()).hexdigest()!=digest:raise ValueError('Prepared source modified: '+rel)
  return lock

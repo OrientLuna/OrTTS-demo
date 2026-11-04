@@ -55,7 +55,7 @@ def main():
     files += [f for f in (ROOT/'runtime').rglob('*') if f.is_file() and f.suffix in ('.h','.cpp','.c','.rs','.toml','.in','.apple','.map') and 'target' not in f.parts]
     receipt={'status':'PLAN_ONLY','target':a.target,'cpu_profile':a.profile,'backend':'CPU',
              'source_commit':lock['base_commit'],'integration_patch_sha256':lock['patch_sha256'],
-             'additional_patches':lock.get('additional_patches',[]),
+             'additional_patches':lock.get('additional_patches',[]),'release_compat':lock.get('release_compat'),
              'plugin_source_sha256':{str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(files)},
              'argv':commands,'models_included':False,'liquidcodec':a.liquidcodec,
              'unified_source_receipt':json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text()) if a.liquidcodec else None}

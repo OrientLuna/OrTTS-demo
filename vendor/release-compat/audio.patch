@@ -1,0 +1,144 @@
+--- a/src/models/qwen3_tts/assets.cpp
++++ b/src/models/qwen3_tts/assets.cpp
+@@ -1,3 +1,5 @@
++#include "p3_native_source.h"
++#include "ortts_joint/file_sha256.h"
+ #include "engine/models/qwen3_tts/assets.h"
+ 
+ #include "engine/framework/assets/weight_adapter.h"
+@@ -240,13 +242,27 @@
+             p3.head_dim != original.head_dim || p3.vocab_size != 2048 ||
+             json::require_i64(config_json, "num_code_groups") != 16 ||
+             p3.rms_norm_eps != original.rms_norm_eps || p3.rope_theta != original.rope_theta)
+-            throw std::invalid_argument("P3 source does not match native 0.6B predictor interface");
++            throw std::invalid_argument("P3 source does not match own-base predictor interface");
++        if (std::filesystem::exists(root/"predictor.gguf") || assets->config.talker.hidden_size != 1024 || std::filesystem::exists(root/"talker_config.json")) {
++        const auto own = json::parse_file(root / "talker_config.json");
++        if(json::require_i64(own,"hidden_size")!=assets->config.talker.hidden_size || json::require_i64(own,"vocab_size")!=assets->config.talker.vocab_size)throw std::runtime_error("P3 own Talker config mismatch");
++        }
++        if(std::filesystem::exists(root/"predictor.gguf")){
++            const char* expected=std::getenv("ORTTS_P3_NATIVE_SHA256");
++            if(!expected || std::string(expected).size()!=64 || ortts_sha256::file((root/"predictor.gguf").string())!=expected)throw std::runtime_error("P3 native GGUF SHA binding mismatch");
++            auto native=engine::assets::open_tensor_source(root/"predictor.gguf");
++            const size_t count=assets->config.talker.hidden_size==original.hidden_size?64:66;
++            if(native->tensors().size()!=count)throw std::runtime_error("P3 native own-base tensor count mismatch");
++            assets->model_weights=std::make_shared<P3NativeSource>(assets->model_weights,native);
++            fprintf(stderr,"ORTTS_P3_STORAGE=native_GGUF NATIVE_TENSORS=%zu NO_FULL_F32_REPLACEMENT=1\n",count);
++        }else{
+         auto source = engine::assets::open_tensor_source(root / "predictor.safetensors");
+-        if (source->tensors().size() != 64)
+-            throw std::invalid_argument("P3 requires complete 64-tensor deployment source");
++        const bool needs_projection = assets->config.talker.hidden_size != original.hidden_size;
++        if (source->tensors().size() != size_t(needs_projection ? 66 : 64))
++            throw std::invalid_argument("P3 requires complete own-base predictor including projection");
+         engine::assets::WeightAdapter replacement;
+         for (const auto & tensor : source->tensors()) {
+-            if (tensor.name.rfind("model.", 0) != 0 && tensor.name.rfind("lm_head.", 0) != 0)
++            if (tensor.name.rfind("model.", 0) != 0 && tensor.name.rfind("lm_head.", 0) != 0 && !(needs_projection && (tensor.name == "small_to_mtp_projection.weight" || tensor.name == "small_to_mtp_projection.bias")))
+                 throw std::invalid_argument("Unexpected P3 tensor: " + tensor.name);
+             auto data = source->require_f32_tensor(tensor.name);
+             replacement.replacements.emplace("talker.code_predictor." + tensor.name,
+@@ -254,6 +270,8 @@
+         }
+         assets->model_weights = engine::assets::make_weight_adapter_source(
+             assets->model_weights, std::move(replacement), "qwen3_tts.p3_complete_source");
++            fprintf(stderr,"ORTTS_P3_STORAGE=F32_overlay\n");
++        }
+         assets->config.code_predictor = p3;
+     }
+     return assets;
+--- /dev/null
++++ b/src/models/qwen3_tts/p3_native_source.h
+@@ -0,0 +1,31 @@
++#pragma once
++#include "engine/framework/assets/tensor_source.h"
++#include <set>
++#include <algorithm>
++class P3NativeSource final : public engine::assets::TensorSource {
++ using Source=engine::assets::TensorSource;using Meta=engine::assets::TensorMetadata;using Raw=engine::assets::RawTensorData;using Storage=engine::assets::TensorStorageType;
++ std::shared_ptr<const Source> base_,native_;static constexpr const char* prefix="talker.code_predictor.";
++ bool pred(std::string_view n)const{return n.rfind(prefix,0)==0;}
++ std::string local(std::string_view n)const{return std::string(n.substr(std::char_traits<char>::length(prefix)));}
++ public:
++ P3NativeSource(std::shared_ptr<const Source>b,std::shared_ptr<const Source>n):base_(std::move(b)),native_(std::move(n)){
++  std::set<std::string> expected,actual;
++  for(const auto&m:base_->tensors())if(pred(m.name)){auto x=local(m.name);if(x.rfind("model.layers.",0)==0){auto i=x.substr(13);if(std::stoi(i)>=3)continue;}expected.insert(x);}
++  for(const auto&m:native_->tensors()){
++   actual.insert(m.name);auto original=base_->require_metadata(std::string(prefix)+m.name);if(original.shape!=m.shape)throw std::runtime_error("P3 native own-base shape mismatch: "+m.name);
++   auto type=engine::assets::ggml_type_for_tensor_dtype(m.dtype);auto want=m.shape.size()==1?GGML_TYPE_F32:(m.name.rfind("model.codec_embedding.",0)==0?GGML_TYPE_F16:GGML_TYPE_Q8_0);if(type!=want)throw std::runtime_error("P3 native storage profile mismatch: "+m.name);
++  }
++  if(expected!=actual)throw std::runtime_error("P3 native missing/extra predictor heads/embeddings/layers/projection");
++ }
++ const std::filesystem::path& source_path()const noexcept override{return base_->source_path();}
++ bool has_tensor(std::string_view n)const noexcept override{return pred(n)?native_->has_tensor(local(n)):base_->has_tensor(n);}
++ Meta require_metadata(std::string_view n)const override{if(!pred(n))return base_->require_metadata(n);auto m=native_->require_metadata(local(n));m.name=std::string(n);return m;}
++ std::vector<Meta> tensors()const override{std::vector<Meta>out;for(auto m:base_->tensors())if(!pred(m.name))out.push_back(std::move(m));for(auto m:native_->tensors()){m.name=std::string(prefix)+m.name;out.push_back(std::move(m));}std::sort(out.begin(),out.end(),[](auto&a,auto&b){return a.name<b.name;});return out;}
++ void release_storage()const override{base_->release_storage();native_->release_storage();}
++ Raw require_tensor_data(std::string_view n)const override{if(!pred(n))return base_->require_tensor_data(n);auto d=native_->require_tensor_data(local(n));d.metadata.name=std::string(n);return d;}
++ std::vector<float> require_f32(std::string_view n,const std::optional<std::vector<int64_t>>&shape)const override{return pred(n)?native_->require_f32(local(n),shape):base_->require_f32(n,shape);}
++ std::optional<std::vector<float>> optional_f32(std::string_view n,const std::optional<std::vector<int64_t>>&shape)const override{if(!has_tensor(n))return std::nullopt;return require_f32(n,shape);}
++ void set_backend_tensor(ggml_tensor*t,std::string_view n,Storage s,const std::vector<int64_t>&shape)const override{if(pred(n))native_->set_backend_tensor(t,local(n),s,shape);else base_->set_backend_tensor(t,n,s,shape);}
++ void set_backend_f32_tensor(ggml_tensor*t,std::string_view n,const std::vector<int64_t>&shape)const override{set_backend_tensor(t,n,Storage::F32,shape);}
++ int64_t require_i64_scalar(std::string_view n)const override{return pred(n)?native_->require_i64_scalar(local(n)):base_->require_i64_scalar(n);}
++};
+--- a/src/models/qwen3_tts/ortts_joint/binding_checks.h
++++ b/src/models/qwen3_tts/ortts_joint/binding_checks.h
+@@ -21,6 +21,22 @@
+ inline void match(const std::filesystem::path&p,const std::string&expected){if(expected.size()!=64||sha(p)!=expected)throw std::runtime_error("SHA binding mismatch: "+p.string());}
+ inline void validate(const j::Value&m,const std::string&bundle,const std::string&detok,const std::string&voc,const std::string&base,const std::string&trusted_manifest){
+  match(std::filesystem::path(bundle)/"MANIFEST.json",trusted_manifest);const auto&kind=m.require("checkpoint_kind").as_string();
++ if(kind=="QWEN_DEQUANT_ONLY") {
++ if(!std::getenv("ORTTS_LC_VARIANT") || m.require("schema").as_string()!="ortts-qwen-dequant-v1" ||
++    m.require("qwen_tokenizer_sha256").as_string()!="836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258" ||
++    m.require("source_RVQ_groups").as_i64()!=16 || m.require("codebook_size").as_i64()!=2048 || m.require("output_dim").as_i64()!=512)
++   throw std::runtime_error("dequant source/geometry requires LiquidCodec");
++ const auto &items=m.require("tensors").as_object();if(items.size()!=18)throw std::runtime_error("dequant exact18 required");
++ for(int i=0;i<18;++i){auto key=i<16?"codebook."+std::to_string(i):i==16?"semantic.projection.weight":"acoustic.projection.weight";
++  const auto &row=m.require("tensors").require(key);const auto &shape=row.require("shape").as_array();
++  const int64_t rows=i<16?2048:512,cols=256;
++  if(row.require("dtype").as_string()!="F32"||shape.size()!=2||shape[0].as_i64()!=rows||shape[1].as_i64()!=cols||row.require("bytes").as_i64()!=rows*cols*4)throw std::runtime_error("dequant tensor shape/dtype");
++  auto rel=std::filesystem::path(row.require("path").as_string());if(rel.is_absolute()||rel.empty())throw std::runtime_error("dequant path");for(const auto &part:rel)if(part==".."||part==".")throw std::runtime_error("dequant path");
++  auto root=std::filesystem::canonical(bundle),full=std::filesystem::canonical(root/rel);auto a=root.begin(),b=full.begin();for(;a!=root.end()&&b!=full.end()&&*a==*b;++a,++b){}if(a!=root.end()||b==full.end())throw std::runtime_error("dequant path escapes root");
++  match(full,row.require("sha256").as_string());
++ }
++ return;
++ }
+  if(kind=="JOINT_FAST_ADAPTED" || kind=="B260K_FULL_FAST_ADAPTED"){
+  const bool b260=kind=="B260K_FULL_FAST_ADAPTED";
+  if(b260){
+--- a/src/models/qwen3_tts/ortts_joint/private_adapter.cpp
++++ b/src/models/qwen3_tts/ortts_joint/private_adapter.cpp
+@@ -37,9 +37,9 @@
+  auto m=engine::io::json::parse_file(std::filesystem::path(bundle)/"MANIFEST.json");
+  tail_binding::validate(m,bundle,detok,voc,base,trusted_manifest);
+  if(m.require("endianness").as_string()!="little")throw std::runtime_error("endianness");
+- const auto&items=m.require("tensors").as_object();if(items.size()!=28)throw std::runtime_error("bundle tensors count");
++ const auto&items=m.require("tensors").as_object();if(items.size()!=(m.require("checkpoint_kind").as_string()=="QWEN_DEQUANT_ONLY"?18:28))throw std::runtime_error("bundle tensors count");
+  for(const auto&kv:items){auto&s=kv.second;tail_binding::match(std::filesystem::path(bundle)/s.require("path").as_string(),s.require("sha256").as_string());auto&shape=s.require("shape").as_array();int64_t dims[4]={1,1,1,1};if(shape.empty()||shape.size()>3||s.require("dtype").as_string()!="F32")throw std::runtime_error("tensor schema");for(size_t i=0;i<shape.size();i++)dims[i]=shape[shape.size()-1-i].as_i64();auto*t=ggml_new_tensor(weights.c,GGML_TYPE_F32,shape.size(),dims);auto n=ggml_nbytes(t);if(n!=size_t(s.require("bytes").as_i64()))throw std::runtime_error("tensor size");std::ifstream f(std::filesystem::path(bundle)/s.require("path").as_string(),std::ios::binary|std::ios::ate);if(!f||f.tellg()!=std::streamoff(n))throw std::runtime_error("raw size");f.seekg(0);f.read((char*)t->data,n);if(!f)throw std::runtime_error("raw read");for(int64_t j=0;j<ggml_nelements(t);j++){float v=((float*)t->data)[j];if(!std::isfinite(v)||((kv.first=="zstd"||kv.first=="hstd")&&v<=0))throw std::runtime_error("tensor finite/std");}ts[kv.first]=t;}
+- auto at=[&](const char*n){return ts.at(n);};bw={at("zmean"),at("zstd"),at("hmean"),at("hstd"),at("ridge.weight"),at("ridge.bias"),at("context.weight"),at("context.bias"),at("up.weight"),at("up.bias")};for(int k=0;k<16;k++)dw.normalized_tables[k]=ts.at("codebook."+std::to_string(k));dw.semantic_projection=at("semantic.projection.weight");dw.acoustic_projection=at("acoustic.projection.weight");
++ auto at=[&](const char*n){return ts.at(n);};if(m.require("checkpoint_kind").as_string()!="QWEN_DEQUANT_ONLY")bw={at("zmean"),at("zstd"),at("hmean"),at("hstd"),at("ridge.weight"),at("ridge.bias"),at("context.weight"),at("context.bias"),at("up.weight"),at("up.bias")};for(int k=0;k<16;k++)dw.normalized_tables[k]=ts.at("codebook."+std::to_string(k));dw.semantic_projection=at("semantic.projection.weight");dw.acoustic_projection=at("acoustic.projection.weight");
+   if(std::getenv("ORTTS_LC_VARIANT")){liquid=std::make_unique<LCClient>(threads);return;}
+   dt=engine::assets::open_tensor_source(detok);vc=engine::assets::open_tensor_source(voc);q::GgufMetadata meta(detok);auto cfg=q::read_detokenizer_config(meta,*dt,*vc,8);if(cfg.lfm.hidden_size!=512||cfg.lfm.num_layers()!=8||cfg.upsample*cfg.hop_length!=1920)throw std::runtime_error("LFM contract");runtime=std::make_unique<q::Lfm2DetokenizerRuntime>(dt,vc,cfg,execution,128,std::getenv("ORTTS_B0_DISABLE_REPACK")==nullptr);
+ }
+--- a/src/models/qwen3_tts/ortts_joint/session_private.cpp
++++ b/src/models/qwen3_tts/ortts_joint/session_private.cpp
+@@ -578,7 +578,7 @@
+         const char * manifest_sha = std::getenv("ORTTS_PRIVATE_BRIDGE_MANIFEST_SHA256");
+         if (!base || !manifest_sha) throw std::invalid_argument("private adapter requires explicit base and trusted manifest SHA");
+         lfm_b0_ = std::make_shared<ortts_b0::Adapter>(it->second,
+-            options.options.at("qwen3_tts.lfm_b0_detokenizer_gguf"), options.options.at("qwen3_tts.lfm_b0_vocoder_gguf"),base,manifest_sha,options.backend.threads);
++            (std::getenv("ORTTS_LC_VARIANT") && !options.options.count("qwen3_tts.lfm_b0_detokenizer_gguf") ? std::string{} : options.options.at("qwen3_tts.lfm_b0_detokenizer_gguf")), (std::getenv("ORTTS_LC_VARIANT") && !options.options.count("qwen3_tts.lfm_b0_vocoder_gguf") ? std::string{} : options.options.at("qwen3_tts.lfm_b0_vocoder_gguf")),base,manifest_sha,options.backend.threads);
+         debug::timing_log_scalar("qwen3_tts.lfm_b0.load_ms", engine::debug::elapsed_ms(start));
+         const auto manifest = engine::io::json::parse_file(std::filesystem::path(it->second)/"MANIFEST.json");
+         debug::trace_log_scalar("qwen3_tts.codec_backend", manifest.require("checkpoint_kind").as_string() == "B260K_FULL_FAST_ADAPTED" ? std::string_view("b260k_full76") : manifest.require("checkpoint_kind").as_string() == "JOINT_FAST_ADAPTED" ? std::string_view("joint160k_full76") : manifest.require("checkpoint_kind").as_string() == "B_TAIL_ADAPTED" ? std::string_view("lfm_tail256_adapted_mixed") : (manifest.require("checkpoint_kind").as_string() == "A_FROZEN_DETOK" ? std::string_view("lfm_A15000_frozen_q4") : std::string_view("lfm_b0_frozen_q4")));
+--- a/src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp
++++ b/src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp
+@@ -16,7 +16,7 @@
+   if(variant!="base100k"&&variant!="expanded120k"&&variant!="base"&&variant!="expanded")throw std::runtime_error("variant");ggml_backend_load_all();
+   clip_context_params p{};p.use_gpu=false;p.flash_attn_type=CLIP_FLASH_ATTN_TYPE_DISABLED;p.image_min_tokens=-1;p.image_max_tokens=-1;p.warmup=true;
+   std::string core_file="liquidcodec-F32.gguf",precision="F32";std::ifstream config(root+"/runtime.json");
+-  if(config){nlohmann::json cfg;config>>cfg;if(cfg.at("schema")!="ortts-liquidcodec-native-v1"||cfg.at("lookahead_frames")!=1||cfg.at("source_RVQ_groups")!=16||cfg.at("frame_samples")!=1920)throw std::runtime_error("LC runtime schema/geometry");core_file=cfg.at("core_file").get<std::string>();precision=cfg.at("precision").get<std::string>();if(core_file.find('/')!=std::string::npos||core_file.find("..")!=std::string::npos||(precision!="F32"&&precision!="MIXED_Q4_0"))throw std::runtime_error("LC core selector");if(ortts_sha256::file(root+"/"+core_file)!=cfg.at("core_sha256").get<std::string>())throw std::runtime_error("LC core SHA binding");}
++  if(config){nlohmann::json cfg;config>>cfg;if(cfg.at("schema")!="ortts-liquidcodec-native-v1"||cfg.at("lookahead_frames")!=1||cfg.at("source_RVQ_groups")!=16||cfg.at("frame_samples")!=1920)throw std::runtime_error("LC runtime schema/geometry");core_file=cfg.at("core_file").get<std::string>();precision=cfg.at("precision").get<std::string>();if(core_file.find('/')!=std::string::npos||core_file.find("..")!=std::string::npos||(precision!="F32"&&precision!="MIXED_Q4_0"&&precision!="MIXED_Q8_0"))throw std::runtime_error("LC core selector");if(ortts_sha256::file(root+"/"+core_file)!=cfg.at("core_sha256").get<std::string>())throw std::runtime_error("LC core SHA binding");}
+   fprintf(stderr,"LC_CORE_FILE=%s LC_WEIGHT_PROFILE=%s\n",core_file.c_str(),precision.c_str());
+   auto v=clip_init((root+"/"+core_file).c_str(),p);if(v.ctx_v||v.ctx_a||!v.ctx_gen_a)throw std::runtime_error("codec-only load contract");clip=v.ctx_gen_a;state=clip_gen_state_init(clip,7);if(!state)throw std::runtime_error("codec state");
+   pw=tensor(projw.c,48,256,readf(root+"/project_out.weight.f32"));pb=tensor(projw.c,256,1,readf(root+"/project_out.bias.f32"));fw=tensor(projw.c,256,512,readf(root+"/from_quantizer.weight.f32"));fb=tensor(projw.c,512,1,readf(root+"/from_quantizer.bias.f32"));reset();

@@ -1,0 +1,168 @@
+{
+  "source_manifest_sha256": "3123a6ade4b2bebb73272a23a7dfeef6ff3dcd545c61f87fc8fab36ed16fc96b",
+  "qwen_tokenizer_sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258",
+  "tensors": {
+    "codebook.0": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "93baa86da5a795e9af705879be56353a3cb6fc8c0318dfd105d5b6998bc10ca3"
+    },
+    "codebook.1": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "87f17cb4a49a8e848517eecc8bad31c86718c0debf00ed14db85fdebbd6902ec"
+    },
+    "codebook.2": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "d5ee75573575b3128fad2f6467c9ebcf33ec63f1134878d559ab850f0916923f"
+    },
+    "codebook.3": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "fe60193e5dfadc2a30df51b4d3868086268142c3cca41522947d7a09463b16ce"
+    },
+    "codebook.4": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "c8569c89a0f16990968fc2685d050b5ccbf411c8ef28a7e0fd70039f56fba9ea"
+    },
+    "codebook.5": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "36adae62f8def1f7866e7d05ef4a0de8a2f835380c72ab20fe08d11298f6a9a5"
+    },
+    "codebook.6": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "7dbd363dad2e0a5609a8b993fb80f9fce706741496bc21f81c747ad9843e99c6"
+    },
+    "codebook.7": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "fd1a81840de4047a5a103132d426dc25464d71668dbafc47fe6ee5fb2819343c"
+    },
+    "codebook.8": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "f09a6f6d56932ff59c52f14f935792f6ff76ef2c9b9716a2a2c81a57a148d813"
+    },
+    "codebook.9": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "6a78ab7400f00d8c1bc3dce72142138dd9242aecd3cdfbd75828e43fd5dae21a"
+    },
+    "codebook.10": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "84dc9c06c959973eb391689483cdd2048ab3cacc627c684cb14da994efa2379e"
+    },
+    "codebook.11": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "42edd09811c2d4997c998b0fd2d2b8c185c9c380efabd9e64a19e252b26fb5ee"
+    },
+    "codebook.12": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "02df793d6c6cf74a85a18585af0412326186acf7f65a5d39802ec4ae17a20f6d"
+    },
+    "codebook.13": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "9975eb77ca58dbbef72796de4e055e6f6f1e88b47c0f721907bc8cacd94e6ddb"
+    },
+    "codebook.14": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "7e3deb18a8eed142eb66bf95fffdb34b8e6da429b29d58d0384081d185222ec4"
+    },
+    "codebook.15": {
+      "shape": [
+        2048,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 2097152,
+      "sha256": "918a0c2b1899e700b62f6cf8c93f5d6c15a5828f1923567273bb05f2586344fb"
+    },
+    "semantic.projection.weight": {
+      "shape": [
+        512,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 524288,
+      "sha256": "32a1189380f408b601fa7e61767dcb6d409684d0e22efabc2cc59f4b0faf50e1"
+    },
+    "acoustic.projection.weight": {
+      "shape": [
+        512,
+        256
+      ],
+      "dtype": "F32",
+      "bytes": 524288,
+      "sha256": "73a5fe097a8e66fffb9acefd6ec21ec4ee367fa9c405698937d817cf72177453"
+    }
+  }
+}

@@ -66,7 +66,7 @@ struct OptionsOwner {
 }
 
 struct ortts_engine {
- std::string root, variant, speaker, manifest;
+ std::string root, variant, speaker, manifest, predictor_sha;
  ortts::pack::Decoder decoder;
  int threads=4;
  bool streaming=true;
@@ -77,13 +77,14 @@ struct ortts_engine {
  void environment(Environment& e) const {
   ortts::pack::environment(decoder,[&](const char*k,const char*v){e.set(k,v);});
   for(auto key:{"ORTTS_GROUPED_PREDICTOR_GGUF","ORTTS_GROUPED_PREDICTOR_PACKED",
-      "ORTTS_P3_PREDICTOR_SOURCE","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK",
+      "ORTTS_P3_PREDICTOR_SOURCE","ORTTS_P3_NATIVE_SHA256","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK",
       "ORTTS_B0_STREAM_PREFIX_REFERENCE","ORTTS_B0_DISABLE_REPACK","ORTTS_EXPORT_GENERATED_CODES_DIR"}) e.set(key,nullptr);
   if(variant=="P3") {auto path=child(root,"P3/predictor");e.set("ORTTS_P3_PREDICTOR_SOURCE",path.c_str());}
+  if(!predictor_sha.empty()) e.set("ORTTS_P3_NATIVE_SHA256",predictor_sha.c_str());
   for(auto kv:ortts::inference::environment_defaults) e.set(kv.first,kv.second);
   auto base=child(root,"native/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf");
-  e.set("ORTTS_PRIVATE_BASE_DETOK_GGUF",base.c_str());
-  e.set("ORTTS_PRIVATE_BRIDGE_MANIFEST_SHA256",manifest.c_str());
+  e.set("ORTTS_PRIVATE_BASE_DETOK_GGUF",decoder.dequant_bundle.empty()?base.c_str():"");
+  e.set("ORTTS_PRIVATE_BRIDGE_MANIFEST_SHA256",(decoder.dequant_bundle.empty()?manifest:decoder.dequant_sha).c_str());
  }
  ~ortts_engine() {
   audiocpp_session_free(session);
@@ -153,23 +154,20 @@ ortts_status ortts_engine_create(const ortts_config* cfg,ortts_engine** out) {
   if((e->variant!="P3"&&e->variant!="P5")||e->manifest.size()!=64||
      e->manifest.find_first_not_of("0123456789abcdefABCDEF")!=std::string::npos)
    throw std::invalid_argument("Invalid variant/manifest identity");
-  for(auto name:{"native/model.gguf","native/bridge/MANIFEST.json","native/tokenizer-b260k-MIXED_Q4_0.gguf",
-      "native/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf","native/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf"})regular(child(e->root,name));
-  regular(e->speaker);
-  if(std::filesystem::file_size(e->speaker)!=4096)throw std::invalid_argument("Speaker must be 1024 F32 values");
-  std::ifstream speaker(e->speaker,std::ios::binary);float values[1024];
-  if(!speaker.read(reinterpret_cast<char*>(values),sizeof values))throw std::invalid_argument("Cannot read speaker");
-  for(auto v:values)if(!std::isfinite(v))throw std::invalid_argument("Nonfinite speaker vector");
-  if(e->variant=="P3")for(auto name:{"config.json","predictor.safetensors"})regular(child(e->root,(std::string("P3/predictor/")+name).c_str()));
+  ortts::pack::require_dependencies(e->root,e->decoder);
+  ortts::pack::validate_speaker(e->speaker,ortts::pack::speaker_dimension(e->root));
+  e->predictor_sha=ortts::pack::native_predictor_hash(e->root,e->variant);
   e->environment(env);
   check(audiocpp_registry_create(nullptr,&e->registry));
   audiocpp_model_config model{"qwen3_tts",nullptr,nullptr,nullptr};
   check(audiocpp_model_load(e->registry,child(e->root,"native/model.gguf").c_str(),&model,nullptr,&e->model));
   OptionsOwner options;if(!options.p)throw std::runtime_error("Options allocation failed");
   auto opt=[&](const char* k,const std::string& v){check(audiocpp_options_set(options.p,k,v.c_str()));};
-  opt("qwen3_tts.fixed_speaker_f32",e->speaker);opt("qwen3_tts.lfm_b0_bundle",child(e->root,"native/bridge"));
+  opt("qwen3_tts.fixed_speaker_f32",e->speaker);opt("qwen3_tts.lfm_b0_bundle",e->decoder.dequant_bundle.empty()?child(e->root,"native/bridge"):e->decoder.dequant_bundle);
+  if(e->decoder.dequant_bundle.empty()){
   opt("qwen3_tts.lfm_b0_detokenizer_gguf",child(e->root,"native/tokenizer-b260k-MIXED_Q4_0.gguf"));
   opt("qwen3_tts.lfm_b0_vocoder_gguf",child(e->root,"native/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf"));
+  }
   for(auto kv:ortts::inference::session_defaults)opt(kv.first,kv.second);
   audiocpp_backend_config backend{"cpu",0,e->threads};
   check(audiocpp_session_create(e->model,"tts",e->streaming?"streaming":"offline",&backend,options.p,&e->session));

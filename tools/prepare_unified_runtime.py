@@ -5,7 +5,7 @@ import argparse,hashlib,json,subprocess,shutil,os
 ROOT=Path(__file__).resolve().parents[1]/"vendor/unified"
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--audio-source',type=Path,required=True);p.add_argument('--llama-source',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();out=a.out.resolve();lock=json.loads((ROOT/'lock.json').read_text())
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--release-compat',action='store_true');p.add_argument('--audio-source',type=Path,required=True);p.add_argument('--llama-source',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();out=a.out.resolve();lock=json.loads((ROOT/'lock.json').read_text())
  if out.exists():raise ValueError('Output must not exist')
  if sha(ROOT/'audio.patch')!=lock['patch_sha256']:raise ValueError('Patch SHA mismatch')
  if sha(a.llama_source/'ggml/include/ggml.h')!=lock['ggml_header_sha256']:raise ValueError('Pinned ggml header identity mismatch')
@@ -29,5 +29,9 @@ def main():
  for item in lock['changed_files']:
   if sha(audio/item['path'])!=item['sha256']:raise ValueError('Patched source differs: '+item['path'])
  receipt={'ggml_source_dir':str((a.llama_source/'ggml').resolve()),'unified_patch_sha256':lock['patch_sha256'],'files_verified':len(lock['changed_files']),'patch_SHA':lock['patch_sha256'],'llama_source_read_only':str(a.llama_source.resolve()),'base_untouched':True,'out':str(out)}
- (audio/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt))
+ (audio/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').write_text(json.dumps(receipt,indent=2)+'\n');
+ if a.release_compat:
+  from apply_release_compat import apply
+  apply(audio)
+ print(json.dumps(receipt))
 if __name__=='__main__':main()
