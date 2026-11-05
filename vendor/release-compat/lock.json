@@ -30,7 +30,12 @@
       "path": "src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp",
       "base_sha256": "b21a405792f058c1d0e769134ff56507712b9f8fcee0b85de39ab9ce58b7ef4a",
       "sha256": "01a7bd04f18cf1f571377962d4db9d9e4b8310faae5382615c7df4e8fffdf713"
+    },
+    {
+      "path": "src/models/qwen3_tts/talker.cpp",
+      "base_sha256": "371380d2d8efced032eab9c9c64170743eacf58e42a655c065fa24c430a27e94",
+      "sha256": "e1712ee9142c05a950667daaed84cb4be9d849020cf8b12af553813b06c6077e"
     }
   ],
-  "patch_sha256": "4fd767da9546f9f88271de7e90f570bb173a2bc8dadf9ad109d82b2e9c95d0b8"
+  "patch_sha256": "766c7d6db83b1b3fa9323e0f50b8abe4b16c1c3ecd3d811cf7fee1e045e11d77"
 }

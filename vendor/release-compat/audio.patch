@@ -142,3 +142,45 @@
    fprintf(stderr,"LC_CORE_FILE=%s LC_WEIGHT_PROFILE=%s\n",core_file.c_str(),precision.c_str());
    auto v=clip_init((root+"/"+core_file).c_str(),p);if(v.ctx_v||v.ctx_a||!v.ctx_gen_a)throw std::runtime_error("codec-only load contract");clip=v.ctx_gen_a;state=clip_gen_state_init(clip,7);if(!state)throw std::runtime_error("codec state");
    pw=tensor(projw.c,48,256,readf(root+"/project_out.weight.f32"));pb=tensor(projw.c,256,1,readf(root+"/project_out.bias.f32"));fw=tensor(projw.c,256,512,readf(root+"/from_quantizer.weight.f32"));fb=tensor(projw.c,512,1,readf(root+"/from_quantizer.bias.f32"));reset();
+--- a/src/models/qwen3_tts/talker.cpp
++++ b/src/models/qwen3_tts/talker.cpp
+@@ -480,10 +480,22 @@
+     const assets::TensorData & table,
+     int64_t dim,
+     const std::vector<int32_t> & ids) {
+-    if (table.shape.rank != 2 || table.shape.dims[1] != dim) {
++    if (dim <= 0 || table.shape.rank != 2 || table.shape.dims[0] < 0 || table.shape.dims[1] != dim) {
+         throw std::runtime_error("Qwen3 talker embedding table shape mismatch");
+     }
++    if (table.type != GGML_TYPE_F32 && table.type != GGML_TYPE_F16 &&
++        table.type != GGML_TYPE_BF16 && table.type != GGML_TYPE_Q8_0) {
++        throw std::runtime_error("Qwen3 talker embedding table must be f32, f16, bf16, or q8_0");
++    }
++    if (table.type == GGML_TYPE_Q8_0 && dim % ggml_blck_size(table.type) != 0) {
++        throw std::runtime_error("Qwen3 talker q8_0 embedding row width must be block-aligned");
++    }
+     const size_t row_bytes = ggml_row_size(table.type, dim);
++    if (row_bytes == 0 || static_cast<uint64_t>(table.shape.dims[0]) >
++            std::numeric_limits<size_t>::max() / row_bytes ||
++        ids.size() > std::numeric_limits<size_t>::max() / static_cast<size_t>(dim)) {
++        throw std::runtime_error("Qwen3 talker embedding table size overflow");
++    }
+     if (table.bytes.size() != static_cast<size_t>(table.shape.dims[0]) * row_bytes) {
+         throw std::runtime_error("Qwen3 talker embedding table byte size mismatch");
+     }
+@@ -503,8 +515,13 @@
+             ggml_fp16_to_fp32_row(reinterpret_cast<const ggml_fp16_t *>(src), dst, dim);
+         } else if (table.type == GGML_TYPE_BF16) {
+             ggml_bf16_to_fp32_row(reinterpret_cast<const ggml_bf16_t *>(src), dst, dim);
+-        } else {
+-            throw std::runtime_error("Qwen3 talker embedding table must be f32, f16, or bf16");
++        } else if (table.type == GGML_TYPE_Q8_0) {
++            // Decode only the requested activation row; keep the weight table Q8.
++            const auto * traits = ggml_get_type_traits(table.type);
++            if (traits == nullptr || traits->to_float == nullptr) {
++                throw std::runtime_error("Qwen3 talker q8_0 embedding decoder is unavailable");
++            }
++            traits->to_float(src, dst, dim);
+         }
+     }
+     return output;
