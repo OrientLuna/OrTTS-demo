@@ -1,6 +1,6 @@
 # OrTTS-demo
 
-OrTTS 的端侧语音合成应用与可嵌入 CPU 运行时，支持 P3（速度优先）、P5（标准版）及男女音色。模型在设备本地运行。
+OrTTS 的端侧语音合成应用与可嵌入 CPU 运行时，支持 **0.6B／1.7B**、P3／P5、男女各两个音色，以及边生成边播放。
 
 ## 平台支持
 
@@ -15,17 +15,22 @@ iOS 需要自行构建和开发签名，尚无公开 IPA / TestFlight；macOS �
 
 ## Android
 
-1. [下载 Android ARM64 APK](https://github.com/OrientLuna/OrTTS-demo/raw/refs/heads/main/releases/OrTTS-0.2.3-preview-arm64.apk)并安装。
-2. 选择 P3 或 P5，下载模型；也可导入本地权重 ZIP。
-3. 输入文字、选择音色，点击“合成语音”。
+1. [下载 Android ARM64 APK](https://github.com/OrientLuna/OrTTS-demo/releases/download/v0.3.1-preview/OrTTS-0.3.1-preview-arm64-v8a.apk)并安装。
+2. 选择0.6B或1.7B、P3或P5，下载所需权重；也可导入本地模型ZIP。
+3. 输入文字、选择音色，点击“合成语音”。默认开启“边生成边播放”。
 
-P3 速度优先，P5 为标准版。P5 下载约 2.0 GB，P3 约 2.2 GB；共享文件只保存一份，切换模型时补齐缺失组件。下载地址可修改，支持 ModelScope 或其他 HTTP／HTTPS 文件源。
+| 模型 | P5下载 | 包含P3后的总量 |
+|---|---:|---:|
+| 0.6B · 混合Q8 | 1.66 GB | 1.81 GB |
+| 1.7B · 混合Q8 | 3.07 GB | 3.28 GB |
 
-首次下载请保持应用在前台。首次合成需要加载模型；运行较慢时，播放前会增加缓冲。首块生成时间不等于实际开始播放时间。正常卸载会清理应用内的模型、缓存和生成音频；手动保存的外部 ZIP／APK 不受影响。
+共享文件只保存一份，切换P3时补齐预测器。默认使用0.6B P3；也可选择P5原生预测器和`female`、`female_2`、`male`、`male_2`四个音色。模型清单固定为ModelScope的`v0.3.1-preview`版本，下载地址仍可手工修改。
 
-当前 APK 需要 Android 9 或更高版本，以及支持 DotProd、I8MM、FP16 的 ARM64 CPU。本版 APK 已在荣耀90 Pro 验证；不支持必要指令的设备会收到提示。
+首次下载请保持应用在前台。首次合成需要加载模型，较慢设备会在播放前增加缓冲。正常卸载会清理应用内模型、缓存及生成音频；手动保存到外部的文件不受影响。
 
-模型与权重：[OrientLuna/OrTTS-Qwen3-LFM-0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B)
+当前APK需要Android 9或更高版本，以及支持DotProd、I8MM和FP16的ARM64 CPU。手机参考数据见[性能说明](docs/BENCHMARKS.md)。
+
+模型仓库：[0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B) · [1.7B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-1.7B)
 
 ## iOS 与 macOS
 
@@ -35,16 +40,13 @@ macOS 使用 `ortts-apple MODEL_ROOT P3|P5 TRUSTED_BRIDGE_SHA TEXT` 离线合成
 
 ## 文档导航
 
-- [构建与开发环境](docs/BUILD.md)：源码准备及各平台构建命令。
-- [模型准备](docs/MODEL_ASSETS.md)：下载、导入、原生目录与清单校验。
-- [解码器兼容](docs/DECODERS.md)：模型包自动选择与可选后端构建。
-- [CPU 优化参数](docs/CPU_PROFILES.md)：平台档位、指令集和兼容条件。
-- [实测与限制](docs/BENCHMARKS.md)：Android / iPhone 数据及测试口径。
-- [C ABI / Rust 集成](runtime/README.md)：PCM、取消及并发约束。
-- [完整文档索引](docs/README.md)。
+- [构建与开发环境](docs/BUILD.md)
+- [模型准备](docs/MODEL_ASSETS.md)
+- [解码器兼容](docs/DECODERS.md)
+- [CPU参数](docs/CPU_PROFILES.md)与[手机性能](docs/BENCHMARKS.md)
+- [C ABI／Rust集成](runtime/README.md)
+- [完整文档索引](docs/README.md)
 
 ## 致谢与许可
 
-感谢 [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)、[Liquid AI LFM](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B)、[audio.cpp](https://github.com/0xShug0/audio.cpp)、[ggml](https://github.com/ggml-org/ggml)、[speech.cpp](https://github.com/nyosegawa/speech.cpp) 和 [Vocos](https://github.com/gemelo-ai/vocos) 的开源工作。
-
-OrTTS 集成代码采用 Apache-2.0；第三方组件保留各自许可，详见 [NOTICE.md](NOTICE.md)。模型权重适用模型仓库中的组件许可，不能统一视为 Apache-2.0。
+运行时基于[audio.cpp](https://github.com/0xShug0/audio.cpp)与[ggml](https://github.com/ggml-org/ggml)，感谢Qwen3-TTS、Liquid AI、speech.cpp和Vocos等开源项目。组件归属与许可见[NOTICE.md](NOTICE.md)；模型权重适用各模型仓库的许可。

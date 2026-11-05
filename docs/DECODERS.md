@@ -1,6 +1,6 @@
 # 解码器与模型清单
 
-P3/P5 选择生成端，声学解码器由模型包决定，两者相互独立。当前发布 APK 使用现行 Qwen–LFM 解码器；本页的新功能需要从更新后的源码构建，不会改变已有 APK。
+P3/P5 选择生成端，声学解码器由模型包决定，两者相互独立。0.3.1 Android候选使用LiquidCodec；旧版Qwen–LFM包保留兼容，解码器由各自模型清单自动选择。
 
 ## 自动选择
 
@@ -40,7 +40,7 @@ native/liquidcodec/
     <由 tensors.json 声明的 F32 文件>
 ```
 
-`runtime.json` 使用 `ortts-liquidcodec-native-v1`，声明 `core_file`、`core_sha256`、`precision`（`F32` 或 `MIXED_Q4_0`），以及 `source_RVQ_groups: 16`、`frame_samples: 1920`、`lookahead_frames: 1`。24 kHz 单声道输出，真实 EOS 后刷新前瞻与 OLA 尾部。不要通过删除尾部、归一化输出或将长度上限当 EOS 来适配格式。
+`runtime.json` 使用 `ortts-liquidcodec-native-v1`，声明 `core_file`、`core_sha256`、`precision`（`F32`、`MIXED_Q8_0`或`MIXED_Q4_0`），以及 `source_RVQ_groups: 16`、`frame_samples: 1920`、`lookahead_frames: 1`。24 kHz 单声道输出，真实 EOS 后刷新前瞻与 OLA 尾部。不要通过删除尾部、归一化输出或将长度上限当 EOS 来适配格式。
 
 ## 构建可选后端
 
@@ -50,7 +50,7 @@ native/liquidcodec/
 python3 tools/prepare_unified_runtime.py \
   --audio-source /path/to/prepared/audio.cpp \
   --llama-source /path/to/llama.cpp \
-  --out _work/unified
+  --out _work/unified --release-compat
 
 python3 tools/build_engine.py \
   --target linux-x86_64 --profile x86_64-avx2 \

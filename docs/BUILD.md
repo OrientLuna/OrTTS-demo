@@ -15,10 +15,15 @@ python3 tools/prepare_runtime.py --source-repo /path/to/audio.cpp --out _work/ru
 ## Android
 
 ```bash
-python3 tools/build_android.py --source _work/runtime \
+python3 tools/prepare_unified_runtime.py \
+  --audio-source _work/runtime --llama-source /path/to/llama.cpp-v0.8.0 \
+  --out _work/unified --release-compat
+python3 tools/build_android.py --source _work/unified/audio.cpp --liquidcodec \
   --ndk /path/to/android-ndk --ninja /path/to/ninja \
   --gradle /path/to/gradle --sdk /path/to/android-sdk --java /path/to/jdk17
 ```
+
+本版Android使用统一ggml与LiquidCodec构建；上面的`--release-compat`会应用已锁定的原生P3、模型维度与Q8查表补丁。Apple既有构建继续使用原路径，独立验证后再切换。
 
 默认构建不含权重的 APK。调试时可将包含 `bundled/model.json` 及清单模型文件（或 `model.zip`）的目录传入 `--model-assets`，在 APK 内携带权重。
 

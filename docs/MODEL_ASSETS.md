@@ -1,18 +1,15 @@
-# 模型文件
+# 模型资产
 
-模型仓库：[OrTTS-Qwen3-LFM-0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B)。
+Android内置两个ModelScope清单：
 
-Android 应用支持三种准备方式：
+- [0.6B v0.3.1-preview](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/DOWNLOAD_MANIFEST.json)
+- [1.7B v0.3.1-preview](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-1.7B/resolve/v0.3.1-preview/DOWNLOAD_MANIFEST.json)
 
-- 从模型清单地址下载文件并校验。
-- 通过系统文件选择器导入本地权重 ZIP。
-- 调试版本携带 `model.zip`，首次运行解包。
+下载器根据P3/P5选择文件，校验清单和文件SHA；同版本共用权重只保留一份，已安装模型可在尺寸之间切换。四个音色来自各模型自身的说话人向量：0.6B为1024维，1.7B为2048维，不混用。
 
-下载清单包含文件相对路径、长度、SHA256 和文件源地址。默认使用 ModelScope，可改为其他 HTTP／HTTPS 文件源。新模型校验完成后才启用。
+P3需要`P3/predictor/predictor.gguf`及自身配置，P5使用基座内的原生预测器。新版声学端由清单自动选择LiquidCodec；旧LFM包继续支持。详细格式见[模型包合同](model-pack-runtime.md)。
 
-本地 ZIP 使用相同清单，命名为 `model.json`，并包含清单列出的文件。模型与运行时代码分开分发。
-
-P3/P5 共用主干与音频解码器，P3 额外加载三层预测器。`voices/female.f32` 和 `voices/male.f32` 为预设音色。原生配置示例见 [`models/qwen3-lfm-0.6b/`](../models/qwen3-lfm-0.6b/)，下载包包含 `assets-p3.native.json` / `assets-p5.native.json`。
+ZIP导入使用`model.json`清单，包含其中登记的全部文件；不需要另外复制一份Python浮点预测器。模型权重不放入GitHub源码仓库。
 
 ## iOS 与 macOS
 

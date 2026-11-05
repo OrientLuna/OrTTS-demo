@@ -1,0 +1,33 @@
+{
+  "measurement": "warm API weighted RTF; phone CPU4; previous reference voices; no frequency lock",
+  "generation": "native mixedQ8; 06 text embedding F16 in this matrix",
+  "acoustic": "LiquidCodec mixedQ8",
+  "voices": [
+    "female",
+    "male"
+  ],
+  "results": {
+    "06": {
+      "Honor90Pro": {
+        "06-P3-Q8": 0.707066393442623,
+        "06-P5-Q8": 0.9835160891089109
+      },
+      "OPPOFindN5": {
+        "06-P3-Q8": 0.6931293352601156,
+        "06-P5-Q8": 0.8977046204620462
+      }
+    },
+    "17": {
+      "Honor90Pro": {
+        "17-P3-Q8": 1.295140625,
+        "17-P5-Q8": 1.6302496038034866
+      },
+      "OPPOFindN5": {
+        "17-P3-Q8": 1.094820211038961,
+        "17-P5-Q8": 1.215968502377179
+      }
+    }
+  },
+  "OPPO_17_P3_Q8_underruns_long": 7,
+  "historical_android_data": "android-cpu-legacy-v0.2.json"
+}
