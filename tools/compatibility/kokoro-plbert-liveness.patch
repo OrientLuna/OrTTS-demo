@@ -1,0 +1,78 @@
+--- a/src/models/kokoro_tts/plbert.cpp
++++ b/src/models/kokoro_tts/plbert.cpp
+@@ -8,6 +8,10 @@
+ 
+ #include <ggml.h>
+ #include <ggml-backend.h>
++#include <ggml-alloc.h>
++#ifndef ORTTS_KOKORO_GRAPH_ALLOC
++#define ORTTS_KOKORO_GRAPH_ALLOC 1
++#endif
+ 
+ #include <algorithm>
+ #include <array>
+@@ -248,7 +252,11 @@
+     ggml_tensor * token_type_ids = nullptr;
+     ggml_tensor * output = nullptr;
+     ggml_cgraph * graph = nullptr;
++#if ORTTS_KOKORO_GRAPH_ALLOC
++    ggml_gallocr_t buffer = nullptr;
++#else
+     ggml_backend_buffer_t buffer = nullptr;
++#endif
+ 
+     PlbertSession(
+         std::shared_ptr<const KokoroWeights> weights_in,
+@@ -281,15 +289,28 @@
+             ggml_set_input(attn_mask);
+             ggml_set_input(position_ids);
+             ggml_set_input(token_type_ids);
++            // Uploaded once at construction, reused across graph executions.
++            // INPUT alone does not prevent gallocr from recycling leaf storage.
++            ggml_set_output(position_ids);
++            ggml_set_output(token_type_ids);
+ 
+             ggml_tensor * hidden = plbert_last_hidden_state(ctx, ids, attn_mask, position_ids, token_type_ids, *weights);
+             output = project_hidden ? linear_3d(ctx, hidden, weights->bert_encoder) : hidden;
+             graph = ggml_new_graph_custom(ctx, 4096, false);
++            ggml_set_output(output);
+             ggml_build_forward_expand(graph, output);
+ 
+             core::set_backend_threads(backend, n_threads);
+             const double alloc_ms = measure_ms([&]() {
++#if ORTTS_KOKORO_GRAPH_ALLOC
++                buffer = ggml_gallocr_new(ggml_backend_get_default_buffer_type(backend));
++                if (buffer && !ggml_gallocr_alloc_graph(buffer, graph)) {
++                    ggml_gallocr_free(buffer);
++                    buffer = nullptr;
++                }
++#else
+                 buffer = ggml_backend_alloc_ctx_tensors(ctx, backend);
++#endif
+             });
+             if (buffer == nullptr) {
+                 throw std::runtime_error("failed to allocate Kokoro PL-BERT tensors");
+@@ -307,7 +328,11 @@
+             engine::debug::timing_log_scalar("kokoro.graph.build.plbert_fixed_input_upload_ms", fixed_input_upload_ms);
+         } catch (...) {
+             if (buffer) {
++#if ORTTS_KOKORO_GRAPH_ALLOC
++                ggml_gallocr_free(buffer);
++#else
+                 ggml_backend_buffer_free(buffer);
++#endif
+                 buffer = nullptr;
+             }
+             ggml_free(ctx);
+@@ -318,7 +343,11 @@
+ 
+     ~PlbertSession() {
+         if (buffer) {
++#if ORTTS_KOKORO_GRAPH_ALLOC
++            ggml_gallocr_free(buffer);
++#else
+             ggml_backend_buffer_free(buffer);
++#endif
+         }
+         if (ctx) {
+             ggml_free(ctx);

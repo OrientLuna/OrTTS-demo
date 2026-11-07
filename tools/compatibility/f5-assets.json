@@ -1,0 +1,11 @@
+{
+  "assets": [
+    {
+      "repo": "cstr/f5-tts-GGUF",
+      "revision": "28d4461e4706df2c44e5e5b93d462b98dc94732e",
+      "path": "f5-tts-v1-base-f16.gguf",
+      "bytes": 999097152,
+      "sha256": "25a4d273048dad072774ff139cf19b96fe442bebda8392c08009d73256cf1e81"
+    }
+  ]
+}

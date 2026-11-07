@@ -1,0 +1,704 @@
+{
+  "date": "2026-11-07",
+  "host": "Apple M5 MacBook Air, 24 GB, arm64",
+  "backend": "CPU, 4 threads, armv8.2-a+dotprod+i8mm+fp16",
+  "source_base": "e9303b76983993cc59576bf6d16d8a0635ae4d85",
+  "selection": [
+    "kokoro_tts",
+    "piper_tts",
+    "sense_asr",
+    "qwen3_tts"
+  ],
+  "tested_families": [
+    "kokoro_tts",
+    "piper_tts",
+    "sense_asr"
+  ],
+  "registered_families": 6,
+  "runs": [
+    {
+      "name": "piper-en",
+      "returncode": 0,
+      "process_wall_s": 0.5375968749867752,
+      "metrics": {
+        "wall_ms": "439.903",
+        "memory.peak_rss_mb": "262",
+        "memory.peak_footprint_mb": "256",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "5816.6",
+        "rtf": "0.0756289",
+        "x_realtime": "13.2225",
+        "audio_duration_source": "output",
+        "sample_rate": "22050",
+        "channels": "1"
+      },
+      "audio": {
+        "sample_rate": 22050,
+        "channels": 1,
+        "frames": 128256,
+        "seconds": 5.8165986394557825,
+        "finite": true,
+        "peak": 0.636993408203125,
+        "rms": 0.08560629189014435,
+        "clipped_fraction": 0.0,
+        "sha256": "bbf2b01658001232afa1058affb6359fe12bac8bf2d8424216fb78295761f859"
+      },
+      "text": "The northern wind crossed the quiet harbor. At nine thirty, please check the train ticket and call the station."
+    },
+    {
+      "name": "kokoro-en",
+      "returncode": 0,
+      "process_wall_s": 3.9401753750862554,
+      "metrics": {
+        "wall_ms": "3174.93",
+        "memory.peak_rss_mb": "1624",
+        "memory.peak_footprint_mb": "1618",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "6850",
+        "rtf": "0.463493",
+        "x_realtime": "2.15753",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      },
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "frames": 164400,
+        "seconds": 6.85,
+        "finite": true,
+        "peak": 0.426483154296875,
+        "rms": 0.05238937586545944,
+        "clipped_fraction": 0.0,
+        "sha256": "846628d82f27031cca35798e04604d5b1bd487366e966411b1e576ba657b31ed"
+      },
+      "text": "The northern wind crossed the quiet harbor. At nine thirty, please check the train ticket and call the station."
+    },
+    {
+      "name": "kokoro-en-male",
+      "returncode": 0,
+      "process_wall_s": 3.7990122920600697,
+      "metrics": {
+        "wall_ms": "3103.47",
+        "memory.peak_rss_mb": "1604",
+        "memory.peak_footprint_mb": "1598",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "6575",
+        "rtf": "0.472011",
+        "x_realtime": "2.11859",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      },
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "frames": 157800,
+        "seconds": 6.575,
+        "finite": true,
+        "peak": 0.6761474609375,
+        "rms": 0.08195459842681885,
+        "clipped_fraction": 0.0,
+        "sha256": "34ba5d0ac859a67820877ffae267b497e65cb3e4332f8f3585dc64dc5bcf1e0c"
+      },
+      "text": "The northern wind crossed the quiet harbor. At nine thirty, please check the train ticket and call the station."
+    },
+    {
+      "name": "kokoro-zh-stream",
+      "returncode": 0,
+      "process_wall_s": 10.850040249992162,
+      "metrics": {},
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "frames": 451800,
+        "seconds": 18.825,
+        "finite": true,
+        "peak": 0.55426025390625,
+        "rms": 0.06423866003751755,
+        "clipped_fraction": 0.0,
+        "sha256": "3cd28e6eeee407775fc143add137ba95be9329d2ba0716a67acd6a7705463ef4"
+      },
+      "text": "今天是十一月七日，上午九点三十分的列车即将出发。请检查身份证、车票和随身行李，确认手机电量充足。欢迎使用本地语音合成，祝你旅途愉快。"
+    },
+    {
+      "name": "kokoro-zh-mixed",
+      "returncode": 0,
+      "process_wall_s": 7.737482332973741,
+      "metrics": {
+        "wall_ms": "6937.2",
+        "memory.peak_rss_mb": "2025",
+        "memory.peak_footprint_mb": "2094",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "12500",
+        "rtf": "0.554976",
+        "x_realtime": "1.80188",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      },
+      "audio": {
+        "sample_rate": 24000,
+        "channels": 1,
+        "frames": 300000,
+        "seconds": 12.5,
+        "finite": true,
+        "peak": 0.519195556640625,
+        "rms": 0.06749267876148224,
+        "clipped_fraction": 0.0,
+        "sha256": "5aa0355f3af04daa4f00b7dc0bf2dba91a49a69482493c23dd495357bd33817c"
+      },
+      "text": "今天是2026年11月7日，订单编号A123，价格是99.50元。请在下午3:30检查GPU和WiFi设置。"
+    },
+    {
+      "name": "asr-silence",
+      "returncode": 0,
+      "process_wall_s": 0.4215126660419628,
+      "metrics": {
+        "wall_ms": "168.99",
+        "memory.peak_rss_mb": "497",
+        "memory.peak_footprint_mb": "273",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "5000",
+        "rtf": "0.0337979",
+        "x_realtime": "29.5876",
+        "audio_duration_source": "input",
+        "sample_rate": "16000",
+        "channels": "1"
+      },
+      "transcript": "I.\n",
+      "quality_check_passed": false
+    },
+    {
+      "name": "asr-public-zh",
+      "returncode": 0,
+      "process_wall_s": 0.26294525002595037,
+      "metrics": {
+        "wall_ms": "161.058",
+        "memory.peak_rss_mb": "497",
+        "memory.peak_footprint_mb": "275",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "5616",
+        "rtf": "0.0286785",
+        "x_realtime": "34.8694",
+        "audio_duration_source": "input",
+        "sample_rate": "16000",
+        "channels": "1"
+      },
+      "transcript": "开饭时间早上9点至下午5点。\n"
+    },
+    {
+      "name": "asr-kokoro-zh",
+      "returncode": 0,
+      "process_wall_s": 0.6886384580284357,
+      "metrics": {
+        "wall_ms": "585.147",
+        "memory.peak_rss_mb": "497",
+        "memory.peak_footprint_mb": "332",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "18825",
+        "rtf": "0.0310835",
+        "x_realtime": "32.1714",
+        "audio_duration_source": "input",
+        "sample_rate": "24000",
+        "channels": "1"
+      },
+      "transcript": "今天是11月7日上午9点30分的列车即将出发。，请检查身份证、车票和随身行李。确认手机电量充足，欢迎使用本地语音合成，祝你旅途愉快。。\n"
+    },
+    {
+      "name": "asr-piper-en",
+      "returncode": 0,
+      "process_wall_s": 0.3264268330531195,
+      "metrics": {
+        "wall_ms": "209.828",
+        "memory.peak_rss_mb": "497",
+        "memory.peak_footprint_mb": "277",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "5816.6",
+        "rtf": "0.036074",
+        "x_realtime": "27.7208",
+        "audio_duration_source": "input",
+        "sample_rate": "22050",
+        "channels": "1"
+      },
+      "transcript": "The northern wind crossed the quiet harborb at 930. Please check the train ticket and call the station.\n"
+    },
+    {
+      "name": "invalid-voice",
+      "returncode": 1,
+      "process_wall_s": 0.3319102079840377,
+      "metrics": {},
+      "expected_failure": true
+    }
+  ],
+  "limits": [
+    "single-host smoke, not mobile qualification",
+    "no ONNX parity or listening approval",
+    "Qwen family registered but not executed in this new library"
+  ],
+  "binary_bytes_strip_x": {
+    "qwen-family.dylib": 3863024,
+    "four-family-cli": 5116144,
+    "four-family.dylib": 4479360
+  },
+  "cabi_lifecycle": {
+    "registry_families": 6,
+    "observations": [
+      {
+        "family": "piper_tts",
+        "cycle": 0,
+        "repeat": 0,
+        "run_ms": 250.134,
+        "rss_before": 6209536,
+        "rss_after_run": 201785344,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 0,
+        "repeat": 1,
+        "run_ms": 253.147,
+        "rss_before": 6209536,
+        "rss_after_run": 201834496,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 0,
+        "repeat": 0,
+        "run_ms": 1870.97,
+        "rss_before": 22806528,
+        "rss_after_run": 1184350208,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 0,
+        "repeat": 1,
+        "run_ms": 1924.03,
+        "rss_before": 22806528,
+        "rss_after_run": 1004765184,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 0,
+        "repeat": 0,
+        "run_ms": 140.591,
+        "rss_before": 188563456,
+        "rss_after_run": 458440704
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 0,
+        "repeat": 1,
+        "run_ms": 140.595,
+        "rss_before": 188563456,
+        "rss_after_run": 458440704
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 1,
+        "repeat": 0,
+        "run_ms": 268.883,
+        "rss_before": 191496192,
+        "rss_after_run": 375816192,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 1,
+        "repeat": 1,
+        "run_ms": 251.15,
+        "rss_before": 191496192,
+        "rss_after_run": 375816192,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 1,
+        "repeat": 0,
+        "run_ms": 2067.81,
+        "rss_before": 196788224,
+        "rss_after_run": 1079197696,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 1,
+        "repeat": 1,
+        "run_ms": 2063.04,
+        "rss_before": 196788224,
+        "rss_after_run": 988708864,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 1,
+        "repeat": 0,
+        "run_ms": 148.895,
+        "rss_before": 172310528,
+        "rss_after_run": 439435264
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 1,
+        "repeat": 1,
+        "run_ms": 152.188,
+        "rss_before": 172310528,
+        "rss_after_run": 439451648
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 2,
+        "repeat": 0,
+        "run_ms": 271.714,
+        "rss_before": 172507136,
+        "rss_after_run": 356794368,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 2,
+        "repeat": 1,
+        "run_ms": 271.667,
+        "rss_before": 172507136,
+        "rss_after_run": 356794368,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 2,
+        "repeat": 0,
+        "run_ms": 2068.5,
+        "rss_before": 177766400,
+        "rss_after_run": 1219051520,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 2,
+        "repeat": 1,
+        "run_ms": 2243.8,
+        "rss_before": 177766400,
+        "rss_after_run": 989184000,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 2,
+        "repeat": 0,
+        "run_ms": 154.207,
+        "rss_before": 172785664,
+        "rss_after_run": 439746560
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 2,
+        "repeat": 1,
+        "run_ms": 177.218,
+        "rss_before": 172785664,
+        "rss_after_run": 439746560
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 3,
+        "repeat": 0,
+        "run_ms": 309.857,
+        "rss_before": 172802048,
+        "rss_after_run": 357089280,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 3,
+        "repeat": 1,
+        "run_ms": 292.039,
+        "rss_before": 172802048,
+        "rss_after_run": 357105664,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 3,
+        "repeat": 0,
+        "run_ms": 2134.24,
+        "rss_before": 178077696,
+        "rss_after_run": 1216348160,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 3,
+        "repeat": 1,
+        "run_ms": 2281.45,
+        "rss_before": 178077696,
+        "rss_after_run": 1117536256,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 3,
+        "repeat": 0,
+        "run_ms": 154.153,
+        "rss_before": 301137920,
+        "rss_after_run": 568115200
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 3,
+        "repeat": 1,
+        "run_ms": 157.923,
+        "rss_before": 301137920,
+        "rss_after_run": 568115200
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 4,
+        "repeat": 0,
+        "run_ms": 298.63,
+        "rss_before": 301170688,
+        "rss_after_run": 480198656,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 4,
+        "repeat": 1,
+        "run_ms": 279.425,
+        "rss_before": 301170688,
+        "rss_after_run": 480198656,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 4,
+        "repeat": 0,
+        "run_ms": 2144.72,
+        "rss_before": 301170688,
+        "rss_after_run": 1264910336,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 4,
+        "repeat": 1,
+        "run_ms": 2174.97,
+        "rss_before": 301170688,
+        "rss_after_run": 1119993856,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 4,
+        "repeat": 0,
+        "run_ms": 163.456,
+        "rss_before": 303595520,
+        "rss_after_run": 570556416
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 4,
+        "repeat": 1,
+        "run_ms": 158.87,
+        "rss_before": 303595520,
+        "rss_after_run": 570556416
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 5,
+        "repeat": 0,
+        "run_ms": 282.574,
+        "rss_before": 303611904,
+        "rss_after_run": 482639872,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "piper_tts",
+        "cycle": 5,
+        "repeat": 1,
+        "run_ms": 281.093,
+        "rss_before": 303611904,
+        "rss_after_run": 482639872,
+        "frames": 80640,
+        "sample_rate": 22050,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 5,
+        "repeat": 0,
+        "run_ms": 2280.2,
+        "rss_before": 303611904,
+        "rss_after_run": 1273905152,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "kokoro_tts",
+        "cycle": 5,
+        "repeat": 1,
+        "run_ms": 2830.44,
+        "rss_before": 303611904,
+        "rss_after_run": 660766720,
+        "frames": 99600,
+        "sample_rate": 24000,
+        "channels": 1
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 5,
+        "repeat": 0,
+        "run_ms": 227.24,
+        "rss_before": 163741696,
+        "rss_after_run": 431046656
+      },
+      {
+        "family": "sense_asr",
+        "cycle": 5,
+        "repeat": 1,
+        "run_ms": 217.842,
+        "rss_before": 163741696,
+        "rss_after_run": 435290112
+      }
+    ]
+  },
+  "cabi_after_free_rss_bytes": [
+    {
+      "family": "piper_tts",
+      "cycle": 0,
+      "rss": 22806528
+    },
+    {
+      "family": "kokoro_tts",
+      "cycle": 0,
+      "rss": 188563456
+    },
+    {
+      "family": "sense_asr",
+      "cycle": 0,
+      "rss": 191496192
+    },
+    {
+      "family": "piper_tts",
+      "cycle": 1,
+      "rss": 196788224
+    },
+    {
+      "family": "kokoro_tts",
+      "cycle": 1,
+      "rss": 172310528
+    },
+    {
+      "family": "sense_asr",
+      "cycle": 1,
+      "rss": 172507136
+    },
+    {
+      "family": "piper_tts",
+      "cycle": 2,
+      "rss": 177766400
+    },
+    {
+      "family": "kokoro_tts",
+      "cycle": 2,
+      "rss": 172785664
+    },
+    {
+      "family": "sense_asr",
+      "cycle": 2,
+      "rss": 172802048
+    },
+    {
+      "family": "piper_tts",
+      "cycle": 3,
+      "rss": 178077696
+    },
+    {
+      "family": "kokoro_tts",
+      "cycle": 3,
+      "rss": 301137920
+    },
+    {
+      "family": "sense_asr",
+      "cycle": 3,
+      "rss": 301170688
+    },
+    {
+      "family": "piper_tts",
+      "cycle": 4,
+      "rss": 301170688
+    },
+    {
+      "family": "kokoro_tts",
+      "cycle": 4,
+      "rss": 303595520
+    },
+    {
+      "family": "sense_asr",
+      "cycle": 4,
+      "rss": 303611904
+    },
+    {
+      "family": "piper_tts",
+      "cycle": 5,
+      "rss": 303611904
+    },
+    {
+      "family": "kokoro_tts",
+      "cycle": 5,
+      "rss": 163741696
+    },
+    {
+      "family": "sense_asr",
+      "cycle": 5,
+      "rss": 168345600
+    }
+  ],
+  "cabi_stream_probe": "cancel_status=4 cancel_chunks=1\nreset_success=1 chunks=3 callback_samples=260400 final_samples=260400 sample_rate=24000\n",
+  "vad_silence_transcript": "I.\n",
+  "public_sample_with_vad_transcript": "开放时间早上9点至下午5点。\n"
+}

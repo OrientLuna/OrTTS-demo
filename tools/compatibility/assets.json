@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "assets": [
+    {
+      "repo": "audio-cpp/audio.cpp-gguf",
+      "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+      "path": "Kokoro-82M-GGUF/kokoro-82m-q8_0.gguf",
+      "bytes": 189550976,
+      "sha256": "9a4ca6176460cdc8c7845b804c0bbe85a4791ee3ffff568a3fdadbb708c63f47"
+    },
+    {
+      "repo": "audio-cpp/audio.cpp-gguf",
+      "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+      "path": "Piper-TTS-GGUF/piper-en-us-lessac-medium-orig.gguf",
+      "bytes": 62662016,
+      "sha256": "12432fab389024e7f839fbc0d989afba46e74bf0d2fa75495642b3ae44a4b093"
+    },
+    {
+      "repo": "FunAudioLLM/SenseVoiceSmall-GGUF-audiocpp",
+      "revision": "5c3fcfe748a8714216bc135476d5863084fddb72",
+      "path": "sensevoice-small-q8-audiocpp-v1.gguf",
+      "bytes": 254211200,
+      "sha256": "4dedf169f625437fb336f2959674f399819729a765e184128c0e25a6e16ff0ec"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "assets": [
+    {
+      "repo": "audio-cpp/audio.cpp-gguf",
+      "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+      "path": "KittenTTS-GGUF/kitten-tts-mini-0.8-orig.gguf",
+      "bytes": 302167648,
+      "sha256": "485a50101b6c16e98c842f231780789d54136ffb07a6cacb33dc0735103274d7"
+    },
+    {
+      "repo": "audio-cpp/audio.cpp-gguf",
+      "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+      "path": "Moonshine-Streaming-GGUF/moonshine-streaming-tiny-q8_0.gguf",
+      "bytes": 60409088,
+      "sha256": "0f795f14924dbfe40d2ee0e220382c9b23cd9e89064c6ffb97e236d81f1d7020"
+    }
+  ]
+}

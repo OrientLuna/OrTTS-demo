@@ -1,0 +1,90 @@
+{
+  "text": "今天上午九点半，请检查车票和随身行李。",
+  "executor": "sherpa-onnx Python 1.13.8, ONNX CPU4; Python/import overhead included in process resources",
+  "source_asset": {
+    "id": 160855141,
+    "size": 31559701,
+    "created_at": "2024-04-08T01:43:44Z",
+    "updated_at": "2024-04-08T01:43:46Z",
+    "browser_download_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-icefall-zh-aishell3.tar.bz2"
+  },
+  "archive_sha256_observed": "ab468db3a3308cdd861495e0db2f25d79418a0c00639f74944c7cdf5dd8c6ec1",
+  "upstream_digest": "not published in release metadata; local hash is a receipt, not independent upstream verification",
+  "selected_assets": {
+    "model.onnx": {
+      "bytes": 30482262,
+      "sha256": "5511d651b7840c0a93a6bbfd4afd070a2c7f39ca1ec3ff2ecd73191519bbb852"
+    },
+    "lexicon.txt": {
+      "bytes": 2042943,
+      "sha256": "ab2e61d357551e7b24ddd965d924aca784c20165ff58c150794e539c6b5e9e35"
+    },
+    "tokens.txt": {
+      "bytes": 1671,
+      "sha256": "50b45a7b7de1752fd3c7b4755661c285f1547f59186eca2281089a81307ad953"
+    },
+    "speakers.txt": {
+      "bytes": 1392,
+      "sha256": "50a825fc9a89172eee04a4d68869d933d0eca0d847f3b6fcffff9514cc72442d"
+    },
+    "phone.fst": {
+      "bytes": 88630,
+      "sha256": "1ac2b6fa56b1442320c4de7db08353bab8963a2b57f365eebcdd3a2d3562f8d7"
+    },
+    "date.fst": {
+      "bytes": 59154,
+      "sha256": "eb8aa079ae3cb81d8f4404992f39d61a0cb990947512b5b8d1e54d1f6980e718"
+    },
+    "number.fst": {
+      "bytes": 64482,
+      "sha256": "743f402181fcfebf76cc2f0546b71fa26476e626fbe4e460fb7b4c3a7a8bd5bd"
+    }
+  },
+  "results": [
+    {
+      "returncode": 0,
+      "process_wall_s": 0.4732899999944493,
+      "cpu_user_s": 0.698016,
+      "cpu_system_s": 0.049186,
+      "process_peak_rss_bytes": 196706304,
+      "sid": 0,
+      "metrics": {
+        "load_ms": "259.597958996892",
+        "wall_ms": "96.50495799724013",
+        "rtf": "0.016314258689810894",
+        "num_speakers": "174",
+        "sample_rate": "8000"
+      }
+    },
+    {
+      "returncode": 0,
+      "process_wall_s": 0.4145680000074208,
+      "cpu_user_s": 0.616321,
+      "cpu_system_s": 0.036216,
+      "process_peak_rss_bytes": 191217664,
+      "sid": 21,
+      "metrics": {
+        "load_ms": "256.08370802365243",
+        "wall_ms": "68.8378750346601",
+        "rtf": "0.016686958374561564",
+        "num_speakers": "174",
+        "sample_rate": "8000"
+      }
+    },
+    {
+      "returncode": 0,
+      "process_wall_s": 0.4040937499376014,
+      "cpu_user_s": 0.570859,
+      "cpu_system_s": 0.035914999999999996,
+      "process_peak_rss_bytes": 186810368,
+      "sid": 100,
+      "metrics": {
+        "load_ms": "257.93900003191084",
+        "wall_ms": "56.056124973110855",
+        "rtf": "0.016621534462004702",
+        "num_speakers": "174",
+        "sample_rate": "8000"
+      }
+    }
+  ]
+}

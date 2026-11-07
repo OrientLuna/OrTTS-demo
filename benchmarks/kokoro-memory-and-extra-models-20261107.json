@@ -1,0 +1,263 @@
+{
+  "date": "2026-11-07",
+  "host": "Apple M5 MacBook Air,24GB",
+  "scope": "CPU only, isolated source copy, original prepared source unchanged",
+  "allocations": [
+    "ALLOC tensors file=src/models/kokoro_tts/plbert.cpp line=293 bytes=243835680 rss=812171264",
+    "ALLOC CPU_SCRATCH bytes=237440",
+    "ALLOC tensors file=src/models/kokoro_tts/predictor.cpp line=984 bytes=80047904 rss=999129088",
+    "ALLOC tensors file=src/models/kokoro_tts/predictor.cpp line=1206 bytes=28799424 rss=1082572800",
+    "ALLOC tensors file=src/models/kokoro_tts/predictor.cpp line=1480 bytes=4785408 rss=1112915968",
+    "ALLOC tensors file=src/models/kokoro_tts/predictor.cpp line=1480 bytes=4785408 rss=1119256576",
+    "ALLOC tensors file=src/models/kokoro_tts/predictor.cpp line=1809 bytes=248245248 rss=1124728832",
+    "ALLOC graph file=src/models/kokoro_tts/decoder.cpp line=1049 bytes=259435968 rss=1370767360 largest=185185792 op=CUSTOM shape=1408,32881,1,1",
+    "ALLOC CPU_SCRATCH bytes=11608320"
+  ],
+  "abba": [
+    {
+      "variant": "baseline",
+      "returncode": 0,
+      "sha256": "846628d82f27031cca35798e04604d5b1bd487366e966411b1e576ba657b31ed",
+      "metrics": {
+        "wall_ms": "3095.27",
+        "memory.peak_rss_mb": "1246",
+        "memory.peak_footprint_mb": "1617",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "6850",
+        "rtf": "0.451865",
+        "x_realtime": "2.21305",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      }
+    },
+    {
+      "variant": "candidate",
+      "returncode": 0,
+      "sha256": "846628d82f27031cca35798e04604d5b1bd487366e966411b1e576ba657b31ed",
+      "metrics": {
+        "wall_ms": "3238.63",
+        "memory.peak_rss_mb": "1392",
+        "memory.peak_footprint_mb": "1386",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "6850",
+        "rtf": "0.472792",
+        "x_realtime": "2.11509",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      }
+    },
+    {
+      "variant": "candidate",
+      "returncode": 0,
+      "sha256": "846628d82f27031cca35798e04604d5b1bd487366e966411b1e576ba657b31ed",
+      "metrics": {
+        "wall_ms": "3373.02",
+        "memory.peak_rss_mb": "1392",
+        "memory.peak_footprint_mb": "1386",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "6850",
+        "rtf": "0.492411",
+        "x_realtime": "2.03082",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      }
+    },
+    {
+      "variant": "baseline",
+      "returncode": 0,
+      "sha256": "846628d82f27031cca35798e04604d5b1bd487366e966411b1e576ba657b31ed",
+      "metrics": {
+        "wall_ms": "3562.98",
+        "memory.peak_rss_mb": "1622",
+        "memory.peak_footprint_mb": "1617",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "6850",
+        "rtf": "0.520142",
+        "x_realtime": "1.92255",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      }
+    }
+  ],
+  "candidates": [
+    {
+      "candidate": "plbert-only",
+      "returncode": 0,
+      "sha256": "846628d82f27031cca35798e04604d5b1bd487366e966411b1e576ba657b31ed",
+      "metrics": {
+        "wall_ms": "3180.37",
+        "memory.peak_rss_mb": "1295",
+        "memory.peak_footprint_mb": "1279",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "6850",
+        "rtf": "0.464287",
+        "x_realtime": "2.15384",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      }
+    },
+    {
+      "candidate": "plbert-duration-text",
+      "returncode": 0,
+      "sha256": "846628d82f27031cca35798e04604d5b1bd487366e966411b1e576ba657b31ed",
+      "metrics": {
+        "wall_ms": "3143.9",
+        "memory.peak_rss_mb": "1292",
+        "memory.peak_footprint_mb": "1286",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "6850",
+        "rtf": "0.458963",
+        "x_realtime": "2.17882",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      }
+    },
+    {
+      "candidate": "plbert-no-tail",
+      "returncode": 0,
+      "sha256": "846628d82f27031cca35798e04604d5b1bd487366e966411b1e576ba657b31ed",
+      "metrics": {
+        "wall_ms": "3312.04",
+        "memory.peak_rss_mb": "1283",
+        "memory.peak_footprint_mb": "1277",
+        "memory.peak_footprint_source": "macos_phys_footprint",
+        "audio_duration_ms": "6850",
+        "rtf": "0.48351",
+        "x_realtime": "2.06821",
+        "audio_duration_source": "output",
+        "sample_rate": "24000",
+        "channels": "1"
+      }
+    }
+  ],
+  "measurements": {
+    "kokoro-profile": {
+      "wall_ms": "3187.73",
+      "memory.peak_rss_mb": "1502",
+      "memory.peak_footprint_mb": "1526",
+      "memory.peak_footprint_source": "macos_phys_footprint",
+      "audio_duration_ms": "6850",
+      "rtf": "0.465363",
+      "x_realtime": "2.14886",
+      "audio_duration_source": "output",
+      "sample_rate": "24000",
+      "channels": "1"
+    },
+    "kokoro-liveness": {
+      "wall_ms": "3223.66",
+      "memory.peak_rss_mb": "966",
+      "memory.peak_footprint_mb": "950",
+      "memory.peak_footprint_source": "macos_phys_footprint",
+      "audio_duration_ms": "6850",
+      "rtf": "0.470607",
+      "x_realtime": "2.12492",
+      "audio_duration_source": "output",
+      "sample_rate": "24000",
+      "channels": "1"
+    },
+    "kokoro-patch-final": {
+      "wall_ms": "3035.81",
+      "memory.peak_rss_mb": "1412",
+      "memory.peak_footprint_mb": "1406",
+      "memory.peak_footprint_source": "macos_phys_footprint",
+      "audio_duration_ms": "6850",
+      "rtf": "0.443183",
+      "x_realtime": "2.2564",
+      "audio_duration_source": "output",
+      "sample_rate": "24000",
+      "channels": "1"
+    },
+    "kokoro-mixed-plbert": {
+      "wall_ms": "5796.53",
+      "memory.peak_rss_mb": "1768",
+      "memory.peak_footprint_mb": "1646",
+      "memory.peak_footprint_source": "macos_phys_footprint",
+      "audio_duration_ms": "12500",
+      "rtf": "0.463722",
+      "x_realtime": "2.15646",
+      "audio_duration_source": "output",
+      "sample_rate": "24000",
+      "channels": "1"
+    },
+    "kitten-en": {
+      "wall_ms": "2933.88",
+      "memory.peak_rss_mb": "1062",
+      "memory.peak_footprint_mb": "1056",
+      "memory.peak_footprint_source": "macos_phys_footprint",
+      "audio_duration_ms": "7566.67",
+      "rtf": "0.387738",
+      "x_realtime": "2.57906",
+      "audio_duration_source": "output",
+      "sample_rate": "24000",
+      "channels": "1"
+    },
+    "moonshine": {
+      "wall_ms": "40.9464",
+      "memory.peak_rss_mb": "177",
+      "memory.peak_footprint_mb": "116",
+      "memory.peak_footprint_source": "macos_phys_footprint",
+      "audio_duration_ms": "5816.6",
+      "rtf": "0.00703957",
+      "x_realtime": "142.054",
+      "audio_duration_source": "input",
+      "sample_rate": "22050",
+      "channels": "1"
+    }
+  },
+  "rejected_full_liveness": {
+    "reason": "waveform changed",
+    "same_shape": true,
+    "max_abs_error": 0.483917236328125,
+    "rms_error": 0.06456557087312215,
+    "correlation": 0.1263475071035066
+  },
+  "waveform_hash_checks": [
+    {
+      "candidate": "kokoro-patch-final.wav",
+      "baseline": "kokoro-en.wav",
+      "sha256": "846628d82f27031cca35798e04604d5b1bd487366e966411b1e576ba657b31ed",
+      "identical": true
+    },
+    {
+      "candidate": "kokoro-male-plbert.wav",
+      "baseline": "kokoro-en-male.wav",
+      "sha256": "34ba5d0ac859a67820877ffae267b497e65cb3e4332f8f3585dc64dc5bcf1e0c",
+      "identical": true
+    },
+    {
+      "candidate": "kokoro-mixed-plbert.wav",
+      "baseline": "kokoro-zh-mixed.wav",
+      "sha256": "5aa0355f3af04daa4f00b7dc0bf2dba91a49a69482493c23dd495357bd33817c",
+      "identical": true
+    },
+    {
+      "candidate": "kokoro-stream-plbert.wav",
+      "baseline": "kokoro-zh-stream.wav",
+      "sha256": "3cd28e6eeee407775fc143add137ba95be9329d2ba0716a67acd6a7705463ef4",
+      "identical": true
+    }
+  ],
+  "batch_hash_checks": [
+    {
+      "name": "line_2.wav",
+      "identical": true
+    },
+    {
+      "name": "line_3.wav",
+      "identical": true
+    },
+    {
+      "name": "line_1.wav",
+      "identical": true
+    }
+  ],
+  "moonshine_offline": "The northern wind crossed the quiet harbor at 9:30. Please check the train ticket and call the station.\n",
+  "moonshine_streaming_mode": "The northern wind crossed the quiet harbor at 9:30. Please check the train ticket and call the station.\n",
+  "moonshine_streaming_semantics": "source accumulates input and transcribes at finalize; no partial text decoding in this pinned adapter"
+}

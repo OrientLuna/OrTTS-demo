@@ -1,0 +1,18 @@
+{
+  "assets": [
+    {
+      "repo": "audio-cpp/audio.cpp-gguf",
+      "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+      "path": "PocketTTS-GGUF/english/embeddings/anna.safetensors",
+      "bytes": 7816440,
+      "sha256": "5ea82f78db006c9fd34e32ddd5aae82674b5b32646097977436458d00af80dfa"
+    },
+    {
+      "repo": "audio-cpp/audio.cpp-gguf",
+      "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+      "path": "PocketTTS-GGUF/english/embeddings/george.safetensors",
+      "bytes": 6243576,
+      "sha256": "0c1c6c57c55a98d81254b33728150c7776f40647fe95258d1a6c1a02780b5d02"
+    }
+  ]
+}
