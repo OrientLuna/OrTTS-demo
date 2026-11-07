@@ -4,7 +4,7 @@ final class NativeBridge {
  static synchronized void ensureLoaded()throws java.io.IOException{
   if(loaded)return;
   try{
-   if(!DeviceSupport.supportsCurrentRuntime())throw new java.io.IOException("当前设备不支持此安装包需要的CPU指令集（DotProd、I8MM、FP16）。");
+   if(!BuildConfig.NATIVE_CPU_PROFILE.equals("arm64-baseline")&&!DeviceSupport.supportsCurrentRuntime())throw new java.io.IOException("当前设备不支持此安装包需要的CPU指令集（DotProd、I8MM、FP16）。");
    System.loadLibrary("ortts_jni");loaded=true;
   }catch(LinkageError e){throw new java.io.IOException("无法加载语音引擎："+e.getMessage(),e);}
  }

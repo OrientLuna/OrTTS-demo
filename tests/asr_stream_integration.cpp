@@ -55,6 +55,11 @@ int main(int argc,char**argv){if(argc!=3&&argc!=4)return 2;try{
    if(i==9||i==29||i==49||i==69||i==81)resident.push_back(rss());}
   auto s=stats(only);check(ortts_asr_stream_finish(only.p,receive,&c));
   size_t lo=*std::min_element(resident.begin(),resident.end()),hi=*std::max_element(resident.begin(),resident.end());
+  if(hi-lo>=32*1024*1024||finals<82*audio.size()/(settings.max_segment_ms*16)){
+   std::cerr<<"segment_limit_ms="<<settings.max_segment_ms<<" rss_spread_bytes="<<(hi-lo)<<" limit_finals="<<finals<<" rss_samples=";
+   for(auto value:resident)std::cerr<<value<<",";
+   std::cerr<<"\n";
+  }
   expect(hi-lo<32*1024*1024&&finals>=82*audio.size()/(settings.max_segment_ms*16),"memory growth or missing limit endpoint");
   double total=std::chrono::duration<double>(std::chrono::steady_clock::now()-begin).count();
   std::cout<<"{\"pass\":true,\"segment_limit_ms\":"<<settings.max_segment_ms<<",\"audio_s\":"<<82*audio.size()/16000.0<<",\"wall_s\":"<<total

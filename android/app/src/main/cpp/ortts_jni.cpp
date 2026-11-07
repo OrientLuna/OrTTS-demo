@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <audiocpp.h>
+#include "ortts_speech.h"
 #include "../../../../../runtime/src/model_pack.h"
 #include "../../../../../runtime/src/inference_defaults.h"
 #include <chrono>
@@ -41,3 +42,88 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_NativeBridge_run
  }
  double setup_ms=ms(setup);auto*q=audiocpp_request_create();if(!q)throw std::runtime_error("request allocation");audiocpp_result*y=nullptr;try{check(audiocpp_request_set_text(q,text.c_str(),nullptr));for(auto p:{std::pair{"x_vector_only_mode","true"},{"language","Chinese"},{"max_tokens","513"},{"do_sample","true"},{"temperature","0.9"},{"top_k","50"},{"top_p","0.9"},{"repetition_penalty","1.05"},{"subtalker_do_sample","false"}})check(audiocpp_request_set_option(q,p.first,p.second));check(audiocpp_request_set_option(q,"seed",std::to_string(seed).c_str()));Capture c{e,sink,nullptr,Clock::now()};if(stream){check(audiocpp_request_set_option(q,"stream_frames_per_event","3"));check(audiocpp_request_set_option(q,"stream_chunk_policy","fixed"));auto cl=e->GetObjectClass(sink);c.method=e->GetMethodID(cl,"onPcm","([FI)V");e->DeleteLocalRef(cl);if(!c.method)throw std::runtime_error("PCM sink unavailable");check(audiocpp_stream_set_callback(session,callback,&c));auto status=audiocpp_stream_start(session,q);check(audiocpp_stream_set_callback(session,nullptr,nullptr));check(status);check(audiocpp_stream_finish(session,&y));}else check(audiocpp_session_run(session,q,&y));double wall=ms(c.start);const float*pcm=nullptr;size_t n=0;int sr=0,ch=0;check(audiocpp_result_audio(y,&pcm,&n,&sr,&ch));if(!n||sr!=24000||ch!=1)throw std::runtime_error("result schema");for(size_t i=0;i<n;i++)if(!std::isfinite(pcm[i]))throw std::runtime_error("nonfinite PCM");if(stream){if(c.failed||c.chunks<2||c.pcm.size()!=n)throw std::runtime_error("incomplete incremental PCM");for(size_t i=0;i<n;i++)if(c.pcm[i]!=pcm[i])throw std::runtime_error("callback/final mismatch");}savewav(out+"/sample.wav",pcm,n);std::ifstream f(trace);std::string log((std::istreambuf_iterator<char>(f)),{});auto p=log.rfind("observed_stop_reason ");bool eos=p!=std::string::npos&&log.substr(p+21,3)=="eos";struct rusage usage{};getrusage(RUSAGE_SELF,&usage);std::ostringstream s;s<<"{\"variant\":\""<<variant<<"\",\"voice\":\""<<voice<<"\",\"streaming\":"<<(stream?"true":"false")<<",\"setup_ms\":"<<setup_ms<<",\"session_reused\":"<<(reused?"true":"false")<<",\"api_ms\":"<<wall<<",\"audio_s\":"<<double(n)/24000<<",\"RTF\":"<<wall/1000/(double(n)/24000)<<",\"pcm_sink_wall_ms\":"<<c.callback_ms<<",\"generation_ms\":"<<std::max(0.0,wall-c.callback_ms)<<",\"generation_RTF\":"<<std::max(0.0,wall-c.callback_ms)/1000/(double(n)/24000)<<",\"first_pcm_ms\":"<<(stream?std::to_string(c.first):"null")<<",\"chunks\":"<<c.chunks<<",\"samples\":"<<n<<",\"sample_rate\":24000,\"EOS\":\""<<(eos?"eos":"UNKNOWN_OR_NON_EOS")<<"\",\"callback_concat_exact\":"<<(stream?"true":"null")<<",\"peak_RSS_KiB\":"<<usage.ru_maxrss<<",\"threads\":"<<threads<<",\"backend\":\"CPU\"}";auto result=s.str();std::ofstream(out+"/native-report.json")<<result;audiocpp_result_free(y);audiocpp_request_free(q);return e->NewStringUTF(result.c_str());}catch(...){audiocpp_result_free(y);audiocpp_request_free(q);if(session){(void)audiocpp_stream_set_callback(session,nullptr,nullptr);(void)audiocpp_stream_reset(session);}throw;}
  }catch(const std::exception&x){if(!e->ExceptionCheck())e->ThrowNew(e->FindClass("java/lang/IllegalStateException"),x.what());return nullptr;}}
+
+#if ORTTS_WITH_SPEECH
+namespace {
+std::mutex speechPointers;
+ortts_tts *speechTts=nullptr;ortts_asr *speechAsr=nullptr;ortts_asr_stream *speechStream=nullptr;
+void speechCheck(ortts_status s){if(s!=ORTTS_OK)throw std::runtime_error(ortts_last_error());}
+jstring unicode(JNIEnv*e,const std::string&s){auto u=std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t>{}.from_bytes(s);return e->NewString(reinterpret_cast<const jchar*>(u.data()),u.size());}
+void speechError(JNIEnv*e,const std::exception&x){if(!e->ExceptionCheck())e->ThrowNew(e->FindClass("java/lang/IllegalStateException"),x.what());}
+void speechClose(){
+ std::lock_guard<std::mutex>guard(speechPointers);
+ ortts_tts_free(speechTts);speechTts=nullptr;ortts_asr_free(speechAsr);speechAsr=nullptr;ortts_asr_stream_free(speechStream);speechStream=nullptr;
+}
+struct SpeechSink{JNIEnv*env;jobject object;jmethodID method;};
+int speechPcm(void*user,const float*pcm,size_t n,int32_t rate,int32_t channels){
+ auto&s=*static_cast<SpeechSink*>(user);if(channels!=1||n>INT32_MAX)return 1;
+ jfloatArray a=s.env->NewFloatArray(n);if(!a)return 1;s.env->SetFloatArrayRegion(a,0,n,pcm);s.env->CallVoidMethod(s.object,s.method,a,rate);s.env->DeleteLocalRef(a);return s.env->ExceptionCheck()?1:0;
+}
+int speechText(void*user,const ortts_asr_stream_event*v){
+ auto&s=*static_cast<SpeechSink*>(user);jstring t=unicode(s.env,v->text);if(!t)return 1;s.env->CallVoidMethod(s.object,s.method,t,v->endpoint,jlong(v->segment_id));s.env->DeleteLocalRef(t);return s.env->ExceptionCheck()?1:0;
+}
+SpeechSink textSink(JNIEnv*e,jobject sink){auto c=e->GetObjectClass(sink);auto method=e->GetMethodID(c,"onText","(Ljava/lang/String;IJ)V");e->DeleteLocalRef(c);if(!method)throw std::runtime_error("ASR sink unavailable");return {e,sink,method};}
+void nativeWav(const std::string&path,const float*p,size_t n,int rate){std::ofstream f(path,std::ios::binary);f.write("RIFF",4);u32(f,36+n*4);f.write("WAVEfmt ",8);u32(f,16);u16(f,3);u16(f,1);u32(f,rate);u32(f,rate*4);u16(f,4);u16(f,32);f.write("data",4);u32(f,n*4);f.write(reinterpret_cast<const char*>(p),n*4);if(!f)throw std::runtime_error("WAV save failed");}
+}
+#endif
+extern "C" JNIEXPORT jboolean JNICALL Java_com_orient_ortts_demo_SpeechBridge_available(JNIEnv*,jclass){
+#if ORTTS_WITH_SPEECH
+ return ortts_speech_abi_version()==1&&ortts_asr_stream_abi_version()==1;
+#else
+ return JNI_FALSE;
+#endif
+}
+extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_cancel(JNIEnv*,jclass){
+#if ORTTS_WITH_SPEECH
+ std::lock_guard<std::mutex>guard(speechPointers);ortts_tts_cancel(speechTts);ortts_asr_cancel(speechAsr);ortts_asr_stream_cancel(speechStream);
+#endif
+}
+extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_close(JNIEnv*e,jclass){
+#if ORTTS_WITH_SPEECH
+ std::lock_guard<std::mutex>guard(mu);try{speechClose();}catch(const std::exception&x){speechError(e,x);}
+#endif
+}
+extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_synthesize(JNIEnv*e,jclass,jstring pathJ,jstring voiceJ,jstring textJ,jboolean streaming,jobject sink,jstring outJ){
+#if ORTTS_WITH_SPEECH
+ std::lock_guard<std::mutex>guard(mu);ortts_speech_audio*audio=nullptr;
+ try{
+  release();speechClose();auto path=str(e,pathJ),voice=str(e,voiceJ),text=str(e,textJ),out=str(e,outJ);
+  ortts_speech_config c{};c.struct_size=sizeof(c);c.family="pocket_tts";c.model_path=path.c_str();c.threads=4;c.streaming=streaming;
+  ortts_tts*engine=nullptr;speechCheck(ortts_tts_create(&c,&engine));{std::lock_guard<std::mutex>p(speechPointers);speechTts=engine;}
+  auto cl=e->GetObjectClass(sink);auto method=e->GetMethodID(cl,"onPcm","([FI)V");e->DeleteLocalRef(cl);if(!method)throw std::runtime_error("PCM sink unavailable");SpeechSink receiver{e,sink,method};
+  ortts_tts_request request{};request.struct_size=sizeof(request);request.text=text.c_str();request.language="en";request.voice_id=voice.c_str();request.seed_set=1;request.seed=42;
+  speechCheck(ortts_tts_synthesize(engine,&request,streaming?speechPcm:nullptr,&receiver,&audio));
+  const float*pcm=ortts_speech_audio_samples(audio);size_t n=ortts_speech_audio_frames(audio);int rate=ortts_speech_audio_sample_rate(audio);
+  if(!streaming&&speechPcm(&receiver,pcm,n,rate,1))throw std::runtime_error("Playback callback failed");
+  nativeWav(out,pcm,n,rate);ortts_metrics metrics{};speechCheck(ortts_speech_audio_metrics(audio,&metrics));
+  std::ostringstream report;report<<"{\"audio_s\":"<<double(n)/rate<<",\"api_ms\":"<<metrics.api_ms<<",\"sample_rate\":"<<rate<<",\"RTF\":"<<metrics.api_ms/(1000.0*n/rate)<<"}";
+  ortts_speech_audio_free(audio);audio=nullptr;speechClose();return unicode(e,report.str());
+ }catch(const std::exception&x){ortts_speech_audio_free(audio);speechClose();speechError(e,x);return nullptr;}
+#else
+ e->ThrowNew(e->FindClass("java/lang/IllegalStateException"),"Speech feature disabled");return nullptr;
+#endif
+}
+extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_openAsr(JNIEnv*e,jclass,jstring familyJ,jstring pathJ){
+#if ORTTS_WITH_SPEECH
+ std::lock_guard<std::mutex>guard(mu);try{
+  release();speechClose();auto family=str(e,familyJ),path=str(e,pathJ);bool streaming=family=="moonshine_asr";
+  ortts_speech_config c{};c.struct_size=sizeof(c);c.family=family.c_str();c.model_path=path.c_str();c.threads=4;c.streaming=streaming;
+  if(streaming){ortts_asr_stream*engine=nullptr;speechCheck(ortts_asr_stream_create(&c,nullptr,&engine));std::lock_guard<std::mutex>p(speechPointers);speechStream=engine;}
+  else{if(family!="sense_asr")throw std::runtime_error("Unsupported Demo ASR");ortts_asr*engine=nullptr;speechCheck(ortts_asr_create(&c,&engine));std::lock_guard<std::mutex>p(speechPointers);speechAsr=engine;}
+ }catch(const std::exception&x){speechClose();speechError(e,x);}
+#endif
+}
+extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_accept(JNIEnv*e,jclass,jfloatArray input,jint count,jobject sink){
+#if ORTTS_WITH_SPEECH
+ std::lock_guard<std::mutex>guard(mu);jfloat*p=nullptr;
+ try{if(!input||count<=0||count>e->GetArrayLength(input)||count>32000)throw std::runtime_error("Invalid ASR chunk");p=e->GetFloatArrayElements(input,nullptr);if(!p)throw std::bad_alloc();auto receiver=textSink(e,sink);if(speechStream)speechCheck(ortts_asr_stream_accept(speechStream,p,count,speechText,&receiver));else if(speechAsr)speechCheck(ortts_asr_accept(speechAsr,p,count));else throw std::runtime_error("ASR is not open");e->ReleaseFloatArrayElements(input,p,JNI_ABORT);
+ }catch(const std::exception&x){if(p)e->ReleaseFloatArrayElements(input,p,JNI_ABORT);speechError(e,x);}
+#endif
+}
+extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_finish(JNIEnv*e,jclass,jobject sink){
+#if ORTTS_WITH_SPEECH
+ std::lock_guard<std::mutex>guard(mu);ortts_transcript*result=nullptr;
+ try{auto receiver=textSink(e,sink);if(speechStream)speechCheck(ortts_asr_stream_finish(speechStream,speechText,&receiver));else if(speechAsr){speechCheck(ortts_asr_finish(speechAsr,nullptr,&result));ortts_asr_stream_event event{sizeof(event),ORTTS_ASR_FLUSH,0,0,0,1,ortts_transcript_text(result),"auto"};speechText(&receiver,&event);ortts_transcript_free(result);result=nullptr;}else throw std::runtime_error("ASR is not open");
+ }catch(const std::exception&x){ortts_transcript_free(result);speechError(e,x);}
+#endif
+}

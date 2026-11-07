@@ -18,12 +18,16 @@ python3 tools/prepare_runtime.py --source-repo /path/to/audio.cpp --out _work/ru
 python3 tools/prepare_unified_runtime.py \
   --audio-source _work/runtime --llama-source /path/to/llama.cpp-v0.8.0 \
   --out _work/unified --release-compat
-python3 tools/build_android.py --source _work/unified/audio.cpp --liquidcodec \
+python3 tools/prepare_speech_runtime.py --source _work/unified/audio.cpp \
+  --out _work/demo-release/audio.cpp
+python3 tools/build_android.py --source _work/demo-release/audio.cpp --liquidcodec --speech \
   --ndk /path/to/android-ndk --ninja /path/to/ninja \
   --gradle /path/to/gradle --sdk /path/to/android-sdk --java /path/to/jdk17
 ```
 
-本版Android使用统一ggml与LiquidCodec构建；上面的`--release-compat`会应用已锁定的原生P3、模型维度与Q8查表补丁。Apple既有构建继续使用原路径，独立验证后再切换。
+多模型手机 Demo 使用统一 ggml、LiquidCodec 与 speech 构建；`--release-compat` 应用已锁定的原生 P3、模型维度与 Q8 查表补丁。llama.cpp 必须匹配 vendor/unified/lock.json 的源码指纹（v0.8.0，commit 8642541b255bfb5dc39cd351a178be09013a55d6）。多模型源码输出必须是新目录下的 audio.cpp，同级 mtmd 和探针源码也会校验、复制。不要复用先前配置为其他源码/功能组合的构建目录。
+
+Android 使用 AGP 8.7.2、JDK 17；Gradle 至少 8.9，本机离线构建使用 8.14.3。无权重 APK 可独立编译，模型由菜单按固定版本下载。
 
 默认构建不含权重的 APK。调试时可将包含 `bundled/model.json` 及清单模型文件（或 `model.zip`）的目录传入 `--model-assets`，在 APK 内携带权重。
 
@@ -63,7 +67,7 @@ Intel Mac 将引擎目标改为 `macos-x86_64`、profile 改为 `x86_64-baseline
 
 ```sh
 python3.12 tools/build_engine.py --target ios-arm64 --profile arm64-baseline \
-  --source _work/runtime --out build/engine-iphone
+  --source _work/demo-release/audio.cpp --out build/engine-iphone --speech --liquidcodec
 cmake -S apple -B build/apple-iphone -G Ninja \
   -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos \
   -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 \

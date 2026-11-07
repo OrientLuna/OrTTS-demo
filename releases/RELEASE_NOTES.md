@@ -1,4 +1,9 @@
-# OrTTS Android Demo 0.2.3-preview
+# 发行记录
+
+- [0.4.0 候选：多模型手机 Demo](RELEASE_NOTES-0.4.0.md)，尚未发布稳定标签/签名包。
+- [0.3.1-preview](RELEASE_NOTES-0.3.1-preview.md)，既有 Android 预览版。
+
+## OrTTS Android Demo 0.2.3-preview（历史）
 
 本地语音合成，支持 P3／P5 与 female／male 两个音色。
 

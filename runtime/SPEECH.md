@@ -42,7 +42,7 @@ python3 tools/build_engine.py --target android-arm64 --profile arm64-baseline \
   --out build/speech-android
 ```
 
-macOS arm64本轮真实运行；iOS ARM64与Android ARM64做交叉编译和链接检查，**新增模型未做手机真实运行/听感认证**。模拟器、Linux、Windows本轮未验收。不能用平台宏、编译通过或Mac RTF替代设备证据。原Android Demo的JNI接线未改；Rust/其他宿主直接消费新C ABI。既有LiquidCodec可选源码准备/构建入口保留，但本轮未认证与`--speech`组合的模型执行。
+SDK 初始验收在 macOS arm64 真实运行，Linux、Windows 尚未验收。后续手机 Demo 已接线 PocketTTS、SenseVoice 和 Moonshine，详见[手机语音 Demo](../docs/MOBILE_SPEECH_DEMO.md)。Android 将新 C ABI 加入现有 libaudiocpp.so，由 JNI 调用，避免加载第二份 ggml；Apple 使用同一框架。其余 SDK 模型不能据此宣称手机通过。LiquidCodec 与 speech 可组合构建；这也不等于全部自研权重已在该组合重新验收。
 
 同配置增量重建可加`--rebuild`，只接受目标/profile/configure命令/语音补丁receipt相同且未标记BUILDING的目录；改变配置使用新目录。receipt包含源指纹、实际产物SHA与CMakeCache SHA，不包含模型权重。
 
@@ -101,7 +101,7 @@ for event in asr.accept(&pcm16k)? { /* 用segment_id/revision替换partial或提
 for event in asr.finish()? { /* flush最后一段 */ }
 ```
 
-本机验收：C/Rust、跨线程取消、任意分块、reset复用、两会话交错、静音、自动与限长分段；303秒音频加速回放检查RSS平台。固定音色与自然13秒长句另做offline对照。详细记录见 `benchmarks/asr-stream-sdk-20261107.json`、`benchmarks/asr-stream-quality-20261107.json`。iOS/Android仅完成构建和接口检查，**新增ASR手机执行尚未验证**；中文仍使用SenseVoice离线接口。
+本机验收：C/Rust、跨线程取消、任意分块、reset复用、两会话交错、静音、自动与限长分段；303秒音频加速回放检查RSS平台。固定音色与自然13秒长句另做 offline 对照。详细记录见 `benchmarks/asr-stream-sdk-20261107.json`、`benchmarks/asr-stream-quality-20261107.json`；这些原始 SDK 记录不追溯替换为后续手机结果。新增手机验证参见 [Demo](../docs/MOBILE_SPEECH_DEMO.md)，中文仍使用 SenseVoice 离线接口。
 
 ### 调度、缓存与内存
 

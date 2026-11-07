@@ -9,11 +9,22 @@ def prepare(source,out):
  if out==source or out.is_relative_to(source):raise ValueError('Output must be outside input source tree')
  identity(source,(source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').exists())
  if out.exists():raise ValueError('Choose a fresh output directory')
+ unified=(source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').exists()
+ support=[]
+ if unified:
+  if out.name!='audio.cpp':raise ValueError('Unified speech output must be NEW_DIRECTORY/audio.cpp to preserve sibling support sources')
+  support=['mtmd','fullchain_probe.cpp','lc_fixture.cpp','compat_probe.cpp']
+  if any((out.parent/name).exists() for name in support):raise ValueError('Choose a fresh unified output parent')
+  if any(not (source.parent/name).exists() for name in support):raise ValueError('Unified source is missing sibling support sources')
  lock=json.loads((ROOT/'vendor/speech/lock.json').read_text());sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
  if sha(ROOT/'vendor/speech/audio.patch')!=lock['patch_sha256']:raise ValueError('Speech patch modified')
  for f in lock['files']:
   if sha(source/f['path'])!=f['base_sha256']:raise ValueError('Speech base mismatch: '+f['path'])
  shutil.copytree(source,out)
+ for name in support:
+  origin=source.parent/name;target=out.parent/name
+  if origin.is_dir():shutil.copytree(origin,target)
+  else:shutil.copyfile(origin,target)
  subprocess.run(['git','apply',str(ROOT/'vendor/speech/audio.patch')],cwd=out,env={**os.environ,'GIT_CEILING_DIRECTORIES':str(out.parent)},check=True)
  for f in lock['files']:
   if sha(out/f['path'])!=f['sha256']:raise ValueError('Speech patch output mismatch')

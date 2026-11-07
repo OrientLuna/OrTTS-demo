@@ -4,7 +4,7 @@ OrTTS 的端侧语音合成应用与可嵌入 CPU 运行时，支持 **0.6B／1.
 
 ## 可选多模型语音 SDK
 
-除现有自研模型 Demo 外，后端新增可选的 [多模型 TTS / ASR C ABI 与 Rust 接口](runtime/SPEECH.md)：Kokoro、PocketTTS、Piper、Kitten、ZipVoice，以及 SenseVoice / Moonshine。Moonshine 另提供英语增量识别接口（partial/final、分段、取消）。这些流水线与原接口共用一份 ggml；不表示能执行任意 ONNX/GGUF。现有 App 的模型菜单与下载包未自动扩展，新增模型的手机运行仍需验收。
+除现有自研模型 Demo 外，后端提供可选的 [多模型 TTS / ASR C ABI 与 Rust 接口](runtime/SPEECH.md)：Kokoro、PocketTTS、Piper、Kitten、ZipVoice，以及 SenseVoice / Moonshine。Moonshine 另提供英语增量识别接口（partial/final、分段、取消）。这些流水线与原接口共用一份 ggml；不表示能执行任意 ONNX/GGUF。新版手机 Demo 已接入 PocketTTS、SenseVoice 和 Moonshine，支持固定版本下载、SHA256 校验及 TTS/ASR 切换；其余模型当前为 SDK 能力。详见 [多模型 Demo](docs/MOBILE_SPEECH_DEMO.md)。
 
 ## 平台支持
 
@@ -32,7 +32,7 @@ iOS 需要自行构建和开发签名，尚无公开 IPA / TestFlight；macOS �
 
 首次下载请保持应用在前台。首次合成需要加载模型，较慢设备会在播放前增加缓冲。正常卸载会清理应用内模型、缓存及生成音频；手动保存到外部的文件不受影响。
 
-当前APK需要Android 9或更高版本，以及支持DotProd、I8MM和FP16的ARM64 CPU。手机参考数据见[性能说明](docs/BENCHMARKS.md)。
+上面的 0.3.1-preview APK 需要 Android 9 或更高版本，以及支持 DotProd、I8MM 和 FP16 的 ARM64 CPU。新版多模型 Demo 使用 arm64-baseline，安装包不含模型权重。手机参考数据见[性能说明](docs/BENCHMARKS.md)。
 
 模型仓库：[0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B) · [1.7B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-1.7B)
 
@@ -44,6 +44,7 @@ macOS 使用 `ortts-apple MODEL_ROOT P3|P5 TRUSTED_BRIDGE_SHA TEXT` 离线合成
 
 ## 文档导航
 
+- [多模型 Demo 下载与 TTS/ASR 切换](docs/MOBILE_SPEECH_DEMO.md)
 - [构建与开发环境](docs/BUILD.md)
 - [模型准备](docs/MODEL_ASSETS.md)
 - [解码器兼容](docs/DECODERS.md)

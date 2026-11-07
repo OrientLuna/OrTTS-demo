@@ -28,7 +28,8 @@ def main():
  for name in ['fullchain_probe.cpp','lc_fixture.cpp','compat_probe.cpp']:shutil.copy2(ROOT/'support'/name,out/name)
  for item in lock['changed_files']:
   if sha(audio/item['path'])!=item['sha256']:raise ValueError('Patched source differs: '+item['path'])
- receipt={'ggml_source_dir':str((a.llama_source/'ggml').resolve()),'unified_patch_sha256':lock['patch_sha256'],'files_verified':len(lock['changed_files']),'patch_SHA':lock['patch_sha256'],'llama_source_read_only':str(a.llama_source.resolve()),'base_untouched':True,'out':str(out)}
+ receipt={'ggml_source_dir':str((a.llama_source/'ggml').resolve()),'unified_patch_sha256':lock['patch_sha256'],'files_verified':len(lock['changed_files']),'patch_SHA':lock['patch_sha256'],'llama_source_read_only':str(a.llama_source.resolve()),'base_untouched':True,'out':str(out),
+          'mtmd_sources':{str(f.relative_to(mt)):sha(f) for f in mt.rglob('*') if f.is_file()}}
  (audio/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').write_text(json.dumps(receipt,indent=2)+'\n');
  if a.release_compat:
   from apply_release_compat import apply

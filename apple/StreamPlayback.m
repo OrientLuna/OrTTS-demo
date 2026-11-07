@@ -9,7 +9,7 @@
 - (BOOL)prepare:(NSError **)error {
     self.engine=[AVAudioEngine new]; self.node=[AVAudioPlayerNode new];
     AVAudioSession *session=AVAudioSession.sharedInstance;
-    if (![session setCategory:AVAudioSessionCategoryPlayback error:error] || ![session setActive:YES error:error]) return NO;
+    if (![session setCategory:AVAudioSessionCategoryPlayback mode:AVAudioSessionModeDefault options:0 error:error] || ![session setActive:YES error:error]) return NO;
     [self.engine attachNode:self.node];
     AVAudioFormat *format=[[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32 sampleRate:24000 channels:1 interleaved:NO];
     [self.engine connect:self.node to:self.engine.mainMixerNode format:format];

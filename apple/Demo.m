@@ -1,5 +1,6 @@
 #import "Demo.h"
 #import "StreamPlayback.h"
+#import "WorkQueue.h"
 #import <sys/sysctl.h>
 #ifndef ORTTS_APP_CPU_PROFILE
 #define ORTTS_APP_CPU_PROFILE "arm64-baseline"
@@ -107,6 +108,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     if ([NSProcessInfo.processInfo.arguments containsObject:@"--synthesis-smoke"] || [NSProcessInfo.processInfo.arguments containsObject:@"--cancel-stream-smoke"]) dispatch_async(dispatch_get_main_queue(), ^{ [self run]; });
 }
 - (void)dismissKeyboard { [self.view endEditing:YES]; }
+- (void)viewWillDisappear:(BOOL)animated { [super viewWillDisappear:animated]; [self cancel]; }
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gesture shouldReceiveTouch:(UITouch *)touch {
     // Preserve editing, text selection and scrolling inside the text view.
     for (UIView *view=touch.view; view; view=view.superview) {
@@ -128,7 +130,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
 - (void)finish:(NSString *)message { dispatch_async(dispatch_get_main_queue(), ^{ [self setWorking:NO]; self.status.text=message; NSLog(@"OrTTS status: %@",message); }); }
 - (void)downloadModel {
     NSString *variant=[self selectedVariant]; self.cancelled=NO; [self setWorking:YES]; [self message:@"正在获取模型清单…"];
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY,0), ^{
+    dispatch_async(OrTTSDemoQueue(), ^{
         NSError *error=nil; NSData *data=[NSData dataWithContentsOfURL:[NSURL URLWithString:ManifestURL] options:0 error:&error];
         NSDictionary *manifest=TrustedManifest(data) ? [NSJSONSerialization JSONObjectWithData:data options:0 error:&error]:nil;
         NSArray *entries=[self entries:manifest variant:variant];
@@ -164,7 +166,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     NSURL *source=urls.firstObject; if (!source) return;
     BOOL access=[source startAccessingSecurityScopedResource]; [self setWorking:YES]; self.cancelled=NO;
     [self message:@"正在导入文件夹，随后请点“检查所选模型”完成校验。"];
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY,0), ^{
+    dispatch_async(OrTTSDemoQueue(), ^{
         NSURL *root=[Documents() URLByAppendingPathComponent:@"models"]; NSError *error=nil;
         [NSFileManager.defaultManager createDirectoryAtURL:root withIntermediateDirectories:YES attributes:nil error:&error];
         for (NSString *name in @[@"native",@"voices",@"P3"]) {
@@ -183,7 +185,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
 }
 - (void)play {
     [self.stream stop];
-    NSError *error=nil; [AVAudioSession.sharedInstance setCategory:AVAudioSessionCategoryPlayback error:&error]; [AVAudioSession.sharedInstance setActive:YES error:&error];
+    NSError *error=nil; [AVAudioSession.sharedInstance setCategory:AVAudioSessionCategoryPlayback mode:AVAudioSessionModeDefault options:0 error:&error]; [AVAudioSession.sharedInstance setActive:YES error:&error];
     self.player=[[AVAudioPlayer alloc] initWithContentsOfURL:[Documents() URLByAppendingPathComponent:@"ortts-output.caf"] error:&error]; self.player.delegate=self;
     if (!self.player || ![self.player play]) self.status.text=error.localizedDescription ?: @"暂无可播放音频";
     self.stop.enabled=self.player.isPlaying;
@@ -200,7 +202,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     [self.view endEditing:YES]; [self.player stop]; [self.stream stop]; self.cancelled=NO; [self setWorking:YES];
     NSString *variant=[self selectedVariant], *voice=self.voice.selectedSegmentIndex==0 ? @"female":@"male";
     [self message:@"正在校验模型、加载并合成…"];
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED,0), ^{
+    dispatch_async(OrTTSDemoQueue(), ^{
         NSURL *root=[Documents() URLByAppendingPathComponent:@"models"];
         NSData *data=[NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:@"download-manifest.json"]];
         NSDictionary *manifest=TrustedManifest(data) ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil]:nil;
@@ -232,7 +234,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
             memcpy(buffer.floatChannelData[0],ortts_audio_samples(audio),buffer.frameLength*sizeof(float));
             NSError *error=nil; AVAudioFile *file=[[AVAudioFile alloc] initForWriting:[Documents() URLByAppendingPathComponent:@"ortts-output.caf"] settings:format.settings error:&error];
             if (!file || ![file writeFromBuffer:buffer error:&error]) message=error.localizedDescription ?: @"保存音频失败";
-            else { double seconds=buffer.frameLength/format.sampleRate; message=[NSString stringWithFormat:@"完成 · 音频 %.2fs · 合成 %.2fs · RTF %.2f",seconds,metrics.api_ms/1000,seconds>0?metrics.api_ms/1000/seconds:0]; }
+            else { [NSUserDefaults.standardUserDefaults setObject:@"ortts-output.caf" forKey:@"ortts.lastTts"]; double seconds=buffer.frameLength/format.sampleRate; message=[NSString stringWithFormat:@"完成 · 音频 %.2fs · 合成 %.2fs · RTF %.2f",seconds,metrics.api_ms/1000,seconds>0?metrics.api_ms/1000/seconds:0]; }
         }
         BOOL play=!status && !self.cancelled && [message hasPrefix:@"完成"];
         if (self.cancelled) message=@"合成已停止";

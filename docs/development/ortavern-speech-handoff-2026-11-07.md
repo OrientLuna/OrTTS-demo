@@ -1,5 +1,18 @@
 # OrTavern 音频后端迭代交接
 
+## 手机 Demo 与共用底层增量（0.4.0 候选）
+
+以下为增量信息，宿主已有独立进展时按需采用，无需复制 Demo UI、下载管理或重做已有接线。本轮没有修改 OrTavern 主线。
+
+- 手机菜单接入 PocketTTS、SenseVoice、Moonshine；共享 catalog 新增固定 revision 的直接 URL、demo_enabled 与分平台验证状态，仍由宿主解析成 C 配置，ABI 不变。distribution_cleared 仍为 false。
+- LiquidCodec 与 speech 现在组合构建并共享同一 pinned ggml。Android 新 ABI 直接链接进旧 libaudiocpp.so，JNI 与旧路径共用执行锁，不能再同时加载独立 libortts.so；Apple 同一框架。准备源码必须保留 audio.cpp 同级 mtmd 与探针，构建步骤见 BUILD。
+- iOS 模拟器、Android ARM64 模拟器已运行两音色合成/取消、Moonshine 英语、SenseVoice 中文文件输入和合成后识别。iPhone17 的 speech-only 构建也通过，但最终统一构建安装后因锁屏尚待重跑。文件识别不代表麦克风/全双工或声学质量通过。
+- macOS 五种 TTS、两种 ASR、Rust、旧 P3 短句回归通过。当前 LiquidCodec 大包未在本机缓存，不把组合编译或旧 LFM 包通过当作新版大包认证。
+- 二进制与测试原始摘要见 [手机记录](../../benchmarks/mobile-speech-demo-20261107.json)。Android release APK 约8.7MiB（未签名）、核心库约7.2MiB；iOS 框架约9.4MiB。这些不是运行内存。
+- 默认15秒增量内存测试首次触发门限，已保留失败；随后单独诊断及完整隔离回归（C/Rust、4秒/15秒内存测试）均通过，32MiB门限未改。首次失败原因尚未确立，不据复跑通过声称消除所有内存风险。
+
+候选版尚未作为稳定版发布；Android 正式签名、统一底层 iPhone 解锁回归及大包/交互录音验收仍待完成。保留宿主现有中文实时识别路线，不因 Demo 菜单新增而替换。
+
 ## 增量 ASR 更新（2026-11-07）
 
 新增独立 `ortts_asr_stream_*` ABI1 和 Rust `speech::streaming`，不改变下文旧 `ortts_asr_*` final-only 合同。Moonshine英语可修订partial/final、flush/reset、能量/限长endpoint、跨线程取消与stats已接线，仍共享一份ggml。Rust `Cancellation` 可交UI线程，句柄Drop后自动失效，不保活权重。能力检查用 `ortts_asr_stream_abi_version` / catalog的 `incremental_asr`；旧字段 `partial=false` 仅描述旧接口。

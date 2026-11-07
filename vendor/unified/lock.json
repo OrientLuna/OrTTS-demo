@@ -4323,7 +4323,8 @@
     },
     {
       "path": "CMakeLists.txt",
-      "sha256": "9928681c885e0dc7b2feb92cdcaf5c4531cba55cdf970e86cb7fbee8b6a3789b"
+      "sha256": "90852822e547bf0f9156f6ce538a50bd0c831bff83b8f4e40b0d91ae66a7d6cc"
     }
-  ]
+  ],
+  "source_identity_note": "Root CMakeLists.txt hash matches pristine pinned commit; all other llama source digests unchanged."
 }

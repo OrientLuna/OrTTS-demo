@@ -1,0 +1,515 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "release_status": "0.4.0 candidate; not tagged/published",
+  "backend": "single pinned ggml with speech and LiquidCodec enabled",
+  "cpu_profile": "arm64-baseline",
+  "llama_commit": "8642541b255bfb5dc39cd351a178be09013a55d6",
+  "model_downloads": "no new large model; existing pinned models reused; one 6194424-byte voice network repair tested",
+  "mobile": {
+    "ios_arm64_simulator": {
+      "schema": 1,
+      "version": "0.4.0",
+      "target": "simulator",
+      "cases": [
+        {
+          "status": "完成 · 3.20s · 接口RTF 0.226",
+          "model": "pocket-english-q8",
+          "input_frames": 0,
+          "run_id": "pocket-alba-957719b6",
+          "ok": 1,
+          "text": "",
+          "case": "pocket-alba",
+          "process_wall_s": 2.432515374966897
+        },
+        {
+          "status": "已停止",
+          "model": "pocket-english-q8",
+          "input_frames": 0,
+          "run_id": "pocket-cancel-62215188",
+          "ok": 0,
+          "text": "",
+          "case": "pocket-cancel",
+          "process_wall_s": 1.3145793329458684
+        },
+        {
+          "status": "完成 · 4.24s · 接口RTF 0.237",
+          "model": "pocket-english-q8",
+          "input_frames": 0,
+          "run_id": "pocket-anna-f6470579",
+          "ok": 1,
+          "text": "",
+          "case": "pocket-anna",
+          "process_wall_s": 2.312371041974984
+        },
+        {
+          "status": "识别完成 · 输入 3.69s",
+          "model": "moonshine-tiny-q8",
+          "input_frames": 59072,
+          "run_id": "moonshine-en-1bfbd62e",
+          "ok": 1,
+          "text": "At 9:30, please check the train ticket and call the station.",
+          "case": "moonshine-en",
+          "process_wall_s": 1.3136227910872549
+        },
+        {
+          "status": "识别完成 · 输入 5.58s",
+          "model": "sensevoice-small-q8",
+          "input_frames": 89200,
+          "run_id": "sensevoice-zh-7e264ca5",
+          "ok": 1,
+          "text": "今天上午9点半，请检查车票和随身行李。谢。",
+          "case": "sensevoice-zh",
+          "process_wall_s": 1.313229624996893
+        },
+        {
+          "status": "识别完成 · 输入 4.24s",
+          "model": "moonshine-tiny-q8",
+          "input_frames": 67840,
+          "run_id": "roundtrip-82b7fda6",
+          "ok": 1,
+          "text": "At nine thirty, please check the train ticket and call the station.",
+          "case": "roundtrip",
+          "process_wall_s": 1.3106230419361964
+        },
+        {
+          "status": "模型已就绪，大小与SHA256均通过",
+          "model": "pocket-english-q8",
+          "input_frames": 0,
+          "run_id": "download-check-cb5e3da9",
+          "ok": 1,
+          "text": "",
+          "case": "download-check",
+          "process_wall_s": 1.3207657920429483
+        }
+      ],
+      "scope": "Foreground actual-model Demo pipelines; cached download SHA validation; no microphone recording or new large-model download",
+      "limitations": [
+        "microphone permission/live capture needs separate interactive validation",
+        "cached model check does not certify CDN reachability or full download"
+      ]
+    },
+    "android_arm64_emulator": {
+      "schema": 1,
+      "version": "0.4.0",
+      "target": "android",
+      "cases": [
+        {
+          "ok": true,
+          "status": "完成 · 3.20s · 接口RTF 0.650",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "pocket-alba",
+          "process_wall_s": 5.450724832946435
+        },
+        {
+          "ok": false,
+          "status": "已停止",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "pocket-cancel",
+          "process_wall_s": 2.1810983329778537
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.24s · 接口RTF 0.615",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "pocket-anna",
+          "process_wall_s": 6.349691250012256
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 3.69s",
+          "text": "At 9:30, please check the train ticket and call the station.",
+          "model": "moonshine-tiny-q8",
+          "case": "moonshine-en",
+          "process_wall_s": 2.1721031250199303
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 5.58s",
+          "text": "今天上午9点半，请检查车票和随身行李。谢。",
+          "model": "sensevoice-small-q8",
+          "case": "sensevoice-zh",
+          "process_wall_s": 2.214822749956511
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 4.24s",
+          "text": "At 9.30, please check the train ticket and call the station.",
+          "model": "moonshine-tiny-q8",
+          "case": "roundtrip",
+          "process_wall_s": 3.2127375410636887
+        },
+        {
+          "ok": true,
+          "status": "模型已就绪，文件大小与SHA256均通过",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "download-check",
+          "process_wall_s": 2.2152400000486523
+        }
+      ],
+      "scope": "Foreground actual-model Demo pipelines; cached download SHA validation; no microphone recording or new large-model download",
+      "limitations": [
+        "microphone permission/live capture needs separate interactive validation",
+        "cached model check does not certify CDN reachability or full download"
+      ]
+    }
+  },
+  "binary": {
+    "artifact": "app-release-unsigned.apk",
+    "bytes": 9157567,
+    "sha256": "73c1eebe7b23018d843a9d1120f93a354766a3c8ba8259fab3b366f297cf579f",
+    "catalog_matches": true,
+    "extra_libortts": false,
+    "libraries": [
+      {
+        "name": "lib/arm64-v8a/libaudiocpp.so",
+        "bytes": 7500664,
+        "sha256": "f40d82c14deffcdbf9407bd9e7ff1bddf5af37b4caf7226b29da8237db62a1e0",
+        "needed": [
+          "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libc.so]"
+        ],
+        "load_alignment_min": 16384
+      },
+      {
+        "name": "lib/arm64-v8a/libc++_shared.so",
+        "bytes": 1292896,
+        "sha256": "92ee8da641b969254cc8723f64aa115d36c8ffa87115e38bc9cb89e3eefee839",
+        "needed": [
+          "0x0000000000000001 (NEEDED)          Shared library: [libc.so]",
+          "0x0000000000000001 (NEEDED)          Shared library: [libm.so]",
+          "0x0000000000000001 (NEEDED)          Shared library: [libdl.so]"
+        ],
+        "load_alignment_min": 16384
+      },
+      {
+        "name": "lib/arm64-v8a/libortts_device.so",
+        "bytes": 4056,
+        "sha256": "4906139060472373884c713e29d5de27e32ed76d7c701f32c0fd35df3ce95700",
+        "needed": [
+          "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libc.so]"
+        ],
+        "load_alignment_min": 16384
+      },
+      {
+        "name": "lib/arm64-v8a/libortts_jni.so",
+        "bytes": 189752,
+        "sha256": "8585d4dfbc9a0862f44861e1e1f94774c820aea991c34c98b70335fd6b7a73ff",
+        "needed": [
+          "0x0000000000000001 (NEEDED)       Shared library: [libaudiocpp.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libc.so]"
+        ],
+        "load_alignment_min": 16384
+      }
+    ]
+  },
+  "macos_sdk": {
+    "schema": 1,
+    "host": "Darwin arm64",
+    "model_execution": "current host only; cross-builds are not device certification",
+    "checks": [
+      {
+        "step": 0,
+        "returncode": 0
+      },
+      {
+        "step": 1,
+        "returncode": 0
+      },
+      {
+        "step": 2,
+        "returncode": 0
+      }
+    ],
+    "artifact_sha256": "d8f4ce985de7feda7e13d517a40c6c7a6b0464845fbb614ec7445d754beb1f94",
+    "artifact_bytes": 9993312,
+    "public_headers": {
+      "ortts_speech.h": "56a0fb9335de78ef8cd5efb163a0a31cbc6e620a3a43c53dd8de25f2def1c2e2",
+      "ortts_engine.h": "1471c8007982d86d544030db7b2c48e2cbf87ce1f6245338750cb308de2b7027"
+    },
+    "assertions": [
+      "five native-format TTS families",
+      "Kokoro/Pocket/ZipVoice callback/pull stream cancellation and reuse",
+      "Piper/Kitten reject streaming",
+      "English model rejects zh and Han text, invalid UTF-8 and missing voice",
+      "SenseVoice/Moonshine offline equals buffered-final",
+      "ASR bounds/reset/digital silence/nonfinite input",
+      "SenseVoice explicit Silero NoSpeech does not re-transcribe whole input",
+      "legacy and speech share BUSY gate",
+      "Rust native-rate copy + ASR + Pocket stream reuse"
+    ],
+    "subjective_quality": "not certified"
+  },
+  "network_small_voice": {
+    "asset": "PocketTTS-GGUF/english/embeddings/alba.safetensors",
+    "bytes": 6194424,
+    "sha256": "69c32db63ca56843d994f81f343f62e0bf2d73f7e4c9bc73e44bb1110b1d8845",
+    "wall_s": 9.087356082978658,
+    "scope": "actual network download of one small voice; remaining large model assets already cached",
+    "ok": true
+  },
+  "android_zip_import": {
+    "cases": [
+      {
+        "case": "valid",
+        "expected_success": true,
+        "result": {
+          "ok": true,
+          "status": "模型导入完成，大小及SHA256均通过",
+          "text": "",
+          "model": "pocket-english-q8"
+        }
+      },
+      {
+        "case": "bad-hash",
+        "expected_success": false,
+        "result": {
+          "ok": false,
+          "status": "操作失败：导入文件大小或SHA256不匹配",
+          "text": "",
+          "model": "pocket-english-q8"
+        }
+      },
+      {
+        "case": "traversal",
+        "expected_success": false,
+        "result": {
+          "ok": false,
+          "status": "操作失败：Invalid zip entry path: ../escape.gguf",
+          "text": "",
+          "model": "pocket-english-q8"
+        }
+      }
+    ],
+    "scope": "actual Android ZIP import pipeline, cached complete model plus small imported voice"
+  },
+  "legacy_p3": {
+    "passed": true,
+    "model_revision": "v0.2.0-preview legacy LFM; not current LiquidCodec default pack",
+    "frames": 36480,
+    "callback_frames": 36480,
+    "chunks": 8,
+    "api_ms": 1087.784,
+    "first_pcm_ms": 246.43
+  },
+  "initial_stream_stress": {
+    "steps_0_1_2": "passed",
+    "step_3_default_segment": "failed memory growth or missing endpoint aggregate assertion; first run overlapped broader SDK test; failure retained",
+    "diagnostic_isolated_default": {
+      "pass": true,
+      "segment_limit_ms": 15000,
+      "audio_s": 302.744,
+      "wall_s": 35.6937,
+      "rss_before_bytes": 7012352,
+      "rss_loaded_bytes": 177438720,
+      "rss_spread_bytes": 3932160,
+      "limit_finals": 20,
+      "encoder_ms": 12009.2,
+      "decoder_ms": 23608.6,
+      "peak_pcm_frames": 43840,
+      "peak_encoder_frames": 750,
+      "rss_samples": [
+        234799104,
+        238665728,
+        238731264,
+        238731264,
+        238731264
+      ]
+    },
+    "threshold_unchanged": true,
+    "interpretation": "isolation re-run passed unchanged threshold; cause of first failure not established; do not discard original failure"
+  },
+  "limitations": [
+    "iPhone17 speech-only foreground pipelines passed earlier; final unified build installed but locked device prevented new run",
+    "no physical Android validation; ARM64 emulator only",
+    "live microphone and all picker workflows not certified",
+    "full current LiquidCodec pack not cached; no unilateral 1.8GB download; end-to-end pending",
+    "SenseVoice Chinese fixture includes spurious tail character; raw transcript retained",
+    "subjective listening and word-error corpus not certified",
+    "release APK unsigned; original publishing certificate signing pending"
+  ],
+  "ios_framework": {
+    "bytes": 9817688,
+    "sha256": "e6a35844f75a8a8649baf9d83e6e17320eda6907f19d65f1d9dee51e8355b944"
+  },
+  "simulator_framework": {
+    "bytes": 9993544,
+    "sha256": "26962e1f21228625fbb1b9039d7ecd6befd12452a693b89614c12982ed8cde15"
+  },
+  "isolated_stream_stress": {
+    "schema": 1,
+    "date": "2026-11-07",
+    "host": "macOS-27.2-arm64-arm-64bit",
+    "artifact_sha256": "d8f4ce985de7feda7e13d517a40c6c7a6b0464845fbb614ec7445d754beb1f94",
+    "artifact_bytes": 9993312,
+    "model_sha256": "0f795f14924dbfe40d2ee0e220382c9b23cd9e89064c6ffb97e236d81f1d7020",
+    "fixture_sha256": "cab4a1e8d7cb80db3f0e11e6225ca8121f41de13e2eb3fb9f603286b2df05cd7",
+    "public_header_sha256": "56a0fb9335de78ef8cd5efb163a0a31cbc6e620a3a43c53dd8de25f2def1c2e2",
+    "test_source_sha256": "de00e199b88df37c0c4562a4b0a58cec35e8a71aab30920ae45cfa9b2555e568",
+    "rust_sources_sha256": {
+      "runtime/rust/src/speech/streaming.rs": "185482f0decae60598870a7f794c1a9bdd670348aead4cfde15b856121e92e06",
+      "runtime/rust/examples/asr_stream.rs": "2715e83cfa3999158042167b2acde6226bf835de955d386bd2f6beaf1dc7d0b7"
+    },
+    "exports": [
+      "_ortts_abi_version",
+      "_ortts_asr_accept",
+      "_ortts_asr_cancel",
+      "_ortts_asr_create",
+      "_ortts_asr_finish",
+      "_ortts_asr_free",
+      "_ortts_asr_reset",
+      "_ortts_asr_run",
+      "_ortts_asr_stream_abi_version",
+      "_ortts_asr_stream_accept",
+      "_ortts_asr_stream_cancel",
+      "_ortts_asr_stream_create",
+      "_ortts_asr_stream_finish",
+      "_ortts_asr_stream_free",
+      "_ortts_asr_stream_get_stats",
+      "_ortts_asr_stream_reset",
+      "_ortts_audio_free",
+      "_ortts_audio_metrics",
+      "_ortts_audio_sample_count",
+      "_ortts_audio_sample_rate",
+      "_ortts_audio_samples",
+      "_ortts_engine_cancel",
+      "_ortts_engine_create",
+      "_ortts_engine_free",
+      "_ortts_engine_synthesize",
+      "_ortts_last_error",
+      "_ortts_speech_abi_version",
+      "_ortts_speech_audio_channels",
+      "_ortts_speech_audio_frames",
+      "_ortts_speech_audio_free",
+      "_ortts_speech_audio_metrics",
+      "_ortts_speech_audio_sample_rate",
+      "_ortts_speech_audio_samples",
+      "_ortts_speech_catalog_json",
+      "_ortts_transcript_api_ms",
+      "_ortts_transcript_free",
+      "_ortts_transcript_language",
+      "_ortts_transcript_text",
+      "_ortts_tts_cancel",
+      "_ortts_tts_create",
+      "_ortts_tts_free",
+      "_ortts_tts_synthesize"
+    ],
+    "checks": [
+      {
+        "step": 0,
+        "returncode": 0,
+        "wall_s": 0.3767474580090493,
+        "cpu_user_s": 0.35423,
+        "cpu_system_s": 0.041646999999999997
+      },
+      {
+        "step": 1,
+        "returncode": 0,
+        "wall_s": 16.582239417009987,
+        "cpu_user_s": 46.542954,
+        "cpu_system_s": 3.136614,
+        "result": {
+          "pass": true,
+          "fixture_final": "At 9:30, please check the train ticket and call the station.",
+          "partial_events": 7,
+          "stress_audio_s": 302.744,
+          "stress_encoder_ms": 8758.49,
+          "stress_decoder_ms": 5656.79,
+          "peak_pcm_frames": 43840,
+          "peak_encoder_frames": 200,
+          "rss_spread_bytes": 3440640,
+          "rss_samples": [
+            641777664,
+            641777664,
+            641777664,
+            638337024,
+            638337024
+          ]
+        }
+      },
+      {
+        "step": 2,
+        "returncode": 0,
+        "wall_s": 14.345019084052183,
+        "cpu_user_s": 42.16298799999999,
+        "cpu_system_s": 2.628305,
+        "result": {
+          "pass": true,
+          "segment_limit_ms": 4000,
+          "audio_s": 302.744,
+          "wall_s": 14.1858,
+          "rss_before_bytes": 6995968,
+          "rss_loaded_bytes": 175833088,
+          "rss_spread_bytes": 11812864,
+          "limit_finals": 75,
+          "encoder_ms": 8583.47,
+          "decoder_ms": 5550.2,
+          "peak_pcm_frames": 43840,
+          "peak_encoder_frames": 200,
+          "rss_samples": [
+            244187136,
+            232374272,
+            233963520,
+            234061824,
+            234061824
+          ]
+        }
+      },
+      {
+        "step": 3,
+        "returncode": 0,
+        "wall_s": 34.77607004204765,
+        "cpu_user_s": 111.421562,
+        "cpu_system_s": 4.80386,
+        "result": {
+          "pass": true,
+          "segment_limit_ms": 15000,
+          "audio_s": 302.744,
+          "wall_s": 34.617,
+          "rss_before_bytes": 7045120,
+          "rss_loaded_bytes": 175849472,
+          "rss_spread_bytes": 1753088,
+          "limit_finals": 20,
+          "encoder_ms": 11714.3,
+          "decoder_ms": 22833.1,
+          "peak_pcm_frames": 43840,
+          "peak_encoder_frames": 750,
+          "rss_samples": [
+            238174208,
+            238239744,
+            239927296,
+            239927296,
+            239927296
+          ]
+        }
+      },
+      {
+        "step": 4,
+        "returncode": 0,
+        "wall_s": 1.8027114999713376,
+        "cpu_user_s": 1.0891980000000103,
+        "cpu_system_s": 0.11069700000000005
+      }
+    ],
+    "limitations": [
+      "CPU macOS execution only; mobile cross-build is not device execution",
+      "bounded-overlap encoder with F16-expanded weights; decoder re-decodes hypotheses",
+      "English only; energy endpoint is not neural VAD",
+      "five-minute audio replay is accelerated, not five minutes of microphone/thermal measurement",
+      "repeated synthetic speech is not an ASR accuracy corpus"
+    ]
+  }
+}

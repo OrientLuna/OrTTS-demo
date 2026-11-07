@@ -17,6 +17,11 @@ def identity(source,liquidcodec=False,speech=False):
   llama=Path(ur['ggml_source_dir']).parent
   for item in ul['llama_sources']:
    if hashlib.sha256((llama/item['path']).read_bytes()).hexdigest()!=item['sha256']:raise ValueError('Pinned llama source modified: '+item['path'])
+  if ur.get('mtmd_sources'):
+   for path,digest in ur['mtmd_sources'].items():
+    if hashlib.sha256((source.parent/'mtmd'/path).read_bytes()).hexdigest()!=digest:raise ValueError('Patched mtmd source modified: '+path)
+  for path,digest in ul['support_files'].items():
+   if hashlib.sha256((source.parent/path).read_bytes()).hexdigest()!=digest:raise ValueError('Unified support source modified: '+path)
   changes={x['path']:x['sha256']for x in ul['changed_files']}
  elif liquidcodec:raise ValueError('Prepare unified sources before using --liquidcodec')
  expected={x['path']:x['sha256']for x in lock['selected_files']};expected.update(changes)

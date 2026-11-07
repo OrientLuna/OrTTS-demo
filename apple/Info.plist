@@ -5,9 +5,10 @@
 <key>CFBundleExecutable</key><string>ortts-apple</string>
 <key>CFBundleName</key><string>OrTTS</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleVersion</key><string>1</string>
-<key>CFBundleShortVersionString</key><string>0.1</string>
+<key>CFBundleVersion</key><string>2</string>
+<key>CFBundleShortVersionString</key><string>0.4.0</string>
 <key>LSRequiresIPhoneOS</key><true/>
+<key>NSMicrophoneUsageDescription</key><string>在本机识别录音为文字，音频不会上传。</string>
 <key>UIFileSharingEnabled</key><true/>
 <key>LSSupportsOpeningDocumentsInPlace</key><true/>
 <key>UIApplicationSceneManifest</key><dict>
