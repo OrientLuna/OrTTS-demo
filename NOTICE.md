@@ -15,6 +15,8 @@ OrTTS-demo integration code is licensed under Apache-2.0 (LICENSE). Third-party 
 | utf8proc | Unicode support in enabled runtime components | [Notices](licenses/utf8proc-LICENSE.md) |
 | cpp-httplib | Optional upstream HTTP components | [MIT](licenses/cpp-httplib-MIT.txt) |
 | Optional LiquidCodec dependencies | nlohmann/json, miniaudio, stb, xxHash, rotate-bits, SHA helpers and subprocess.h | Corresponding license texts in licenses/ |
+| jieba / cppjieba | MIT-derived ZipVoice Chinese segmenter in the optional speech build; embedded model dictionaries are separate assets | [MIT attribution](licenses/zipvoice-jieba-MIT.txt) |
+| Optional eSpeak NG | External G2P library/data for Kokoro, Piper, Kitten and ZipVoice; not required by PocketTTS or ASR | [GPL-3.0-or-later](https://github.com/espeak-ng/espeak-ng/blob/master/COPYING); bundled distributions need their own source/notices and license compatibility review |
 | Android NDK / LLVM | Distributed Android libc++ runtime | [NDK notices](licenses/Android-NDK-NOTICE.txt) |
 
 The pinned audio.cpp revision and OrTTS patches are recorded in vendor/runtime.lock.json. The speech.cpp adaptation is from commit d074e1b9d84fe5ec530c959292ffe3d94ffd288b; its original copyright notice is retained. No upstream endorsement is implied.
@@ -24,3 +26,15 @@ The pinned audio.cpp revision and OrTTS patches are recorded in vendor/runtime.l
 Model weights are downloaded separately from the model repository. Qwen3-TTS retains Apache-2.0; Liquid AI LFM-derived weights retain LFM Open License v1.0, including its commercial-use terms. The inherited model-side iSTFT implementation credits [Vocos](https://github.com/gemelo-ai/vocos) ([MIT](licenses/Vocos-MIT.txt)). Runtime licensing does not grant additional rights to those models, speaker recordings or presets.
 
 The distributed APK includes native third-party binaries. Corresponding notices must accompany binary releases; future APK builds include this file and the license texts under assets/licenses/.
+
+## Optional speech assets (reviewed 2026-11-07)
+
+The model catalog is a compatibility/verification example, not a cleared distribution bundle. See [license and expansion review](docs/development/speech-license-and-expansion-2026-11-07.md). Model weights, preset embeddings, source recordings and phonemizer dictionaries retain their own terms.
+
+- Kokoro and Kitten model cards identify Apache-2.0; Moonshine streaming tiny identifies MIT. Keep the relevant model notices as well as these runtime notices.
+- Pocket TTS model weights identify CC-BY-4.0; voice origins require separate attribution. The sampled alba/anna/george origins are documented separately in the catalog; not every Pocket voice is permissively licensed.
+- The tested ZipVoice-Distill Emilia checkpoint is subject to the upstream non-commercial statement (CC-BY-NC), despite the converter's Apache-2.0 label. Conversion cannot enlarge rights. It is not a cleared default distribution asset.
+- The tested Piper Lessac card links a research-only dataset license. This is an unresolved distribution-rights review, not a blanket conclusion about every Piper voice.
+- SenseVoice uses the linked FunASR model agreement, not Apache-2.0 for its weights. Attribution, model-name and other agreement terms apply.
+
+The integration code's Apache-2.0 license is unchanged. A host combining GPL-covered components must evaluate the resulting distribution and provide the corresponding source/build material where required; using dynamic loading is not an automatic exemption. No complete binary distribution compliance certification is asserted by this notice.

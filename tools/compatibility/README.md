@@ -89,3 +89,24 @@ clang++ -O3 -std=c++17 -I_work/crispasr-compat/src \
 完成所有运行后，用 `python3.12 tools/compatibility/summarize_local.py` 重新汇总JSON及终端比较表。Whisper用`total-load`估算推理边界；该差异已在报告明示。
 
 后续SDK已落地于 `runtime/SPEECH.md`。当前PL-BERT补丁含持久位置/类型输入保护；此前仅改gallocr的首版在取消后复用时不安全，不能回填首版。生产源准备使用 `vendor/speech/` 锁文件和 `tools/prepare_speech_runtime.py`，不要将画像/分配日志源树作为SDK源。
+
+## Whisper共享现有ggml的扩展探针
+
+这不是生产SDK注册。固定Whisper v1.7.6，直接使用当前头编译缺少`GGML_KQ_MASK_PAD`；显式恢复其原配头中的64，仅作为兼容实验。Mac复现（已有源/模型，不下载）：
+
+```sh
+clang++ -std=c++17 -O3 -DNDEBUG -DGGML_KQ_MASK_PAD=64 \
+ -I_work/runtime-speech/external/ggml/include -I_work/whisper-compat/include \
+ -I_work/whisper-compat/src -c _work/whisper-compat/src/whisper.cpp -o /tmp/ortts-shared-whisper.o
+clang++ -std=c++17 -O3 -I_work/runtime-speech/external/ggml/include \
+ -I_work/whisper-compat/include tools/compatibility/shared_whisper_probe.cpp \
+ /tmp/ortts-shared-whisper.o build/speech-macos-final/audio/ggml/src/libggml.a \
+ build/speech-macos-final/audio/ggml/src/libggml-cpu.a \
+ build/speech-macos-final/audio/ggml/src/ggml-blas/libggml-blas.a \
+ build/speech-macos-final/audio/ggml/src/libggml-base.a \
+ -framework Accelerate -o build/whisper-compat/shared-ggml-probe
+# 输入是已转换的16k mono F32原始文件，不是带头WAV。
+build/whisper-compat/shared-ggml-probe local/compat/assets/ggml-base.bin input16k.f32 en
+```
+
+原配对照用同一个probe链接`build/whisper-compat/src/libwhisper.dylib`，在独立进程中运行；候选只链接OrTTS现有静态ggml。两者均beam search 5、CPU4、no timestamps。中英两个短样例文本相同，不是logit或完整架构parity，中文也有共同识别错误。结果见`benchmarks/shared-ggml-whisper-20261107.json`；不可据此提前把Whisper列进SDK目录。

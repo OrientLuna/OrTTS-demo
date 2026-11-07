@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-07",
+  "host": "M5 MacBook Air 24GB CPU4",
+  "status": "experimental standalone probe, not integrated into OrTTS speech ABI",
+  "whisper_commit": "a8d002cfd879315632a579e73f0148d06959de36",
+  "whisper_tag": "v1.7.6",
+  "whisper_source_sha256": "cf3e1e1d1bd1f91649c946d8f4b87b079fe6f0847cdfbffeaf3239f8a028fc1c",
+  "ggml_header_sha256": "75d6f381a06d68069aeab68e2bc0e339cd74310b456f08dee9609264f89927fa",
+  "shared_libraries": {
+    "build/speech-macos-final/audio/ggml/src/libggml.a": "d6e55671bf02093877a4549963db2e05f113051a63074206e777026a85da306d",
+    "build/speech-macos-final/audio/ggml/src/libggml-cpu.a": "1258e0efc0dd94d0496fbffd74a66b709eed2f293a4f543b54f22b2ce6ac23e3",
+    "build/speech-macos-final/audio/ggml/src/libggml-base.a": "8b84b7dd79a424c1cf092bceb1f30a8784ddf9db1b659d828419e945e38cedcd",
+    "build/speech-macos-final/audio/ggml/src/ggml-blas/libggml-blas.a": "4f3c31150bba95eb061caed53b7691af944a43a32f4b9226ccf61bed83add333"
+  },
+  "unmodified_compile": "fails: GGML_KQ_MASK_PAD undefined",
+  "compatibility_define": "GGML_KQ_MASK_PAD=64, value from pinned Whisper ggml header; not a blanket ggml compatibility guarantee",
+  "defined_ggml_init_symbols": 1,
+  "model_sha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
+  "cases": [
+    {
+      "language": "en",
+      "shared": {
+        "load_ms": "137.559",
+        "inference_ms": "595.929",
+        "rtf": "0.161411",
+        "text": " At 930, please check the train ticket and call the station."
+      },
+      "original": {
+        "load_ms": "102.248",
+        "inference_ms": "510.318",
+        "rtf": "0.138223",
+        "text": " At 930, please check the train ticket and call the station."
+      },
+      "same_transcript": true
+    },
+    {
+      "language": "zh",
+      "shared": {
+        "load_ms": "187.474",
+        "inference_ms": "655.821",
+        "rtf": "0.116777",
+        "text": "開放時間早上9點,墜下5點"
+      },
+      "original": {
+        "load_ms": "83.310",
+        "inference_ms": "479.287",
+        "rtf": "0.085343",
+        "text": "開放時間早上9點,墜下5點"
+      },
+      "same_transcript": true
+    }
+  ],
+  "limitations": [
+    "Two short fixtures only; Chinese baseline itself has word errors",
+    "No logit/golden intermediate parity, long audio, GPU or mobile certification",
+    "Single measurements with different ggml configurations; not a performance ranking",
+    "No second ggml linked in candidate executable; existing static OrTTS ggml archives reused"
+  ]
+}

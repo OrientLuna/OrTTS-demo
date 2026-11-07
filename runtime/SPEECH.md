@@ -54,7 +54,7 @@ python3 tools/verify_speech_pack.py --id pocket-english-q8 --root /installed/ass
 
 该命令只读校验，不下载；拒绝重复/越界路径、尺寸/SHA不符和缺少model资产。源码、模型、音色、G2P资源许可证分别适用；不能用推理代码许可证代替模型/语料授权。清单中Piper/ZipVoice仍需按其具体资产审查许可，不视为默认发行包。
 
-英语前端所需eSpeak-ng不是系统内置能力：宿主需带合适的平台库和数据，配置`espeak_library`/`espeak_data`绝对路径。同进程应使用一致的eSpeak库/字典；底层有缓存，环境变量按操作恢复不意味着支持同时混用不同库版本。iOS需嵌入并签名合法库，Android需匹配ABI，并携带NDK的`libc++_shared.so`。Android安装产物会strip，未剥离调试信息留在构建目录，避免将调试体积误算作发布库体积。不能把Mac的Homebrew路径带到手机。新库隐藏audio.cpp/ggml符号，Android保留16KiB页对齐并链接liblog；不要再在同进程加载另一份独立OrTTS库。
+Kokoro/Piper/Kitten和ZipVoice英文前端使用的eSpeak-ng不是系统内置能力（Pocket与ASR当前不需要）：宿主需带合适的平台库和数据，配置`espeak_library`/`espeak_data`绝对路径。同进程应使用一致的eSpeak库/字典；底层有缓存，环境变量按操作恢复不意味着支持同时混用不同库版本。iOS需嵌入并签名合法库，Android需匹配ABI，并携带NDK的`libc++_shared.so`。Android安装产物会strip，未剥离调试信息留在构建目录，避免将调试体积误算作发布库体积。不能把Mac的Homebrew路径带到手机。新库隐藏audio.cpp/ggml符号，Android保留16KiB页对齐并链接liblog；不要再在同进程加载另一份独立OrTTS库。
 
 ## C ABI与生命周期
 
@@ -103,3 +103,5 @@ python3 tools/test_speech.py --build build/speech-macos --source _work/runtime-s
 ```
 
 还需保留原ABI回归、模型包验证、Swift头文件导入与Android ELF依赖/符号检查。具体本轮结果见`docs/development/ortavern-speech-handoff-2026-11-07.md`和`benchmarks/speech-integration-20261107.json`。音频听感/音色相似度仍由人确认。
+
+发行状态复核：参见[完整开源发行审计与扩展计划](../docs/development/speech-license-and-expansion-2026-11-07.md)。特别是测试的ZipVoice Emilia Distill权重，上游已明确非商业限制，不能沿用转换仓库的Apache标记；完整开源也不等于模型无使用限制。catalog的license_review是审计记录，不是自动授权。

@@ -12,3 +12,5 @@
 6. [单语言与音色抽测](languages-and-voices-2026-11-07.md)：最新要求，中文候选与固定音色样本，不再强制混读。
 
 可复现工具在 `tools/compatibility/`，结构化结果在 `benchmarks/`；权重和试听音频只在本地忽略目录。
+
+最新许可及扩展结论见[完整开源发行审计](../development/speech-license-and-expansion-2026-11-07.md)，其中纠正了ZipVoice权重、Pocket外部依赖与音色许可范围。
