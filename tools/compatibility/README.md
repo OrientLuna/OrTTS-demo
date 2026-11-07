@@ -90,6 +90,10 @@ clang++ -O3 -std=c++17 -I_work/crispasr-compat/src \
 
 后续SDK已落地于 `runtime/SPEECH.md`。当前PL-BERT补丁含持久位置/类型输入保护；此前仅改gallocr的首版在取消后复用时不安全，不能回填首版。生产源准备使用 `vendor/speech/` 锁文件和 `tools/prepare_speech_runtime.py`，不要将画像/分配日志源树作为SDK源。
 
+## Moonshine增量编码实验
+
+Moonshine 增量编码的小切片另见 [ggml 流式 ASR 与 FunASR 边界](../../docs/development/ggml-streaming-asr-2026-11-07.md)。`build_moonshine_incremental.py` / `check_moonshine_incremental.py` 不下载模型，不更改 SDK；当前是局部窗口编码、重复解码的实验，不是已发布的流式 ABI。F16/F32 筛查通过，Native Q8 数值阈值尚未通过。
+
 ## Whisper共享现有ggml的扩展探针
 
 这不是生产SDK注册。固定Whisper v1.7.6，直接使用当前头编译缺少`GGML_KQ_MASK_PAD`；显式恢复其原配头中的64，仅作为兼容实验。Mac复现（已有源/模型，不下载）：

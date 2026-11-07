@@ -4,6 +4,8 @@
 
 ## 能力边界
 
+Moonshine 新增独立的 `ortts_asr_stream_*` / Rust `speech::streaming::Stream`，支持可修订 partial、final、flush/reset、取消与有界分段；旧 `ortts_asr_*` 保持 buffered-final。实现与 FunASR 边界见 [验证记录](../docs/development/ggml-streaming-asr-2026-11-07.md)。
+
 | 路线 | 本轮模型资产 | 输出/输入格式 | 增量与限制 |
 |---|---|---|---|
 | 原 OrTTS P3/P5 | 现有自研包 | 24kHz mono F32 | 原接口保持；原 LiquidCodec 仍需原有可选构建流程 |
@@ -13,7 +15,7 @@
 | Kitten | mini0.8 | 原生24kHz F32 | 当前port仅离线；流式配置明确拒绝 |
 | ZipVoice | Distill Q8 | 原生24kHz F32 | pull文本分块；需要参考PCM和匹配转写；用户报告手机效果不佳，保持可选 |
 | SenseVoice | Small Q8 | 输入16kHz mono F32 | 离线/有界缓冲后final；中文、英文；可显式配置Silero |
-| Moonshine | streaming tiny Q8 | 输入16kHz mono F32 | 当前接线只在finish输出final；英语，不宣称真流式partial |
+| Moonshine | streaming tiny Q8，增量接口将编码器展开为F16 | 输入16kHz mono F32 | 独立增量接口支持英语 partial/final；有界重叠编码、重复解码；非逐层KV缓存 |
 
 F5、Whisper、VITS ONNX、CosyVoice、MeloTTS不在这个交付库的新模型目录中。F5独立基线很慢；Whisper独立基线未移植；此前VITS是Sherpa独立比较。Piper是模型专用流水线，不是任意VITS ONNX导入器。
 
@@ -30,7 +32,7 @@ python3 tools/build_engine.py --target macos-arm64 --profile arm64-i8mm \
   --source _work/runtime-speech --speech --out build/speech-macos
 ```
 
-`prepare_speech_runtime.py`复制源树后应用两个锁定修正，不改原树：Kokoro PL-BERT生命周期复用；SenseVoice VAD无语音时不再错误地整段转写。准备结果有独立receipt，构建工具拒绝未经准备或被改动的源。要复现低内存开关A/B，可在独立构建目录将CMake的`ORTTS_KOKORO_GRAPH_ALLOC`设为OFF；发布构建默认ON，最终回归应记录实际配置。
+`prepare_speech_runtime.py`复制源树后应用锁定修正与增量执行器，不改原树：Kokoro PL-BERT生命周期复用；SenseVoice VAD无语音时不再错误地整段转写；Moonshine绝对位置偏移与独立有界增量会话。准备结果有独立receipt，构建工具拒绝未经准备或被改动的源。要复现低内存开关A/B，可在独立构建目录将CMake的`ORTTS_KOKORO_GRAPH_ALLOC`设为OFF；发布构建默认ON，最终回归应记录实际配置。
 
 ```sh
 python3 tools/build_engine.py --target ios-arm64 --profile arm64-baseline \
@@ -71,9 +73,35 @@ Kokoro/Piper/Kitten和ZipVoice英文前端使用的eSpeak-ng不是系统内置�
 
 `ortts_asr_run`直接接受有限16kHz mono F32；`accept`复制片段到有界缓冲，`finish(language)`转写后释放输入，`reset`丢弃输入。默认60秒，上限120秒；超限返回INVALID，宿主可finish/reset，不能无限累积。缓冲未结束时run被拒绝，防止串话。
 
-没有partial、自动endpoint或中间时间戳API；宿主现有VAD/endpoint决定何时finish。精确数字静音返回空串，这是确定性保护，**不是通用VAD**。SenseVoice若配置session option `sense_asr.vad_model_path`为已验证Silero路径，会在离线转写时做VAD分段；未配置则显式禁用内部VAD，不依赖cwd寻找文件。此VAD不是实时endpoint。
+旧 `ortts_asr_*` 没有partial、自动endpoint或中间时间戳API；宿主现有VAD/endpoint决定何时finish。精确数字静音返回空串，这是确定性保护，**不是通用VAD**。SenseVoice若配置session option `sense_asr.vad_model_path`为已验证Silero路径，会在离线转写时做VAD分段；未配置则显式禁用内部VAD，不依赖cwd寻找文件。此VAD不是实时endpoint。
 
-取消为PCM/事件边界检查，离线ASR/TTS只能在compute返回后丢弃结果，不能中断单个矩阵计算。取消不释放句柄；TTS复用前适配层reset。不得与free并发。输入缓冲要丢弃请显式reset，idle cancel不会充当reset。
+旧接口取消为PCM/事件边界检查，离线ASR/TTS只能在compute返回后丢弃结果，不能中断单个矩阵计算。取消不释放句柄；TTS复用前适配层reset。不得与free并发。输入缓冲要丢弃请显式reset，idle cancel不会充当reset。
+
+### Moonshine 增量 ASR
+
+检查 `ortts_asr_stream_abi_version()==1`。`ortts_asr_stream_create` 使用基础 speech config（`family=moonshine_asr`、`streaming=1`、CPU线程1..8）和独立 typed config，不接受旧离线 `max_input_frames`、eSpeak或session options。C结构必须填写 `struct_size`；传NULL流式配置使用默认值。
+
+- 输入固定为有限16kHz mono F32，每次1..32000帧，任意分块大小；内部按20ms推进，尾部不足一块在finish时处理。
+- 默认每400ms尝试更新，积累至少1000ms才发partial。partial是当前segment整条假设，宿主应替换，不应把它追加到最终文本。没有稳定token承诺，也没有词级时间戳；start/end是输入段范围。
+- endpoint=0表示partial，1/2/3分别表示显式flush、能量静音、段长上限产生的final。segment_id和revision区分段与修订。finish结束当前段，但句柄继续接收下一段；没有新输入时重复finish不重复final。全静音flush可得到空final。
+- 默认段长上限15s，可配置1..30s；达到上限会切段，不保证词边界。默认RMS阈值0.003、静音800ms；这是能量门限，**不是神经网络VAD**，噪声可能误触发，较轻语音可能漏检。`silence_ms=0`关闭自动静音结束，由宿主VAD调用finish；能量门限仍用于无语音保护，可调整阈值。
+- 编码器采用有界上下文重叠计算，保留段内已提交编码帧；解码器从新cross-memory重新生成假设。编码器固定将Q8权重展开为F16，解码器保持Native；F16已通过数值筛查，Native Q8增量筛查尚未通过，没有把失败模式开放为配置。它是增量输入/输出执行器，**不是逐层KV完全复用实现**。
+- 当前段PCM、编码帧、单条假设和临时解码图均受段长上限约束，不保存无限历史转写。模型权重每个句柄独立持有，多个句柄会增加常驻内存，宿主仍需小型引擎缓存。`get_stats`返回当前/峰值PCM、编码帧、输入计数、累计编码/解码耗时，不包含宿主保存的事件或播放缓冲。
+- accept/finish同步执行回调，借用字符串只在回调内有效；快速复制/入队，不得重入或free。回调非零或独立cancel均使取消保持到reset；可以从另一线程cancel，检查发生在20ms tick、编码前后及解码token边界，不能中断单个tensor kernel。reset清除音频、假设、分段计数与取消状态；free不得与任何操作/cancel并发。
+- INVALID输入不会消耗音频；推理/回调异常后必须reset。取消可能使一次accept只处理部分输入，received计数仍记录该次提供的总帧数，processed记录实际进入tick的帧数。此时不要重送未处理尾部，先reset并重新开始一段。
+
+Rust `speech::streaming::{Stream,Settings,Event,Kind,Stats,Cancellation}` 封装所有权并捕获回调panic，句柄保持!Send/!Sync；`cancellation()`返回可跨线程克隆的取消token，UI可以在推理中取消。token不保活权重，句柄释放后cancel为no-op。`accept`/`finish`返回拥有字符串的事件Vec；`accept_with`/`finish_with`在回调返回true继续、false取消。示例见 `rust/examples/asr_stream.rs`；Swift导入检查见 `examples/ImportSpeech.swift`。
+
+```rust,ignore
+use ortts_engine::speech::{Config, streaming::{Stream, Settings}};
+let mut config = Config::new("moonshine_asr", "/models/moonshine-streaming-tiny-q8_0.gguf");
+config.streaming = true;
+let mut asr = Stream::new(&config, Settings::default())?;
+for event in asr.accept(&pcm16k)? { /* 用segment_id/revision替换partial或提交final */ }
+for event in asr.finish()? { /* flush最后一段 */ }
+```
+
+本机验收：C/Rust、跨线程取消、任意分块、reset复用、两会话交错、静音、自动与限长分段；303秒音频加速回放检查RSS平台。固定音色与自然13秒长句另做offline对照。详细记录见 `benchmarks/asr-stream-sdk-20261107.json`、`benchmarks/asr-stream-quality-20261107.json`。iOS/Android仅完成构建和接口检查，**新增ASR手机执行尚未验证**；中文仍使用SenseVoice离线接口。
 
 ### 调度、缓存与内存
 
@@ -97,7 +125,7 @@ let audio = tts.synthesize(&req)?; // PCM + 原生rate/channels
 完整Rust闭环见`rust/examples/speech.rs`：Piper原生采样率→宿主显式重采样→SenseVoice离线/缓冲一致→Pocket pull流取消后复用。
 
 ```sh
-python3 tools/test_speech.py --build build/speech-macos --source _work/runtime-speech \
+python3.12 tools/test_speech.py --build build/speech-macos --source _work/runtime-speech \
   --assets local/compat/assets --espeak-library /opt/homebrew/lib/libespeak-ng.dylib \
   --espeak-data /opt/homebrew/share/espeak-ng-data --out outputs/speech-acceptance
 ```

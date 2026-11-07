@@ -10,7 +10,17 @@
       "path": "src/community_models/sense_asr/session.cpp",
       "base_sha256": "681a9815280d0e6d209ba6d243879912e6d4784348a090c7f4915119282969a8",
       "sha256": "b7f2bd212035da6fdac48beee0701e6d9488fa70941c5aa8086f905efb73b07d"
+    },
+    {
+      "path": "include/engine/models/moonshine_asr/runtime.h",
+      "base_sha256": "85fc764fef4e8299e22d0d96e1c8c743be94239029eb27992e071f4581e3aaf3",
+      "sha256": "f9d1f14133c00b33e49a1082b505d5f24b0d89c4de2f15560640e6439794a791"
+    },
+    {
+      "path": "src/models/moonshine_asr/runtime.cpp",
+      "base_sha256": "5916c7d6a939655a4c0bbac84cce4b13c016c8a5ad964d6529c7b1de488f5184",
+      "sha256": "8410925092f361abb9ddc562f718659043ec2a688d8df679575c48d825bea3d3"
     }
   ],
-  "patch_sha256": "fafc02ebcf5e1d4f1ad0c6cbf3a757ed350e8d4c2d98dd28d0172f58505e7555"
+  "patch_sha256": "a4a520aa2ecdbaf2aec3ef9c0027a590c547cc643dd41e99eced43c5147e5c63"
 }

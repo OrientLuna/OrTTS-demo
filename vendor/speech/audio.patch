@@ -92,3 +92,267 @@
      return run_single(make_request(normalized_request));
    }
    const auto &audio = *normalized_request.audio_input;
+--- a/include/engine/models/moonshine_asr/runtime.h
++++ b/include/engine/models/moonshine_asr/runtime.h
+@@ -6,6 +6,8 @@
+ #include "engine/framework/runtime/session.h"
+ 
+ #include <cstddef>
++#include <cstdint>
++#include <functional>
+ #include <string>
+ #include <unordered_map>
+ #include <memory>
+@@ -46,4 +48,43 @@
+     const std::unordered_map<std::string, std::string> & options,
+     const MoonshineRuntimeConfig & config);
+ 
++
++// OrTTS incremental Moonshine session. Shares this translation unit's ggml
++// implementation; no second backend. Encoder uses bounded overlap, decoder
++// hypotheses are recomputed because new cross-memory invalidates self-KV.
++struct MoonshineIncrementalConfig {
++    size_t update_samples = 6400;
++    size_t min_partial_samples = 16000;
++    size_t max_segment_samples = 240000;
++    size_t endpoint_silence_samples = 12800; // 0 disables energy endpoint
++    float energy_threshold = 0.003F;
++};
++struct MoonshineIncrementalEvent {
++    std::string text;
++    uint64_t segment = 0, start = 0, end = 0, revision = 0;
++    int endpoint = 0; // 0 partial, 1 explicit flush, 2 energy silence, 3 limit
++};
++struct MoonshineIncrementalStats {
++    uint64_t received = 0, processed = 0, encoded = 0, updates = 0;
++    size_t buffered = 0, cached_frames = 0, segment_samples = 0;
++    size_t peak_buffered = 0, peak_cached_frames = 0;
++    double encoder_ms = 0, decoder_ms = 0;
++};
++class MoonshineIncremental {
++public:
++    using Sink = std::function<bool(const MoonshineIncrementalEvent &)>; // true cancels
++    using Cancel = std::function<bool()>;
++    MoonshineIncremental(const std::string & model, int threads, MoonshineIncrementalConfig);
++    ~MoonshineIncremental();
++    MoonshineIncremental(const MoonshineIncremental &) = delete;
++    MoonshineIncremental & operator=(const MoonshineIncremental &) = delete;
++    bool accept(const float *, size_t, const Sink &, const Cancel &);
++    bool finish(const Sink &, const Cancel &);
++    void reset();
++    MoonshineIncrementalStats stats() const;
++private:
++    struct Impl;
++    std::unique_ptr<Impl> impl_;
++};
++
+ }  // namespace engine::models::moonshine_asr
+--- a/src/models/moonshine_asr/runtime.cpp
++++ b/src/models/moonshine_asr/runtime.cpp
+@@ -475,7 +475,7 @@
+         int64_t input_frames,
+         engine::modules::GeluApproximation encoder_gelu,
+         bool cpu_blas_scheduler,
+-        size_t graph_arena_bytes)
++        size_t graph_arena_bytes, int64_t position_offset = 0)
+         : backend_(execution_context.backend()),
+           frames_(input_frames),
+           hidden_(assets.config.decoder.hidden_size) {
+@@ -591,7 +591,8 @@
+             }
+             engine::core::prepare_host_graph_plan(execution_context, graph_, plan_);
+         }
+-        const auto pos_values = engine::modules::decoder_position_ids(memory_frames_);
++        auto pos_values = engine::modules::decoder_position_ids(memory_frames_);
++        for (auto & p : pos_values) p += position_offset;
+         engine::core::write_tensor_i32(positions_, pos_values);
+         for (const auto & mask : masks_) {
+             engine::core::write_tensor_f16(mask.tensor, mask.values);
+@@ -1136,3 +1137,187 @@
+ 
+ 
+ }  // namespace engine::models::moonshine_asr
++
++namespace engine::models::moonshine_asr {
++namespace {
++// Loading encoder weights as F16 avoids the Native Q8 shape-dependent dispatch
++// differences observed in the pinned backend. Decoder weights remain Native.
++std::string incremental_decode(
++    const MoonshineAssets & assets, const MoonshineWeights & weights,
++    const engine::core::ExecutionContext & context, const std::vector<float> & memory,
++    const MoonshineRuntimeConfig & config, const MoonshineIncremental::Cancel & cancel) {
++    const int64_t frames = memory.size() / assets.config.decoder.hidden_size;
++    const int64_t max_tokens = std::min<int64_t>(
++        std::ceil(frames * 0.020 * assets.config.max_tokens_per_second),
++        assets.config.decoder.max_position_embeddings);
++    if (!max_tokens || cancel()) return {};
++    CachedDecoderGraph graph(assets, weights, context, max_tokens, frames, config.graph_arena_bytes);
++    graph.prepare_memory(memory, context);
++    std::vector<int32_t> tokens;
++    int32_t previous = assets.config.decoder.decoder_start_token_id;
++    for (int64_t step = 0; step < max_tokens; ++step) {
++        if (cancel()) return {};
++        auto logits = graph.run_step(previous, static_cast<int32_t>(step), context);
++        if (logits.size() != static_cast<size_t>(assets.config.decoder.vocab_size))
++            throw std::runtime_error("Incremental Moonshine logits shape mismatch");
++        previous = sampling::HfLogitsProcessor::argmax(logits.data(), logits.size(), "Moonshine stream");
++        if (previous == assets.config.decoder.eos_token_id) break;
++        tokens.push_back(previous);
++    }
++    return decode_moonshine_tokens(assets, tokens);
++}
++}
++
++struct MoonshineIncremental::Impl {
++    MoonshineIncrementalConfig config;
++    engine::core::ExecutionContext context;
++    std::shared_ptr<const MoonshineAssets> assets;
++    MoonshineRuntimeConfig runtime;
++    std::shared_ptr<const MoonshineWeights> weights;
++    MoonshineIncrementalStats counters;
++    std::vector<float> ring, memory, tail;
++    size_t segment_samples = 0, ring_start = 0, committed = 0;
++    size_t voiced = 0, quiet = 0, last_update = 0;
++    size_t left = 4, right = 0;
++    uint64_t segment = 0, revision = 0, segment_start = 0;
++    std::string hypothesis;
++
++    Impl(const std::string & path, int threads, MoonshineIncrementalConfig c)
++        : config(c), context({engine::core::BackendType::Cpu, 0, threads}) {
++        assets = load_moonshine_asr_assets(path);
++        if (assets->config.encoder.sample_rate != 16000 || assets->config.encoder.frame_length != 80)
++            throw std::invalid_argument("Moonshine stream requires the verified 16k/80-sample frontend");
++        if (config.max_segment_samples / 320 + 1 > size_t(assets->config.decoder.max_position_embeddings))
++            throw std::invalid_argument("Stream segment exceeds model position capacity");
++        runtime = make_moonshine_runtime_config(assets->config, context.backend_type(), {});
++        runtime.encoder_weight_storage_type = engine::assets::TensorStorageType::F16;
++        weights = load_moonshine_asr_weights(*assets, context.backend(), context.backend_type(),
++            runtime.encoder_weight_storage_type, runtime.decoder_weight_storage_type,
++            runtime.conv_weight_storage_type, runtime.weight_context_bytes);
++        for (auto window : assets->config.encoder.sliding_windows) {
++            if (window.past <= 0 || window.future < 0)
++                throw std::invalid_argument("Moonshine stream requires bounded local attention");
++            left += size_t(window.past); right += size_t(window.future);
++        }
++        tail.reserve(320);
++    }
++
++    void clear_segment() {
++        ring.clear(); memory.clear(); segment_samples = ring_start = committed = 0;
++        voiced = quiet = last_update = 0; revision = 0; hypothesis.clear();
++        segment_start = counters.processed;
++    }
++
++    bool update(bool final, int endpoint, const Sink & sink, const Cancel & cancel) {
++        if (cancel()) return false;
++        if (voiced >= 1600 && segment_samples >= 80) {
++            size_t stable = final ? ((segment_samples / 80 + 3) / 4)
++                : (segment_samples / 320 > right + 1 ? segment_samples / 320 - right - 1 : 0);
++            if (stable > committed) {
++                auto start = Clock::now();
++                auto frames = prepare_compressed_frames(ring, 80, weights->encoder.frontend.log_k);
++                EncoderGraph graph(*assets, *weights, context, frames.size()/80,
++                    runtime.encoder_gelu, runtime.cpu_blas_scheduler, runtime.graph_arena_bytes,
++                    ring_start / 320);
++                auto output = graph.run(frames, context);
++                const size_t hidden = size_t(assets->config.decoder.hidden_size);
++                size_t from = (committed - ring_start/320) * hidden;
++                size_t count = (stable - committed) * hidden;
++                if (from + count > output.size()) throw std::runtime_error("Invalid incremental commit range");
++                for (size_t i = from; i < from + count; ++i)
++                    if (!std::isfinite(output[i])) throw std::runtime_error("Nonfinite incremental encoding");
++                memory.insert(memory.end(), output.begin()+from, output.begin()+from+count);
++                committed = stable;
++                counters.encoded += ring.size();
++                counters.encoder_ms += engine::debug::elapsed_ms(start);
++                counters.peak_cached_frames = std::max(counters.peak_cached_frames, committed);
++                size_t keep = committed > left ? (committed-left)*320 : 0;
++                if (keep > ring_start) {
++                    ring.erase(ring.begin(), ring.begin()+(keep-ring_start)); ring_start = keep;
++                }
++                if (cancel()) return false;
++                start = Clock::now();
++                hypothesis = incremental_decode(*assets, *weights, context, memory, runtime, cancel);
++                counters.decoder_ms += engine::debug::elapsed_ms(start);
++                if (cancel()) return false;
++            }
++        }
++        ++counters.updates;
++        if (final || !hypothesis.empty()) {
++            MoonshineIncrementalEvent event{hypothesis, segment, segment_start,
++                counters.processed, ++revision, endpoint};
++            if (sink(event)) return false;
++        }
++        last_update = segment_samples;
++        return !cancel();
++    }
++
++    bool tick(const float * p, size_t n, const Sink & sink, const Cancel & cancel) {
++        if (cancel()) return false;
++        double square = 0;
++        for (size_t i=0; i<n; ++i) square += double(p[i])*p[i];
++        bool speech = square > double(config.energy_threshold)*config.energy_threshold*n;
++        counters.processed += n;
++        segment_samples += n;
++        ring.insert(ring.end(), p, p+n);
++        counters.peak_buffered = std::max(counters.peak_buffered, ring.size());
++        if (speech) { voiced += n; quiet = 0; } else quiet += n;
++        // Before speech, retain only 200ms pre-roll; do not infer on silence.
++        if (!voiced && segment_samples > 3200) {
++            size_t drop = ((segment_samples-3200)/320)*320;
++            ring.erase(ring.begin(), ring.begin()+drop);
++            segment_samples -= drop; segment_start += drop;
++        }
++        int endpoint = segment_samples >= config.max_segment_samples ? 3
++            : (voiced >= 1600 && config.endpoint_silence_samples && quiet >= config.endpoint_silence_samples ? 2 : 0);
++        if (endpoint) {
++            if (!update(true, endpoint, sink, cancel)) return false;
++            ++segment; clear_segment();
++        } else if (segment_samples >= config.min_partial_samples &&
++                   segment_samples-last_update >= config.update_samples && voiced >= 1600) {
++            if (!update(false, 0, sink, cancel)) return false;
++        }
++        return true;
++    }
++};
++
++MoonshineIncremental::MoonshineIncremental(const std::string & model, int threads, MoonshineIncrementalConfig config)
++    : impl_(std::make_unique<Impl>(model, threads, config)) {}
++MoonshineIncremental::~MoonshineIncremental() = default;
++bool MoonshineIncremental::accept(const float * p, size_t n, const Sink & sink, const Cancel & cancel) {
++    auto & s = *impl_;
++    s.counters.received += n;
++    size_t at = 0;
++    while (at < n) {
++        size_t take = std::min(n-at, 320-s.tail.size());
++        s.tail.insert(s.tail.end(), p+at, p+at+take); at += take;
++        if (s.tail.size() == 320) {
++            bool ok = s.tick(s.tail.data(), s.tail.size(), sink, cancel);
++            s.tail.clear(); if (!ok) return false;
++        }
++        if (cancel()) return false;
++    }
++    return true;
++}
++bool MoonshineIncremental::finish(const Sink & sink, const Cancel & cancel) {
++    auto & s = *impl_;
++    if (!s.tail.empty()) {
++        bool ok = s.tick(s.tail.data(), s.tail.size(), sink, cancel);
++        s.tail.clear(); if (!ok) return false;
++    }
++    // A tick may have emitted an automatic final. Avoid a second empty final.
++    if (s.segment_samples || s.segment == 0) {
++        if (!s.update(true, 1, sink, cancel)) return false;
++        ++s.segment; s.clear_segment();
++    }
++    return !cancel();
++}
++void MoonshineIncremental::reset() {
++    auto & s = *impl_; s.counters = {}; s.segment = 0; s.tail.clear(); s.clear_segment();
++}
++MoonshineIncrementalStats MoonshineIncremental::stats() const {
++    auto & s = *impl_; auto result = s.counters;
++    result.buffered = s.ring.size() + s.tail.size(); result.cached_frames = s.committed;
++    result.segment_samples = s.segment_samples; return result;
++}
++} // namespace engine::models::moonshine_asr

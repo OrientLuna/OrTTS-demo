@@ -6,7 +6,7 @@ The API supports model loading, offline synthesis, incremental float PCM, cancel
 
 ## Optional multi-model speech SDK
 
-The additive [speech API](SPEECH.md) adds five TTS and two ASR families to the same CPU library/ggml build. Use `--speech` with separately prepared speech sources; existing P3/P5 calls keep ABI1. Output formats are native per model, and ASR has its own bounded input/final/reset API. This is model-specific execution, not a general ONNX importer. Mobile cross-builds do not certify model execution.
+The additive [speech API](SPEECH.md) adds five TTS and two ASR families to the same CPU library/ggml build. Use `--speech` with separately prepared speech sources; existing P3/P5 calls keep ABI1. Output formats are native per model, and ASR has its own bounded input/final/reset API; a separately versioned Moonshine incremental API adds revisable partial/final events, bounded segments and cancellation. This is model-specific execution, not a general ONNX importer. Mobile cross-builds do not certify model execution.
 
 ## Build
 

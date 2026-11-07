@@ -260,7 +260,7 @@
       ],
       "external_espeak": false,
       "status": "macos-cpu-tested; mobile-unverified",
-      "notes": "Buffered final only, not true partial ASR",
+      "notes": "Legacy ASR remains buffered-final. Separate ortts_asr_stream_* supports English revisable partials, bounded-overlap F16 encoder, hypothesis re-decoding and energy/manual/limit endpoints. macOS validated; mobile execution unverified.",
       "license_review": {
         "checked_at": "2026-11-07",
         "weights_license": "MIT",

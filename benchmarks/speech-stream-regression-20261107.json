@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "host": "Darwin arm64",
+  "model_execution": "current host only; cross-builds are not device certification",
+  "checks": [
+    {
+      "step": 0,
+      "returncode": 0
+    },
+    {
+      "step": 1,
+      "returncode": 0
+    },
+    {
+      "step": 2,
+      "returncode": 0
+    }
+  ],
+  "artifact_sha256": "ba4f0fa5c5f6ad2ace15a75f2ba19884aff920273536535d76440c7f8258df78",
+  "artifact_bytes": 8928448,
+  "public_headers": {
+    "ortts_speech.h": "56a0fb9335de78ef8cd5efb163a0a31cbc6e620a3a43c53dd8de25f2def1c2e2",
+    "ortts_engine.h": "1471c8007982d86d544030db7b2c48e2cbf87ce1f6245338750cb308de2b7027"
+  },
+  "assertions": [
+    "five native-format TTS families",
+    "Kokoro/Pocket/ZipVoice callback/pull stream cancellation and reuse",
+    "Piper/Kitten reject streaming",
+    "English model rejects zh and Han text, invalid UTF-8 and missing voice",
+    "SenseVoice/Moonshine offline equals buffered-final",
+    "ASR bounds/reset/digital silence/nonfinite input",
+    "SenseVoice explicit Silero NoSpeech does not re-transcribe whole input",
+    "legacy and speech share BUSY gate",
+    "Rust native-rate copy + ASR + Pocket stream reuse"
+  ],
+  "subjective_quality": "not certified",
+  "date": "2026-11-07",
+  "scope": "Existing speech SDK regression after adding independent incremental Moonshine API"
+}

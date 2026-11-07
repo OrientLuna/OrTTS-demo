@@ -1,0 +1,1495 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "platform": "macOS ARM64",
+  "scope": "experimental bounded-overlap encoder; decoder restarts each update; no endpoint/cancel ABI",
+  "tolerance_relative_l2": 0.0005,
+  "model_sha256": "0f795f14924dbfe40d2ee0e220382c9b23cd9e89064c6ffb97e236d81f1d7020",
+  "binary_sha256": "a969e45ae798f4aa12219ff77821409f6cd96e030e457393386cafe959973a5f",
+  "cases": [
+    {
+      "experimental": true,
+      "encoder_storage": "f32",
+      "chunk_samples": 1600,
+      "left_context_frames": 100,
+      "right_context_frames": 16,
+      "updates": [
+        {
+          "audio_s": 0.4,
+          "final": false,
+          "slice_relative_l2": 2.52059063e-05,
+          "committed_frames": 3,
+          "text": "Okay"
+        },
+        {
+          "audio_s": 0.5,
+          "final": false,
+          "slice_relative_l2": 7.53305223e-05,
+          "committed_frames": 8,
+          "text": "But"
+        },
+        {
+          "audio_s": 0.6,
+          "final": false,
+          "slice_relative_l2": 0.000119308367,
+          "committed_frames": 13,
+          "text": "That'"
+        },
+        {
+          "audio_s": 0.7,
+          "final": false,
+          "slice_relative_l2": 0.000135516621,
+          "committed_frames": 18,
+          "text": "At night."
+        },
+        {
+          "audio_s": 0.8,
+          "final": false,
+          "slice_relative_l2": 0.000160768453,
+          "committed_frames": 23,
+          "text": "At 9"
+        },
+        {
+          "audio_s": 0.9,
+          "final": false,
+          "slice_relative_l2": 0.000112045458,
+          "committed_frames": 28,
+          "text": "At 9."
+        },
+        {
+          "audio_s": 1,
+          "final": false,
+          "slice_relative_l2": 0.000144447377,
+          "committed_frames": 33,
+          "text": "At 9.3"
+        },
+        {
+          "audio_s": 1.1,
+          "final": false,
+          "slice_relative_l2": 0.0001219153,
+          "committed_frames": 38,
+          "text": "At 9.3"
+        },
+        {
+          "audio_s": 1.2,
+          "final": false,
+          "slice_relative_l2": 0.00015750263,
+          "committed_frames": 43,
+          "text": "At 9.30"
+        },
+        {
+          "audio_s": 1.3,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 48,
+          "text": "At 9.30,"
+        },
+        {
+          "audio_s": 1.4,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 53,
+          "text": "At 9.30,"
+        },
+        {
+          "audio_s": 1.5,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 58,
+          "text": "At 9.30,"
+        },
+        {
+          "audio_s": 1.6,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 63,
+          "text": "At 9.30,"
+        },
+        {
+          "audio_s": 1.7,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 68,
+          "text": "At 9.30, P."
+        },
+        {
+          "audio_s": 1.8,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 73,
+          "text": "At 9.30, please"
+        },
+        {
+          "audio_s": 1.9,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 78,
+          "text": "At 9.30, please"
+        },
+        {
+          "audio_s": 2,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 83,
+          "text": "At 9:30, please please"
+        },
+        {
+          "audio_s": 2.1,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 88,
+          "text": "At 9:30, please check the"
+        },
+        {
+          "audio_s": 2.2,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 93,
+          "text": "At 9:30, please check the"
+        },
+        {
+          "audio_s": 2.3,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 98,
+          "text": "At 9:30, please check the"
+        },
+        {
+          "audio_s": 2.4,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 103,
+          "text": "At 9:30, please check the check"
+        },
+        {
+          "audio_s": 2.5,
+          "final": false,
+          "slice_relative_l2": 0.00010809597,
+          "committed_frames": 108,
+          "text": "At 9:30, please check the train."
+        },
+        {
+          "audio_s": 2.6,
+          "final": false,
+          "slice_relative_l2": 0.000128923076,
+          "committed_frames": 113,
+          "text": "At 9:30, please check the train"
+        },
+        {
+          "audio_s": 2.7,
+          "final": false,
+          "slice_relative_l2": 0.000109880898,
+          "committed_frames": 118,
+          "text": "At 9:30, please check the train to"
+        },
+        {
+          "audio_s": 2.8,
+          "final": false,
+          "slice_relative_l2": 0.000143121661,
+          "committed_frames": 123,
+          "text": "At 9:30, please check the train ticket."
+        },
+        {
+          "audio_s": 2.9,
+          "final": false,
+          "slice_relative_l2": 0.000133203368,
+          "committed_frames": 128,
+          "text": "At 9:30, please check the train ticket ticket."
+        },
+        {
+          "audio_s": 3,
+          "final": false,
+          "slice_relative_l2": 0.000134999837,
+          "committed_frames": 133,
+          "text": "At 9:30, please check the train ticket at 10:0"
+        },
+        {
+          "audio_s": 3.1,
+          "final": false,
+          "slice_relative_l2": 0.000124120967,
+          "committed_frames": 138,
+          "text": "At 9:30, please check the train ticket and"
+        },
+        {
+          "audio_s": 3.2,
+          "final": false,
+          "slice_relative_l2": 0.000155073802,
+          "committed_frames": 143,
+          "text": "At 9:30, please check the train ticket and call"
+        },
+        {
+          "audio_s": 3.3,
+          "final": false,
+          "slice_relative_l2": 0.000147199315,
+          "committed_frames": 148,
+          "text": "At 9:30, please check the train ticket and call"
+        },
+        {
+          "audio_s": 3.4,
+          "final": false,
+          "slice_relative_l2": 0.000116525053,
+          "committed_frames": 153,
+          "text": "At 9:30, please check the train ticket and call the"
+        },
+        {
+          "audio_s": 3.5,
+          "final": false,
+          "slice_relative_l2": 0.00012540312,
+          "committed_frames": 158,
+          "text": "At 9:30, please check the train ticket and call the city."
+        },
+        {
+          "audio_s": 3.6,
+          "final": false,
+          "slice_relative_l2": 0.000108355804,
+          "committed_frames": 163,
+          "text": "At 9:30, please check the train ticket and call the state."
+        },
+        {
+          "audio_s": 3.692,
+          "final": true,
+          "slice_relative_l2": 0.000112387505,
+          "committed_frames": 185,
+          "text": "At 9:30, please check the train ticket and call the station."
+        }
+      ],
+      "input_samples": 59072,
+      "max_ring_samples": 39040,
+      "encoded_samples_with_overlap": 977792,
+      "encoder_max_abs": 0.00098824501,
+      "encoder_relative_l2": 0.000106116371,
+      "final_matches_offline": true,
+      "baseline_ms": 37.312625,
+      "encoder_ms": 349.582587,
+      "decoder_ms": 239.441378,
+      "process_peak_rss_bytes": 269533184,
+      "name": "short-100ms",
+      "input_sha256": "cab4a1e8d7cb80db3f0e11e6225ca8121f41de13e2eb3fb9f603286b2df05cd7",
+      "exit_code": 0,
+      "ring_bound_samples": 39360,
+      "ring_within_bound": true
+    },
+    {
+      "experimental": true,
+      "encoder_storage": "f32",
+      "chunk_samples": 6400,
+      "left_context_frames": 100,
+      "right_context_frames": 16,
+      "updates": [
+        {
+          "audio_s": 0.4,
+          "final": false,
+          "slice_relative_l2": 2.52059063e-05,
+          "committed_frames": 3,
+          "text": "Okay"
+        },
+        {
+          "audio_s": 0.8,
+          "final": false,
+          "slice_relative_l2": 0.000127517328,
+          "committed_frames": 23,
+          "text": "At 9"
+        },
+        {
+          "audio_s": 1.2,
+          "final": false,
+          "slice_relative_l2": 0.00013574588,
+          "committed_frames": 43,
+          "text": "At 9.30"
+        },
+        {
+          "audio_s": 1.6,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 63,
+          "text": "At 9.30,"
+        },
+        {
+          "audio_s": 2,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 83,
+          "text": "At 9:30, please please"
+        },
+        {
+          "audio_s": 2.4,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 103,
+          "text": "At 9:30, please check the check"
+        },
+        {
+          "audio_s": 2.8,
+          "final": false,
+          "slice_relative_l2": 0.000119498223,
+          "committed_frames": 123,
+          "text": "At 9:30, please check the train ticket."
+        },
+        {
+          "audio_s": 3.2,
+          "final": false,
+          "slice_relative_l2": 0.000143284078,
+          "committed_frames": 143,
+          "text": "At 9:30, please check the train ticket and call"
+        },
+        {
+          "audio_s": 3.6,
+          "final": false,
+          "slice_relative_l2": 0.000120756749,
+          "committed_frames": 163,
+          "text": "At 9:30, please check the train ticket and call the state."
+        },
+        {
+          "audio_s": 3.692,
+          "final": true,
+          "slice_relative_l2": 0.000112387505,
+          "committed_frames": 185,
+          "text": "At 9:30, please check the train ticket and call the station."
+        }
+      ],
+      "input_samples": 59072,
+      "max_ring_samples": 43840,
+      "encoded_samples_with_overlap": 304832,
+      "encoder_max_abs": 0.000882387161,
+      "encoder_relative_l2": 0.000105578961,
+      "final_matches_offline": true,
+      "baseline_ms": 32.356625,
+      "encoder_ms": 113.065125,
+      "decoder_ms": 74.321749,
+      "process_peak_rss_bytes": 268976128,
+      "name": "short-400ms",
+      "input_sha256": "cab4a1e8d7cb80db3f0e11e6225ca8121f41de13e2eb3fb9f603286b2df05cd7",
+      "exit_code": 0,
+      "ring_bound_samples": 44160,
+      "ring_within_bound": true
+    },
+    {
+      "experimental": true,
+      "encoder_storage": "f32",
+      "chunk_samples": 16000,
+      "left_context_frames": 100,
+      "right_context_frames": 16,
+      "updates": [
+        {
+          "audio_s": 1,
+          "final": false,
+          "slice_relative_l2": 0.000125071911,
+          "committed_frames": 33,
+          "text": "At 9.3"
+        },
+        {
+          "audio_s": 2,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 83,
+          "text": "At 9:30, please please"
+        },
+        {
+          "audio_s": 3,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 133,
+          "text": "At 9:30, please check the train ticket at 10:0"
+        },
+        {
+          "audio_s": 3.692,
+          "final": true,
+          "slice_relative_l2": 0.000120885205,
+          "committed_frames": 185,
+          "text": "At 9:30, please check the train ticket and call the station."
+        }
+      ],
+      "input_samples": 59072,
+      "max_ring_samples": 48512,
+      "encoded_samples_with_overlap": 144512,
+      "encoder_max_abs": 0.00103759766,
+      "encoder_relative_l2": 8.35022423e-05,
+      "final_matches_offline": true,
+      "baseline_ms": 33.32575,
+      "encoder_ms": 54.571084,
+      "decoder_ms": 35.598375,
+      "process_peak_rss_bytes": 268419072,
+      "name": "short-1000ms",
+      "input_sha256": "cab4a1e8d7cb80db3f0e11e6225ca8121f41de13e2eb3fb9f603286b2df05cd7",
+      "exit_code": 0,
+      "ring_bound_samples": 53760,
+      "ring_within_bound": true
+    },
+    {
+      "experimental": true,
+      "encoder_storage": "f32",
+      "chunk_samples": 7777,
+      "left_context_frames": 100,
+      "right_context_frames": 16,
+      "updates": [
+        {
+          "audio_s": 0.4860625,
+          "final": false,
+          "slice_relative_l2": 5.93189621e-05,
+          "committed_frames": 7,
+          "text": "Okay"
+        },
+        {
+          "audio_s": 0.972125,
+          "final": false,
+          "slice_relative_l2": 0.000133946942,
+          "committed_frames": 31,
+          "text": "At 9.3"
+        },
+        {
+          "audio_s": 1.4581875,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 55,
+          "text": "At 9.30,"
+        },
+        {
+          "audio_s": 1.94425,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 80,
+          "text": "At 9.30, please"
+        },
+        {
+          "audio_s": 2.4303125,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 104,
+          "text": "At 9:30, please check the check"
+        },
+        {
+          "audio_s": 2.916375,
+          "final": false,
+          "slice_relative_l2": 9.83277673e-05,
+          "committed_frames": 128,
+          "text": "At 9:30, please check the train ticket ticket."
+        },
+        {
+          "audio_s": 3.4024375,
+          "final": false,
+          "slice_relative_l2": 0.000137048794,
+          "committed_frames": 153,
+          "text": "At 9:30, please check the train ticket and call the"
+        },
+        {
+          "audio_s": 3.8885,
+          "final": false,
+          "slice_relative_l2": 0.000118823493,
+          "committed_frames": 177,
+          "text": "At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 4.3745625,
+          "final": false,
+          "slice_relative_l2": 0.000120272082,
+          "committed_frames": 201,
+          "text": "At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 4.860625,
+          "final": false,
+          "slice_relative_l2": 0.000149472205,
+          "committed_frames": 226,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and"
+        },
+        {
+          "audio_s": 5.3466875,
+          "final": false,
+          "slice_relative_l2": 0.000104128474,
+          "committed_frames": 250,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30,"
+        },
+        {
+          "audio_s": 5.83275,
+          "final": false,
+          "slice_relative_l2": 0.000131135726,
+          "committed_frames": 274,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30,"
+        },
+        {
+          "audio_s": 6.3188125,
+          "final": false,
+          "slice_relative_l2": 0.00010074684,
+          "committed_frames": 298,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 6.804875,
+          "final": false,
+          "slice_relative_l2": 0.000123235539,
+          "committed_frames": 323,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket."
+        },
+        {
+          "audio_s": 7.2909375,
+          "final": false,
+          "slice_relative_l2": 0.000132721574,
+          "committed_frames": 347,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the train ticket."
+        },
+        {
+          "audio_s": 7.777,
+          "final": false,
+          "slice_relative_l2": 0.000111600018,
+          "committed_frames": 371,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 8.2630625,
+          "final": false,
+          "slice_relative_l2": 0.000111532062,
+          "committed_frames": 396,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 8.749125,
+          "final": false,
+          "slice_relative_l2": 0.00010929036,
+          "committed_frames": 420,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 9.2351875,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 444,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 9.72125,
+          "final": false,
+          "slice_relative_l2": 0.000113062286,
+          "committed_frames": 469,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 10.2073125,
+          "final": false,
+          "slice_relative_l2": 0.000148184235,
+          "committed_frames": 493,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 10.693375,
+          "final": false,
+          "slice_relative_l2": 0.000115160084,
+          "committed_frames": 517,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 11.1794375,
+          "final": false,
+          "slice_relative_l2": 0.000130622358,
+          "committed_frames": 541,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 11.6655,
+          "final": false,
+          "slice_relative_l2": 0.000129254361,
+          "committed_frames": 566,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 12.1515625,
+          "final": false,
+          "slice_relative_l2": 0.000136266976,
+          "committed_frames": 590,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 12.637625,
+          "final": false,
+          "slice_relative_l2": 0.000109863137,
+          "committed_frames": 614,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 13.1236875,
+          "final": false,
+          "slice_relative_l2": 0.000145102013,
+          "committed_frames": 639,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 13.60975,
+          "final": false,
+          "slice_relative_l2": 0.000218304966,
+          "committed_frames": 663,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 14.0958125,
+          "final": false,
+          "slice_relative_l2": 0.00012645843,
+          "committed_frames": 687,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 14.581875,
+          "final": false,
+          "slice_relative_l2": 0.00011035293,
+          "committed_frames": 712,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 15.0679375,
+          "final": false,
+          "slice_relative_l2": 0.000117241315,
+          "committed_frames": 736,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 15.554,
+          "final": false,
+          "slice_relative_l2": 9.07832221e-05,
+          "committed_frames": 760,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 16.0400625,
+          "final": false,
+          "slice_relative_l2": 9.85541146e-05,
+          "committed_frames": 785,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 16.526125,
+          "final": false,
+          "slice_relative_l2": 0.000114209238,
+          "committed_frames": 809,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 17.0121875,
+          "final": false,
+          "slice_relative_l2": 0.000121029098,
+          "committed_frames": 833,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 17.49825,
+          "final": false,
+          "slice_relative_l2": 0.000158175684,
+          "committed_frames": 857,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the"
+        },
+        {
+          "audio_s": 17.9843125,
+          "final": false,
+          "slice_relative_l2": 0.000127991015,
+          "committed_frames": 882,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and"
+        },
+        {
+          "audio_s": 18.470375,
+          "final": false,
+          "slice_relative_l2": 0.000144435618,
+          "committed_frames": 906,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station"
+        },
+        {
+          "audio_s": 18.9564375,
+          "final": false,
+          "slice_relative_l2": 0.000128579986,
+          "committed_frames": 930,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At "
+        },
+        {
+          "audio_s": 19.4425,
+          "final": false,
+          "slice_relative_l2": 0.000130058896,
+          "committed_frames": 955,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 19.9285625,
+          "final": false,
+          "slice_relative_l2": 0.00015035422,
+          "committed_frames": 979,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 20.414625,
+          "final": false,
+          "slice_relative_l2": 0.000125481206,
+          "committed_frames": 1003,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 20.9006875,
+          "final": false,
+          "slice_relative_l2": 0.000115267319,
+          "committed_frames": 1028,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 21.38675,
+          "final": false,
+          "slice_relative_l2": 0.000125573259,
+          "committed_frames": 1052,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 21.8728125,
+          "final": false,
+          "slice_relative_l2": 8.78989478e-05,
+          "committed_frames": 1076,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:"
+        },
+        {
+          "audio_s": 22.358875,
+          "final": false,
+          "slice_relative_l2": 0.000108233631,
+          "committed_frames": 1100,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30,"
+        },
+        {
+          "audio_s": 22.8449375,
+          "final": false,
+          "slice_relative_l2": 0.000101988595,
+          "committed_frames": 1125,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train"
+        },
+        {
+          "audio_s": 23.331,
+          "final": false,
+          "slice_relative_l2": 0.000122368593,
+          "committed_frames": 1149,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call"
+        },
+        {
+          "audio_s": 23.8170625,
+          "final": false,
+          "slice_relative_l2": 0.000128902907,
+          "committed_frames": 1173,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 24.303125,
+          "final": false,
+          "slice_relative_l2": 0.000139276746,
+          "committed_frames": 1198,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9"
+        },
+        {
+          "audio_s": 24.7891875,
+          "final": false,
+          "slice_relative_l2": 0.000124772522,
+          "committed_frames": 1222,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30"
+        },
+        {
+          "audio_s": 25.27525,
+          "final": false,
+          "slice_relative_l2": 0.000113607476,
+          "committed_frames": 1246,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check"
+        },
+        {
+          "audio_s": 25.7613125,
+          "final": false,
+          "slice_relative_l2": 0.00013669719,
+          "committed_frames": 1271,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and"
+        },
+        {
+          "audio_s": 26.247375,
+          "final": false,
+          "slice_relative_l2": 0.000112474544,
+          "committed_frames": 1295,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station"
+        },
+        {
+          "audio_s": 26.7334375,
+          "final": false,
+          "slice_relative_l2": 0.000119600426,
+          "committed_frames": 1319,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At "
+        },
+        {
+          "audio_s": 27.2195,
+          "final": false,
+          "slice_relative_l2": 0.000120712196,
+          "committed_frames": 1343,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:3"
+        },
+        {
+          "audio_s": 27.7055625,
+          "final": false,
+          "slice_relative_l2": 0.000120316332,
+          "committed_frames": 1368,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please"
+        },
+        {
+          "audio_s": 27.9976875,
+          "final": true,
+          "slice_relative_l2": 0.000108916902,
+          "committed_frames": 1400,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket"
+        }
+      ],
+      "input_samples": 447963,
+      "max_ring_samples": 45529,
+      "encoded_samples_with_overlap": 2518384,
+      "encoder_max_abs": 0.00118106604,
+      "encoder_relative_l2": 0.000120546008,
+      "final_matches_offline": true,
+      "baseline_ms": 382.52225,
+      "encoder_ms": 788.434125,
+      "decoder_ms": 4190.48175,
+      "process_peak_rss_bytes": 330022912,
+      "name": "long-irregular",
+      "input_sha256": "0b56ed5d65ff851957829d1c7dc2bbf9008dff1a51f6933bee50ea7d97273b43",
+      "exit_code": 0,
+      "ring_bound_samples": 45537,
+      "ring_within_bound": true
+    },
+    {
+      "experimental": true,
+      "encoder_storage": "f16",
+      "chunk_samples": 6400,
+      "left_context_frames": 100,
+      "right_context_frames": 16,
+      "updates": [
+        {
+          "audio_s": 0.4,
+          "final": false,
+          "slice_relative_l2": 0.000251390547,
+          "committed_frames": 3,
+          "text": "Okay"
+        },
+        {
+          "audio_s": 0.8,
+          "final": false,
+          "slice_relative_l2": 0.000117342308,
+          "committed_frames": 23,
+          "text": "At 9"
+        },
+        {
+          "audio_s": 1.2,
+          "final": false,
+          "slice_relative_l2": 0.000137195857,
+          "committed_frames": 43,
+          "text": "At 9.30"
+        },
+        {
+          "audio_s": 1.6,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 63,
+          "text": "At 9.30,"
+        },
+        {
+          "audio_s": 2,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 83,
+          "text": "At 9:30, please please"
+        },
+        {
+          "audio_s": 2.4,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 103,
+          "text": "At 9:30, please check the check"
+        },
+        {
+          "audio_s": 2.8,
+          "final": false,
+          "slice_relative_l2": 0.000130138813,
+          "committed_frames": 123,
+          "text": "At 9:30, please check the train ticket."
+        },
+        {
+          "audio_s": 3.2,
+          "final": false,
+          "slice_relative_l2": 0.000146305336,
+          "committed_frames": 143,
+          "text": "At 9:30, please check the train ticket and call"
+        },
+        {
+          "audio_s": 3.6,
+          "final": false,
+          "slice_relative_l2": 0.000114349764,
+          "committed_frames": 163,
+          "text": "At 9:30, please check the train ticket and call the state."
+        },
+        {
+          "audio_s": 3.692,
+          "final": true,
+          "slice_relative_l2": 0.000125821405,
+          "committed_frames": 185,
+          "text": "At 9:30, please check the train ticket and call the station."
+        }
+      ],
+      "input_samples": 59072,
+      "max_ring_samples": 43840,
+      "encoded_samples_with_overlap": 304832,
+      "encoder_max_abs": 0.000863224268,
+      "encoder_relative_l2": 0.000110009131,
+      "final_matches_offline": true,
+      "baseline_ms": 31.252542,
+      "encoder_ms": 109.870417,
+      "decoder_ms": 66.141249,
+      "process_peak_rss_bytes": 248512512,
+      "name": "short-f16",
+      "input_sha256": "cab4a1e8d7cb80db3f0e11e6225ca8121f41de13e2eb3fb9f603286b2df05cd7",
+      "exit_code": 0,
+      "ring_bound_samples": 44160,
+      "ring_within_bound": true
+    },
+    {
+      "experimental": true,
+      "encoder_storage": "f16",
+      "chunk_samples": 7777,
+      "left_context_frames": 100,
+      "right_context_frames": 16,
+      "updates": [
+        {
+          "audio_s": 0.4860625,
+          "final": false,
+          "slice_relative_l2": 0.000389313185,
+          "committed_frames": 7,
+          "text": "Okay"
+        },
+        {
+          "audio_s": 0.972125,
+          "final": false,
+          "slice_relative_l2": 0.000133666334,
+          "committed_frames": 31,
+          "text": "At 9.3"
+        },
+        {
+          "audio_s": 1.4581875,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 55,
+          "text": "At 9.30,"
+        },
+        {
+          "audio_s": 1.94425,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 80,
+          "text": "At 9.30, please"
+        },
+        {
+          "audio_s": 2.4303125,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 104,
+          "text": "At 9:30, please check the check"
+        },
+        {
+          "audio_s": 2.916375,
+          "final": false,
+          "slice_relative_l2": 0.000113100023,
+          "committed_frames": 128,
+          "text": "At 9:30, please check the train ticket ticket."
+        },
+        {
+          "audio_s": 3.4024375,
+          "final": false,
+          "slice_relative_l2": 0.000118396149,
+          "committed_frames": 153,
+          "text": "At 9:30, please check the train ticket and call the"
+        },
+        {
+          "audio_s": 3.8885,
+          "final": false,
+          "slice_relative_l2": 0.000124647833,
+          "committed_frames": 177,
+          "text": "At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 4.3745625,
+          "final": false,
+          "slice_relative_l2": 0.000114257,
+          "committed_frames": 201,
+          "text": "At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 4.860625,
+          "final": false,
+          "slice_relative_l2": 0.000134058216,
+          "committed_frames": 226,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and"
+        },
+        {
+          "audio_s": 5.3466875,
+          "final": false,
+          "slice_relative_l2": 0.000119640045,
+          "committed_frames": 250,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30,"
+        },
+        {
+          "audio_s": 5.83275,
+          "final": false,
+          "slice_relative_l2": 0.00011439345,
+          "committed_frames": 274,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30,"
+        },
+        {
+          "audio_s": 6.3188125,
+          "final": false,
+          "slice_relative_l2": 0.000113365997,
+          "committed_frames": 298,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 6.804875,
+          "final": false,
+          "slice_relative_l2": 0.000123787891,
+          "committed_frames": 323,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket."
+        },
+        {
+          "audio_s": 7.2909375,
+          "final": false,
+          "slice_relative_l2": 0.000129283847,
+          "committed_frames": 347,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the train ticket."
+        },
+        {
+          "audio_s": 7.777,
+          "final": false,
+          "slice_relative_l2": 0.000142848114,
+          "committed_frames": 371,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 8.2630625,
+          "final": false,
+          "slice_relative_l2": 0.000118471466,
+          "committed_frames": 396,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 8.749125,
+          "final": false,
+          "slice_relative_l2": 0.000107538228,
+          "committed_frames": 420,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 9.2351875,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 444,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 9.72125,
+          "final": false,
+          "slice_relative_l2": 0.000138176392,
+          "committed_frames": 469,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 10.2073125,
+          "final": false,
+          "slice_relative_l2": 0.000149466337,
+          "committed_frames": 493,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 10.693375,
+          "final": false,
+          "slice_relative_l2": 0.000100521439,
+          "committed_frames": 517,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 11.1794375,
+          "final": false,
+          "slice_relative_l2": 0.000115327921,
+          "committed_frames": 541,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 11.6655,
+          "final": false,
+          "slice_relative_l2": 0.000122524367,
+          "committed_frames": 566,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 12.1515625,
+          "final": false,
+          "slice_relative_l2": 0.000122210252,
+          "committed_frames": 590,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 12.637625,
+          "final": false,
+          "slice_relative_l2": 0.000116080189,
+          "committed_frames": 614,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 13.1236875,
+          "final": false,
+          "slice_relative_l2": 0.000130898553,
+          "committed_frames": 639,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station"
+        },
+        {
+          "audio_s": 13.60975,
+          "final": false,
+          "slice_relative_l2": 0.000153982001,
+          "committed_frames": 663,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 14.0958125,
+          "final": false,
+          "slice_relative_l2": 0.000109019802,
+          "committed_frames": 687,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 14.581875,
+          "final": false,
+          "slice_relative_l2": 0.000125302441,
+          "committed_frames": 712,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 15.0679375,
+          "final": false,
+          "slice_relative_l2": 0.000115058188,
+          "committed_frames": 736,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 15.554,
+          "final": false,
+          "slice_relative_l2": 8.97547548e-05,
+          "committed_frames": 760,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 16.0400625,
+          "final": false,
+          "slice_relative_l2": 0.000131087013,
+          "committed_frames": 785,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 16.526125,
+          "final": false,
+          "slice_relative_l2": 0.00011290597,
+          "committed_frames": 809,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 17.0121875,
+          "final": false,
+          "slice_relative_l2": 0.000109429388,
+          "committed_frames": 833,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 17.49825,
+          "final": false,
+          "slice_relative_l2": 0.000112196323,
+          "committed_frames": 857,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the"
+        },
+        {
+          "audio_s": 17.9843125,
+          "final": false,
+          "slice_relative_l2": 0.000129131075,
+          "committed_frames": 882,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and"
+        },
+        {
+          "audio_s": 18.470375,
+          "final": false,
+          "slice_relative_l2": 0.000131908013,
+          "committed_frames": 906,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station"
+        },
+        {
+          "audio_s": 18.9564375,
+          "final": false,
+          "slice_relative_l2": 0.00011640798,
+          "committed_frames": 930,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At "
+        },
+        {
+          "audio_s": 19.4425,
+          "final": false,
+          "slice_relative_l2": 0.00010072942,
+          "committed_frames": 955,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 19.9285625,
+          "final": false,
+          "slice_relative_l2": 0.000127897651,
+          "committed_frames": 979,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 20.414625,
+          "final": false,
+          "slice_relative_l2": 0.00014343122,
+          "committed_frames": 1003,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 20.9006875,
+          "final": false,
+          "slice_relative_l2": 0.000120063888,
+          "committed_frames": 1028,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 21.38675,
+          "final": false,
+          "slice_relative_l2": 0.000148970556,
+          "committed_frames": 1052,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 21.8728125,
+          "final": false,
+          "slice_relative_l2": 8.64753922e-05,
+          "committed_frames": 1076,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:"
+        },
+        {
+          "audio_s": 22.358875,
+          "final": false,
+          "slice_relative_l2": 9.96240017e-05,
+          "committed_frames": 1100,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30,"
+        },
+        {
+          "audio_s": 22.8449375,
+          "final": false,
+          "slice_relative_l2": 0.000116539921,
+          "committed_frames": 1125,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train"
+        },
+        {
+          "audio_s": 23.331,
+          "final": false,
+          "slice_relative_l2": 0.000116015772,
+          "committed_frames": 1149,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call"
+        },
+        {
+          "audio_s": 23.8170625,
+          "final": false,
+          "slice_relative_l2": 0.000127928887,
+          "committed_frames": 1173,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "audio_s": 24.303125,
+          "final": false,
+          "slice_relative_l2": 0.000133171978,
+          "committed_frames": 1198,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9"
+        },
+        {
+          "audio_s": 24.7891875,
+          "final": false,
+          "slice_relative_l2": 0.00014644174,
+          "committed_frames": 1222,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30"
+        },
+        {
+          "audio_s": 25.27525,
+          "final": false,
+          "slice_relative_l2": 0.000112427756,
+          "committed_frames": 1246,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check"
+        },
+        {
+          "audio_s": 25.7613125,
+          "final": false,
+          "slice_relative_l2": 0.000133913225,
+          "committed_frames": 1271,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and"
+        },
+        {
+          "audio_s": 26.247375,
+          "final": false,
+          "slice_relative_l2": 0.000119036375,
+          "committed_frames": 1295,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station"
+        },
+        {
+          "audio_s": 26.7334375,
+          "final": false,
+          "slice_relative_l2": 0.000106901034,
+          "committed_frames": 1319,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At "
+        },
+        {
+          "audio_s": 27.2195,
+          "final": false,
+          "slice_relative_l2": 0.000103117601,
+          "committed_frames": 1343,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:3"
+        },
+        {
+          "audio_s": 27.7055625,
+          "final": false,
+          "slice_relative_l2": 0.00011300275,
+          "committed_frames": 1368,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please"
+        },
+        {
+          "audio_s": 27.9976875,
+          "final": true,
+          "slice_relative_l2": 0.000123336979,
+          "committed_frames": 1400,
+          "text": "At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket and call the station. At 9:30, please check the train ticket"
+        }
+      ],
+      "input_samples": 447963,
+      "max_ring_samples": 45529,
+      "encoded_samples_with_overlap": 2518384,
+      "encoder_max_abs": 0.00146389008,
+      "encoder_relative_l2": 0.000119512328,
+      "final_matches_offline": true,
+      "baseline_ms": 332.936791,
+      "encoder_ms": 841.886039,
+      "decoder_ms": 4208.39375,
+      "process_peak_rss_bytes": 313409536,
+      "name": "long-f16-irregular",
+      "input_sha256": "0b56ed5d65ff851957829d1c7dc2bbf9008dff1a51f6933bee50ea7d97273b43",
+      "exit_code": 0,
+      "ring_bound_samples": 45537,
+      "ring_within_bound": true
+    },
+    {
+      "experimental": true,
+      "encoder_storage": "native",
+      "chunk_samples": 6400,
+      "left_context_frames": 100,
+      "right_context_frames": 16,
+      "updates": [
+        {
+          "audio_s": 0.4,
+          "final": false,
+          "slice_relative_l2": 0.00663862619,
+          "committed_frames": 3,
+          "text": "Okay"
+        },
+        {
+          "audio_s": 0.8,
+          "final": false,
+          "slice_relative_l2": 0.000127517328,
+          "committed_frames": 23,
+          "text": "At 9"
+        },
+        {
+          "audio_s": 1.2,
+          "final": false,
+          "slice_relative_l2": 0.00013574588,
+          "committed_frames": 43,
+          "text": "At 9.30"
+        },
+        {
+          "audio_s": 1.6,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 63,
+          "text": "At 9.30,"
+        },
+        {
+          "audio_s": 2,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 83,
+          "text": "At 9:30, please please"
+        },
+        {
+          "audio_s": 2.4,
+          "final": false,
+          "slice_relative_l2": 0,
+          "committed_frames": 103,
+          "text": "At 9:30, please check the check"
+        },
+        {
+          "audio_s": 2.8,
+          "final": false,
+          "slice_relative_l2": 0.000119498223,
+          "committed_frames": 123,
+          "text": "At 9:30, please check the train ticket."
+        },
+        {
+          "audio_s": 3.2,
+          "final": false,
+          "slice_relative_l2": 0.000143284078,
+          "committed_frames": 143,
+          "text": "At 9:30, please check the train ticket and call"
+        },
+        {
+          "audio_s": 3.6,
+          "final": false,
+          "slice_relative_l2": 0.000120756749,
+          "committed_frames": 163,
+          "text": "At 9:30, please check the train ticket and call the state."
+        },
+        {
+          "audio_s": 3.692,
+          "final": true,
+          "slice_relative_l2": 0.000112387505,
+          "committed_frames": 185,
+          "text": "At 9:30, please check the train ticket and call the station."
+        }
+      ],
+      "input_samples": 59072,
+      "max_ring_samples": 43840,
+      "encoded_samples_with_overlap": 304832,
+      "encoder_max_abs": 0.0233895779,
+      "encoder_relative_l2": 0.000618393908,
+      "final_matches_offline": true,
+      "baseline_ms": 30.443833,
+      "encoder_ms": 107.467043,
+      "decoder_ms": 63.919542,
+      "process_peak_rss_bytes": 240664576,
+      "name": "short-native-q8",
+      "input_sha256": "cab4a1e8d7cb80db3f0e11e6225ca8121f41de13e2eb3fb9f603286b2df05cd7",
+      "exit_code": 1,
+      "ring_bound_samples": 44160,
+      "ring_within_bound": true
+    }
+  ],
+  "build_provenance": {
+    "runtime_sha256": "8410925092f361abb9ddc562f718659043ec2a688d8df679575c48d825bea3d3",
+    "libraries": {
+      "audio/libengine_runtime.a": "cc9d6c45d71ef3756d5702db7c4f9d46e0e921a6477ee15a40b47ebe643f6660",
+      "audio/ggml/src/libggml.a": "7cee0ee59087f52a0b00d796d307fe270d7d420f2bf70048921532bf724c38f8",
+      "audio/ggml/src/libggml-cpu.a": "5031c0da77221b739f76ff070896a7c6173106b9501449ebe4c7fbc7fee30bae",
+      "audio/ggml/src/ggml-blas/libggml-blas.a": "fc540cb03eaf8602b3b55f548a55a4f62712f160d6d2112c497fc99e5223ba7a",
+      "audio/ggml/src/libggml-base.a": "19c19be4f61024cb660b15c6a58c7fdbedae4d3d7949875ea0fda261182b4dac",
+      "audio/external/sentencepiece/src/libsentencepiece.a": "58a69c6a2d23e1d7b6129f0be7f834b61668425f3e91379fa2482574c2ebfc2e",
+      "audio/libcjson_vendor.a": "cb46c85c8e832ef0ecf5dca98a24331c99069a4db7cfdd8e1fc0e2859a67c1c3",
+      "audio/libyaml_vendor.a": "61b627331011c549ad8dae777f606a87b97e838633df6483b426a3de1337618f"
+    },
+    "compiler": "Apple clang version 21.0.0 (clang-2100.4.1.1)\nTarget: arm64-apple-darwin27.2.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+    "flags": [
+      "-std=c++17",
+      "-O3",
+      "-DNDEBUG"
+    ],
+    "binary_sha256": "a969e45ae798f4aa12219ff77821409f6cd96e030e457393386cafe959973a5f"
+  },
+  "f32_screen_passed": true,
+  "f16_screen_passed": true,
+  "invalid_input_checks": {
+    "nan": "nonfinite input",
+    "too_short": "input must be 5ms..30s F32",
+    "unaligned": "input must be 5ms..30s F32"
+  },
+  "ggml_init_definitions": 1
+}

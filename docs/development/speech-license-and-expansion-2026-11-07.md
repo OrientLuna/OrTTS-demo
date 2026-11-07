@@ -6,6 +6,8 @@
 
 本地main的`ca630c5`是研究，`525d419`是SDK实装。已有自研P3/P5之外，新增5个TTS和2个ASR：Kokoro、Pocket、Piper、Kitten、ZipVoice；SenseVoice、Moonshine。它们共用一份audio.cpp/ggml，C/Rust接线不是只改名字。macOS真实模型回归通过；iOS/Android只有交叉编译/头文件/符号检查，新增模型还没有手机执行证据。
 
+后续已增加独立Moonshine英语增量API，partial/final、分段、取消、reset和有界状态已落地，旧ASR接口仍final-only。数值、内存及自然长句证据见 [增量SDK记录](ggml-streaming-asr-2026-11-07.md)。它采用有界重叠编码与假设重解码，不宣称逐层KV完全复用。FunASR本次核对的官方工具集提交是MIT，模型权重仍逐个按模型卡/协议审查；未将新的FunASR组件或模型加入发行包。
+
 Kokoro/Pocket/ZipVoice有PCM回调（分别是文本块/codec块/文本块）；Piper/Kitten仅离线。两个ASR目前只有离线或有界输入缓冲后final，没有真实partial或自动endpoint。全库仍串行/BUSY。没有通用ONNX执行器，F5/Whisper/Cosy/Melo未注册进交付ABI。
 
 ## 发行结论：已有基础，尚未闭环
@@ -51,7 +53,7 @@ CC-BY允许商业使用但有署名/变更标记要求；CC-BY-NC不因软件开
 | **Whisper共享现有ggml** | MIT代码与权重；本轮已做真实编译/链接/中英转写探针，候选只链接现有OrTTS静态ggml档案，符号检查只有一个ggml_init | 将固定版本适配到独立ASR接口，加入模型选项/取消/reset/语言声明，再做长音频与手机测试；本轮尚未注册进SDK |
 | **原生中文CosyVoice3** | 当前pin已有该流水线；[具体0.5B模型卡Apache-2.0](https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512)，但未下载/执行此包 | 固定1个检查点+必要声学/声纹资产+两种合法参考，测内容/峰值内存/RTF；通过后再裁剪进构建，不能把训练框架可运行当手机证据 |
 | **MeloTTS中文** | [具体中文权重卡MIT](https://huggingface.co/myshell-ai/MeloTTS-Chinese)；当前SDK未接入，G2P/BERT/词典均要核对 | 与Cosy先选一个做完整流水线；缺少成熟同ggml port时，保留明确的ONNX兼容执行器，不重新造所有算子 |
-| **真流式ASR** | 现在缺的是partial/endpoint/状态语义，不只是模型名单 | 优先Moonshine原生增量状态或宿主已有Sherpa流式Zipformer；为partial/final/endpoint/reset建独立能力，不用循环离线伪装 |
+| **进一步优化增量ASR** | Moonshine独立partial/final/endpoint/reset已接线；逐层KV、神经VAD和中文在线状态未完成 | 保留宿主现有全双工/中文路线；在现有有界执行器上进一步减少重叠和重复解码，不将离线Paraformer直接标成在线 |
 | **更多现有语言/音色** | 一些已有流水线可复用权重和注册层 | 固定对应语言包/合法音色先测；Pocket小模型/新语言若架构变化仍需核对，不假定100M实现兼容全部新版本 |
 | **Sherpa/ONNX可选模块** | 扩展VITS/Matcha/Paraformer/Zipformer等已有成熟流水线，通常增加ORT等真实依赖 | 宿主已有Sherpa先复用一份，按需装载；模型包声明executor/schema/hash，核心库不自动打包所有框架 |
 | Apple CoreML/MLX等 | 可能利用硬件，但不是跨平台通用替换 | 后续只选具体模型做平台A/B；不凭平台宏宣布支持，不将转换成功当完整G2P/codec可用 |

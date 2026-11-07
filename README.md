@@ -4,7 +4,7 @@ OrTTS 的端侧语音合成应用与可嵌入 CPU 运行时，支持 **0.6B／1.
 
 ## 可选多模型语音 SDK
 
-除现有自研模型 Demo 外，后端新增可选的 [多模型 TTS / ASR C ABI 与 Rust 接口](runtime/SPEECH.md)：Kokoro、PocketTTS、Piper、Kitten、ZipVoice，以及 SenseVoice / Moonshine。这些流水线与原接口共用一份 ggml；不表示能执行任意 ONNX/GGUF。现有 App 的模型菜单与下载包未自动扩展，新增模型的手机运行仍需验收。
+除现有自研模型 Demo 外，后端新增可选的 [多模型 TTS / ASR C ABI 与 Rust 接口](runtime/SPEECH.md)：Kokoro、PocketTTS、Piper、Kitten、ZipVoice，以及 SenseVoice / Moonshine。Moonshine 另提供英语增量识别接口（partial/final、分段、取消）。这些流水线与原接口共用一份 ggml；不表示能执行任意 ONNX/GGUF。现有 App 的模型菜单与下载包未自动扩展，新增模型的手机运行仍需验收。
 
 ## 平台支持
 

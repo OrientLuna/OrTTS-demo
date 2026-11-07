@@ -32,3 +32,11 @@ _ortts_transcript_text
 _ortts_transcript_language
 _ortts_transcript_api_ms
 _ortts_transcript_free
+_ortts_asr_stream_abi_version
+_ortts_asr_stream_create
+_ortts_asr_stream_accept
+_ortts_asr_stream_finish
+_ortts_asr_stream_reset
+_ortts_asr_stream_cancel
+_ortts_asr_stream_get_stats
+_ortts_asr_stream_free

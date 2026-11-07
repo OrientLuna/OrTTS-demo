@@ -1,0 +1,173 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "host": "macOS-27.2-arm64-arm-64bit",
+  "artifact_sha256": "ba4f0fa5c5f6ad2ace15a75f2ba19884aff920273536535d76440c7f8258df78",
+  "artifact_bytes": 8928448,
+  "model_sha256": "0f795f14924dbfe40d2ee0e220382c9b23cd9e89064c6ffb97e236d81f1d7020",
+  "fixture_sha256": "cab4a1e8d7cb80db3f0e11e6225ca8121f41de13e2eb3fb9f603286b2df05cd7",
+  "public_header_sha256": "56a0fb9335de78ef8cd5efb163a0a31cbc6e620a3a43c53dd8de25f2def1c2e2",
+  "test_source_sha256": "ad82b516526de9433de2a8be7f6858c4f349c40b80da186bcfc02785a026a568",
+  "exports": [
+    "_ortts_abi_version",
+    "_ortts_asr_accept",
+    "_ortts_asr_cancel",
+    "_ortts_asr_create",
+    "_ortts_asr_finish",
+    "_ortts_asr_free",
+    "_ortts_asr_reset",
+    "_ortts_asr_run",
+    "_ortts_asr_stream_abi_version",
+    "_ortts_asr_stream_accept",
+    "_ortts_asr_stream_cancel",
+    "_ortts_asr_stream_create",
+    "_ortts_asr_stream_finish",
+    "_ortts_asr_stream_free",
+    "_ortts_asr_stream_get_stats",
+    "_ortts_asr_stream_reset",
+    "_ortts_audio_free",
+    "_ortts_audio_metrics",
+    "_ortts_audio_sample_count",
+    "_ortts_audio_sample_rate",
+    "_ortts_audio_samples",
+    "_ortts_engine_cancel",
+    "_ortts_engine_create",
+    "_ortts_engine_free",
+    "_ortts_engine_synthesize",
+    "_ortts_last_error",
+    "_ortts_speech_abi_version",
+    "_ortts_speech_audio_channels",
+    "_ortts_speech_audio_frames",
+    "_ortts_speech_audio_free",
+    "_ortts_speech_audio_metrics",
+    "_ortts_speech_audio_sample_rate",
+    "_ortts_speech_audio_samples",
+    "_ortts_speech_catalog_json",
+    "_ortts_transcript_api_ms",
+    "_ortts_transcript_free",
+    "_ortts_transcript_language",
+    "_ortts_transcript_text",
+    "_ortts_tts_cancel",
+    "_ortts_tts_create",
+    "_ortts_tts_free",
+    "_ortts_tts_synthesize"
+  ],
+  "checks": [
+    {
+      "step": 0,
+      "returncode": 0,
+      "wall_s": 0.5164614160000001,
+      "cpu_user_s": 0.37029399999999996,
+      "cpu_system_s": 0.083328
+    },
+    {
+      "step": 1,
+      "returncode": 0,
+      "wall_s": 16.541438541,
+      "cpu_user_s": 47.740086,
+      "cpu_system_s": 3.0258800000000003,
+      "result": {
+        "pass": true,
+        "fixture_final": "At 9:30, please check the train ticket and call the station.",
+        "partial_events": 7,
+        "stress_audio_s": 302.744,
+        "stress_encoder_ms": 8674.79,
+        "stress_decoder_ms": 5963.37,
+        "peak_pcm_frames": 43840,
+        "peak_encoder_frames": 200,
+        "rss_spread_bytes": 18317312,
+        "rss_samples": [
+          636321792,
+          631078912,
+          631078912,
+          631373824,
+          618004480
+        ]
+      }
+    },
+    {
+      "step": 2,
+      "returncode": 0,
+      "wall_s": 13.698007416,
+      "cpu_user_s": 40.372088999999995,
+      "cpu_system_s": 2.484594,
+      "result": {
+        "pass": true,
+        "segment_limit_ms": 4000,
+        "audio_s": 302.744,
+        "wall_s": 13.5694,
+        "rss_before_bytes": 6307840,
+        "rss_loaded_bytes": 175063040,
+        "rss_spread_bytes": 10240000,
+        "limit_finals": 75,
+        "encoder_ms": 8192.77,
+        "decoder_ms": 5326.39,
+        "peak_pcm_frames": 43840,
+        "peak_encoder_frames": 200,
+        "rss_samples": [
+          243433472,
+          233193472,
+          233193472,
+          233193472,
+          233193472
+        ]
+      }
+    },
+    {
+      "step": 3,
+      "returncode": 0,
+      "wall_s": 32.50604375,
+      "cpu_user_s": 104.28648300000002,
+      "cpu_system_s": 4.675749,
+      "result": {
+        "pass": true,
+        "segment_limit_ms": 15000,
+        "audio_s": 302.744,
+        "wall_s": 32.4604,
+        "rss_before_bytes": 6307840,
+        "rss_loaded_bytes": 175128576,
+        "rss_spread_bytes": 2048000,
+        "limit_finals": 20,
+        "encoder_ms": 10809.7,
+        "decoder_ms": 21578.1,
+        "peak_pcm_frames": 43840,
+        "peak_encoder_frames": 750,
+        "rss_samples": [
+          239091712,
+          241106944,
+          241139712,
+          241139712,
+          241139712
+        ]
+      }
+    },
+    {
+      "step": 4,
+      "returncode": 0,
+      "wall_s": 0.7041435000000007,
+      "cpu_user_s": 1.015817999999996,
+      "cpu_system_s": 0.09217899999999979
+    }
+  ],
+  "limitations": [
+    "CPU macOS execution only; mobile cross-build is not device execution",
+    "bounded-overlap encoder with F16-expanded weights; decoder re-decodes hypotheses",
+    "English only; energy endpoint is not neural VAD",
+    "five-minute audio replay is accelerated, not five minutes of microphone/thermal measurement",
+    "repeated synthetic speech is not an ASR accuracy corpus"
+  ],
+  "rust_sources_sha256": {
+    "runtime/rust/src/speech/streaming.rs": "185482f0decae60598870a7f794c1a9bdd670348aead4cfde15b856121e92e06",
+    "runtime/rust/examples/asr_stream.rs": "2715e83cfa3999158042167b2acde6226bf835de955d386bd2f6beaf1dc7d0b7"
+  },
+  "rust_cancellation_lifetime_recheck": {
+    "returncode": 0,
+    "log_sha256": "b3b8df0993e6e99210ba9de55c6e4d39eeb414f0bbca624f15466d571abd63ea",
+    "assertions": [
+      "UI-thread token cancels an active callback/inference operation",
+      "token after Stream drop is a no-op and does not retain engine weights",
+      "callback panic is caught before FFI unwind",
+      "reset permits same-result reuse"
+    ]
+  }
+}

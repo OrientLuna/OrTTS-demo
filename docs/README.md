@@ -12,6 +12,7 @@
 | 准备模型 | [MODEL_ASSETS](MODEL_ASSETS.md) | 清单、目录、平台导入方式 |
 | 查看性能证据 | [BENCHMARKS](BENCHMARKS.md) | RTF、测试条件、原始数据及局限 |
 | 嵌入其他应用 | [运行时](../runtime/README.md) | C ABI、Rust、PCM及取消、并发约束 |
+| ggml 流式 ASR 与 FunASR | [增量验证](development/ggml-streaming-asr-2026-11-07.md) | 本机原型、数值筛查、中文在线模型与移植边界 |
 | 许可与历史发行 | [NOTICE](../NOTICE.md)、[发行记录](../releases/RELEASE_NOTES.md) | 依赖许可、已有 Android 发行历史 |
 
 `benchmarks/` 保存原始数据，`models/` 保存模型示例配置；模型权重和本机构建目录不纳入源码。各目录 README 解释相应模块；通用构建、模型和优化规则统一放在本目录。

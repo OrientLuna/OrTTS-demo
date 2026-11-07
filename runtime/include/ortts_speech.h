@@ -10,13 +10,14 @@ typedef struct ortts_tts ortts_tts;
 typedef struct ortts_asr ortts_asr;
 typedef struct ortts_speech_audio ortts_speech_audio;
 typedef struct ortts_transcript ortts_transcript;
+typedef struct ortts_asr_stream ortts_asr_stream;
 typedef struct ortts_speech_option { const char *key; const char *value; } ortts_speech_option;
 typedef struct ortts_speech_config {
  uint32_t struct_size;
  const char *family; /* Explicit catalog family. Never auto-detect or silently fallback. */
  const char *model_path; /* Verified local audio.cpp package; files outlive handle. */
  int32_t threads; /* 1..8 */
- int32_t streaming; /* TTS: 0 offline, 1 PCM callback. ASR: must be 0. */
+ int32_t streaming; /* TTS: 0 offline, 1 callback; legacy ASR: 0; ASR stream API: 1. */
  /* SenseVoice: setting sense_asr.vad_model_path explicitly enables offline Silero
   * speech segmentation; absent means no internal VAD. Not automatic endpointing. */
  const ortts_speech_option *session_options;
@@ -70,6 +71,56 @@ ORTTS_API const char *ortts_transcript_text(const ortts_transcript*);
 ORTTS_API const char *ortts_transcript_language(const ortts_transcript*);
 ORTTS_API double ortts_transcript_api_ms(const ortts_transcript*);
 ORTTS_API void ortts_transcript_free(ortts_transcript*);
+/* Additive, separately versioned incremental ASR API. Moonshine English only.
+ * bounded-overlap encoder + revisable decoder; not per-layer KV streaming.
+ * Existing ortts_asr_* retains buffered-final semantics. */
+#define ORTTS_ASR_STREAM_ABI_VERSION 1u
+typedef struct ortts_asr_stream_config {
+ uint32_t struct_size;
+ uint32_t update_ms;       /* 100..2000, multiple of 20; default 400 */
+ uint32_t min_partial_ms;  /* 400..3000, multiple of 20; default 1000 */
+ uint32_t max_segment_ms;  /* 1000..30000, multiple of 20; default 15000 */
+ uint32_t silence_ms;      /* 0=manual/limit only; 200..3000, multiple of 20 */
+ float energy_threshold;  /* RMS amplitude 0..1, >0. Energy gate, NOT neural VAD */
+} ortts_asr_stream_config;
+typedef enum ortts_asr_endpoint {
+ ORTTS_ASR_PARTIAL=0, ORTTS_ASR_FLUSH=1, ORTTS_ASR_SILENCE=2, ORTTS_ASR_LIMIT=3
+} ortts_asr_endpoint;
+typedef struct ortts_asr_stream_event {
+ uint32_t struct_size;
+ int32_t endpoint; /* 0=partial; otherwise final. Partials replace the whole hypothesis. */
+ uint64_t segment_id, start_frame, end_frame, revision; /* 16kHz input timeline */
+ const char *text; /* Borrowed UTF-8; valid only during callback. */
+ const char *language; /* "en" */
+} ortts_asr_stream_event;
+typedef struct ortts_asr_stream_stats {
+ uint32_t struct_size;
+ uint64_t received_frames, processed_frames, encoded_samples, updates;
+ uint64_t buffered_pcm_frames, cached_encoder_frames, segment_frames;
+ uint64_t peak_buffered_pcm_frames, peak_cached_encoder_frames;
+ double encoder_ms, decoder_ms;
+} ortts_asr_stream_stats;
+/* Synchronous worker callback. Copy/enqueue; never reenter/free an engine here.
+ * Nonzero cancels the stream; reset is required before reuse. */
+typedef int (*ortts_asr_stream_callback)(void*,const ortts_asr_stream_event*);
+ORTTS_API uint32_t ortts_asr_stream_abi_version(void); /* 0 if --speech disabled */
+/* NULL stream config uses 400/1000/15000ms, 800ms silence, RMS 0.003.
+ * Base config must select moonshine_asr, streaming=1, threads=1..8.
+ * No session_options/eSpeak/max_input_frames: use typed stream settings. */
+ORTTS_API ortts_status ortts_asr_stream_create(const ortts_speech_config*,const ortts_asr_stream_config*,ortts_asr_stream**);
+/* Finite 16kHz mono F32; each call 1..32000 frames. No implicit resampling.
+ * Callback is required on every accept/finish; emitted events are not retained. */
+ORTTS_API ortts_status ortts_asr_stream_accept(ortts_asr_stream*,const float*,size_t,ortts_asr_stream_callback,void*);
+/* Flush current utterance; session continues with a new segment. Repeated flush
+ * without new input emits nothing. Exact/energy silence does not invoke ASR. */
+ORTTS_API ortts_status ortts_asr_stream_finish(ortts_asr_stream*,ortts_asr_stream_callback,void*);
+ORTTS_API ortts_status ortts_asr_stream_reset(ortts_asr_stream*);
+/* Can be called from another thread, including between accept calls. Cancel is
+ * sticky until reset. Checked at ticks, encode boundaries and decoder tokens;
+ * no interruption inside a tensor kernel. Do not race free with any operation. */
+ORTTS_API void ortts_asr_stream_cancel(ortts_asr_stream*);
+ORTTS_API ortts_status ortts_asr_stream_get_stats(ortts_asr_stream*,ortts_asr_stream_stats*);
+ORTTS_API void ortts_asr_stream_free(ortts_asr_stream*);
 /* All errors use ortts_last_error(), borrowed thread-local. Same-process inference
  * including legacy OrTTS is serialized (BUSY). No internal download/cache/playback.
  * Model handles own sessions; host owns eviction and must free them explicitly. */

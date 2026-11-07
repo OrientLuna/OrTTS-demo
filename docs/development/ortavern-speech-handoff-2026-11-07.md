@@ -1,5 +1,17 @@
 # OrTavern 音频后端迭代交接
 
+## 增量 ASR 更新（2026-11-07）
+
+新增独立 `ortts_asr_stream_*` ABI1 和 Rust `speech::streaming`，不改变下文旧 `ortts_asr_*` final-only 合同。Moonshine英语可修订partial/final、flush/reset、能量/限长endpoint、跨线程取消与stats已接线，仍共享一份ggml。Rust `Cancellation` 可交UI线程，句柄Drop后自动失效，不保活权重。能力检查用 `ortts_asr_stream_abi_version` / catalog的 `incremental_asr`；旧字段 `partial=false` 仅描述旧接口。
+
+它采用F16展开编码权重、有界重叠编码和重算假设解码，**不是逐层KV完全复用**；中文仍用SenseVoice离线，宿主已有Sherpa真流式中文和全双工路径继续保留。本次不集成Sherpa submodule，不复制宿主编排或修改OrTavern主线。
+
+新增验收见 [SDK状态与内存](../../benchmarks/asr-stream-sdk-20261107.json)、[音色/长句](../../benchmarks/asr-stream-quality-20261107.json)、[平台检查](../../benchmarks/asr-stream-platforms-20261107.json)。默认15秒segment上限下，独立进程加速回放约303秒语音，预热后RSS约228–230MiB，未随输入增长；不是手机或麦克风热验收。原TTS/离线ASR回归见 [回归记录](../../benchmarks/speech-stream-regression-20261107.json)。
+
+本机新产物：`build/speech-incremental-macos/install/lib/libortts.dylib`、`build/speech-incremental-ios/install/OrTTS.framework`、`build/speech-incremental-android/install/lib/libortts.so`。移动端目前只完成构建/符号/Swift接口检查，模型设备运行未验收。接线与事件生命周期以 [SPEECH](../../runtime/SPEECH.md#moonshine-增量-asr) 为准，下面旧交接保留作历史范围。
+
+## 初始交付记录
+
 2026-11-07，交付仓库OrTTS-demo。本轮仅修改运行时仓库，未改OrTavern主线、provider、prompt或对话编排。用户授权后端集成本地提交，然后通知“OrTavern主开发”组织宿主迭代；不是授权直接发布App或替换手机默认后端。
 
 ## 已完成的后端

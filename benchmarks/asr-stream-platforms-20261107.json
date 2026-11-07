@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "source_prepare_reproduced": true,
+  "speech_patch_sha256": "a4a520aa2ecdbaf2aec3ef9c0027a590c547cc643dd41e99eced43c5147e5c63",
+  "swift_ios_typecheck": "passed; ARM64 iOS16.3, SDK iphoneos, ImportSpeech.swift",
+  "disabled_feature_compile": "passed; ORTTS_WITH_SPEECH=0",
+  "c_header_syntax": "passed",
+  "platforms": [
+    {
+      "platform": "macos-arm64",
+      "artifact": "build/speech-incremental-macos/install/lib/libortts.dylib",
+      "bytes": 8928448,
+      "sha256": "ba4f0fa5c5f6ad2ace15a75f2ba19884aff920273536535d76440c7f8258df78",
+      "public_header_sha256": "56a0fb9335de78ef8cd5efb163a0a31cbc6e620a3a43c53dd8de25f2def1c2e2",
+      "model_execution": true,
+      "cpu_profile": "arm64-baseline",
+      "dependencies": [
+        "\t@rpath/libortts.dylib (compatibility version 0.0.0, current version 0.0.0)",
+        "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.40.3)",
+        "\t/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate (compatibility version 1.0.0, current version 4.0.0)",
+        "\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2200.32.0)"
+      ],
+      "ortts_exports": 42,
+      "incremental_exports": [
+        "ortts_asr_stream_abi_version",
+        "ortts_asr_stream_create",
+        "ortts_asr_stream_accept",
+        "ortts_asr_stream_finish",
+        "ortts_asr_stream_reset",
+        "ortts_asr_stream_cancel",
+        "ortts_asr_stream_get_stats",
+        "ortts_asr_stream_free"
+      ]
+    },
+    {
+      "platform": "ios-arm64",
+      "artifact": "build/speech-incremental-ios/install/OrTTS.framework/OrTTS",
+      "bytes": 8777464,
+      "sha256": "393de0981499a0ebc24bcde6d3d381a945b02104e8d3c9c1ae958e354ca3da50",
+      "public_header_sha256": "56a0fb9335de78ef8cd5efb163a0a31cbc6e620a3a43c53dd8de25f2def1c2e2",
+      "model_execution": false,
+      "cpu_profile": "arm64-baseline",
+      "dependencies": [
+        "\t@rpath/OrTTS.framework/OrTTS (compatibility version 0.0.0, current version 0.0.0)",
+        "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.40.3)",
+        "\t/System/Library/Frameworks/Accelerate.framework/Accelerate (compatibility version 1.0.0, current version 4.0.0, weak)",
+        "\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2200.32.0)"
+      ],
+      "ortts_exports": 42,
+      "incremental_exports": [
+        "ortts_asr_stream_abi_version",
+        "ortts_asr_stream_create",
+        "ortts_asr_stream_accept",
+        "ortts_asr_stream_finish",
+        "ortts_asr_stream_reset",
+        "ortts_asr_stream_cancel",
+        "ortts_asr_stream_get_stats",
+        "ortts_asr_stream_free"
+      ]
+    },
+    {
+      "platform": "android-arm64",
+      "artifact": "build/speech-incremental-android/install/lib/libortts.so",
+      "bytes": 6606232,
+      "sha256": "6c7214eec175761b79192f87d832bf4cfa65f5c138d8a01fa171f433953fcc81",
+      "public_header_sha256": "56a0fb9335de78ef8cd5efb163a0a31cbc6e620a3a43c53dd8de25f2def1c2e2",
+      "model_execution": false,
+      "cpu_profile": "arm64-baseline",
+      "elf_load_segments": [
+        "LOAD           0x000000 0x0000000000000000 0x0000000000000000 0x640040 0x640040 R E 0x4000",
+        "LOAD           0x640040 0x0000000000644040 0x0000000000644040 0x00bfa0 0x00bfc0 RW  0x4000",
+        "LOAD           0x64bfe0 0x0000000000653fe0 0x0000000000653fe0 0x000628 0x082b08 RW  0x4000"
+      ],
+      "needed": [
+        "0x0000000000000001 (NEEDED)       Shared library: [liblog.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libm.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libdl.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc++_shared.so]",
+        "0x0000000000000001 (NEEDED)       Shared library: [libc.so]"
+      ],
+      "ortts_exports": 42,
+      "incremental_exports": [
+        "ortts_asr_stream_abi_version",
+        "ortts_asr_stream_create",
+        "ortts_asr_stream_accept",
+        "ortts_asr_stream_finish",
+        "ortts_asr_stream_reset",
+        "ortts_asr_stream_cancel",
+        "ortts_asr_stream_get_stats",
+        "ortts_asr_stream_free"
+      ]
+    }
+  ],
+  "limitations": [
+    "mobile cross-build and symbol/type checks only; no new model device execution",
+    "Linux and Windows not validated this round",
+    "Apple simulator slice not built this round"
+  ]
+}

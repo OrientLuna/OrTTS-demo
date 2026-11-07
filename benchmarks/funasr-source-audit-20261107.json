@@ -1,0 +1,28 @@
+{
+  "repository": "modelscope/FunASR",
+  "commit": "efe5504e388613e5298e1f93d5ca9f861700b489",
+  "commit_date": "2026-11-07T04:45:43Z",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "f382b62dcc61fc566b9215b1e3b604b539bfd96ed52ae1eeff5090f6dc176057",
+      "bytes": 1061
+    },
+    {
+      "path": "runtime/llama.cpp/CMakeLists.txt",
+      "sha256": "bd8ae233c5331069525646ff2bfcca7effb3b6b16fecc2349c0dc665237ea1cf",
+      "bytes": 2699
+    },
+    {
+      "path": "runtime/llama.cpp/paraformer/funasr-paraformer/funasr-paraformer.cpp",
+      "sha256": "1bcbfa5cde5ac4e2da13badc44f565ffa2c721e2cf1bcdb291a35126249146ac",
+      "bytes": 17131
+    },
+    {
+      "path": "funasr/models/paraformer_streaming/model.py",
+      "sha256": "07265409294c4f52174a186b597ea27b1408f2e95ee67083814ade2a3c6fcf39",
+      "bytes": 30224
+    }
+  ],
+  "scope": "Source inspection only; no model download, compilation or device validation."
+}

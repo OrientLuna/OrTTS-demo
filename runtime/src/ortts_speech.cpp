@@ -15,6 +15,9 @@
 #ifndef ORTTS_WITH_SPEECH
 #define ORTTS_WITH_SPEECH 0
 #endif
+#if ORTTS_WITH_SPEECH
+#include "engine/models/moonshine_asr/runtime.h"
+#endif
 namespace {
 using ortts::detail::error;
 using ortts::detail::execution_gate;
@@ -89,6 +92,13 @@ struct ortts_tts{Handle h;};
 struct ortts_asr{Handle h;size_t limit=16000*60;std::vector<float>pending;};
 struct ortts_speech_audio{std::vector<float>samples;int rate=0,channels=0;ortts_metrics metrics{};};
 struct ortts_transcript{std::string text,language;double api_ms=0;};
+struct ortts_asr_stream {
+ std::atomic<bool> cancelled{false};
+ bool faulted=false;
+#if ORTTS_WITH_SPEECH
+ std::unique_ptr<engine::models::moonshine_asr::MoonshineIncremental> native;
+#endif
+};
 namespace {
 struct Capture{Handle&h;ortts_speech_pcm_callback cb;void*user;Clock::time_point start;ortts_metrics metrics{0,0,0,-1,0};size_t frames=0;int rate=0,channels=0;bool failed=false;};
 int capture(const audiocpp_event*event,void*user)noexcept{
@@ -110,7 +120,7 @@ extern "C" {
 uint32_t ortts_speech_abi_version(void){return ORTTS_WITH_SPEECH?ORTTS_SPEECH_ABI_VERSION:0;}
 const char*ortts_speech_catalog_json(void){
 #if ORTTS_WITH_SPEECH
- return R"({"schema":1,"executor":"audio.cpp/ggml-cpu","shared_ggml":true,"tts":["kokoro_tts","piper_tts","kitten_tts","pocket_tts","zipvoice"],"asr":["sense_asr","moonshine_asr"],"tts_stream_kind":{"kokoro_tts":"text-chunks","pocket_tts":"codec-chunks","zipvoice":"text-chunks","piper_tts":"offline-only","kitten_tts":"offline-only"},"asr_input":"16000Hz-mono-f32","asr_stream":"bounded-buffer-final","partial":false,"automatic_endpoint":false,"cancellation":"callback-boundary-or-discard-after-compute","scheduler":"process-serialized-busy","excluded":["f5_tts","whisper","onnx"]})";
+ return R"({"schema":1,"executor":"audio.cpp/ggml-cpu","shared_ggml":true,"tts":["kokoro_tts","piper_tts","kitten_tts","pocket_tts","zipvoice"],"asr":["sense_asr","moonshine_asr"],"tts_stream_kind":{"kokoro_tts":"text-chunks","pocket_tts":"codec-chunks","zipvoice":"text-chunks","piper_tts":"offline-only","kitten_tts":"offline-only"},"asr_input":"16000Hz-mono-f32","asr_stream":"bounded-buffer-final","partial":false,"automatic_endpoint":false,"incremental_asr":{"abi":1,"api":"ortts_asr_stream_*","families":["moonshine_asr"],"languages":["en"],"partial":"revisable","encoder":"bounded-overlap-f16","decoder":"hypothesis-redecode","endpoint":["explicit","energy-silence","segment-limit"],"max_segment_ms":30000,"cancellation":"ticks-encode-boundaries-decoder-tokens","per_layer_kv_cache":false},"cancellation":"callback-boundary-or-discard-after-compute","scheduler":"process-serialized-busy","excluded":["f5_tts","whisper","onnx"]})";
 #else
  return R"({"schema":1,"tts":[],"asr":[],"disabled":true})";
 #endif
@@ -163,4 +173,65 @@ const char*ortts_transcript_text(const ortts_transcript*t){return t?t->text.c_st
 const char*ortts_transcript_language(const ortts_transcript*t){return t?t->language.c_str():nullptr;}
 double ortts_transcript_api_ms(const ortts_transcript*t){return t?t->api_ms:0;}
 void ortts_transcript_free(ortts_transcript*t){delete t;}
+uint32_t ortts_asr_stream_abi_version(void){return ORTTS_WITH_SPEECH?ORTTS_ASR_STREAM_ABI_VERSION:0;}
+ortts_status ortts_asr_stream_create(const ortts_speech_config*c,const ortts_asr_stream_config*s,ortts_asr_stream**out){
+ if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{
+ require(ORTTS_WITH_SPEECH,"Speech feature disabled; rebuild with --speech");
+ require(out&&c&&c->struct_size==sizeof(*c)&&present(c->family)&&std::string(c->family)=="moonshine_asr"&&present(c->model_path)&&c->threads>=1&&c->threads<=8&&c->streaming==1,"Incremental ASR requires Moonshine streaming configuration");
+ require(!c->session_option_count&&!present(c->espeak_library)&&!present(c->espeak_data)&&!c->max_input_frames,"Use typed incremental ASR settings, not offline/session options");
+ require(std::filesystem::is_regular_file(c->model_path)||std::filesystem::is_directory(c->model_path),"Missing ASR model package");
+ ortts_asr_stream_config v{sizeof(v),400,1000,15000,800,0.003F};
+ if(s){require(s->struct_size==sizeof(*s),"Invalid incremental config size");v=*s;}
+ require(v.update_ms>=100&&v.update_ms<=2000&&v.update_ms%20==0,"update_ms must be 100..2000 and multiple of 20");
+ require(v.min_partial_ms>=400&&v.min_partial_ms<=3000&&v.min_partial_ms%20==0,"min_partial_ms must be 400..3000 and multiple of 20");
+ require(v.max_segment_ms>=1000&&v.max_segment_ms<=30000&&v.max_segment_ms%20==0&&v.max_segment_ms>=v.min_partial_ms,"Invalid segment limit");
+ require(v.silence_ms==0||(v.silence_ms>=200&&v.silence_ms<=3000&&v.silence_ms%20==0),"Invalid silence endpoint duration");
+ require(std::isfinite(v.energy_threshold)&&v.energy_threshold>0&&v.energy_threshold<1,"Invalid RMS energy threshold");
+ auto e=std::make_unique<ortts_asr_stream>();
+#if ORTTS_WITH_SPEECH
+ engine::models::moonshine_asr::MoonshineIncrementalConfig settings;
+ settings.update_samples=size_t(v.update_ms)*16;settings.min_partial_samples=size_t(v.min_partial_ms)*16;
+ settings.max_segment_samples=size_t(v.max_segment_ms)*16;settings.endpoint_silence_samples=size_t(v.silence_ms)*16;settings.energy_threshold=v.energy_threshold;
+ e->native=std::make_unique<engine::models::moonshine_asr::MoonshineIncremental>(c->model_path,c->threads,settings);
+#endif
+ *out=e.release();return ORTTS_OK;
+ }catch(...){return failure();}
+}
+}
+namespace {
+ortts_status incremental_operation(ortts_asr_stream*e,const float*p,size_t n,bool finish,ortts_asr_stream_callback cb,void*user){
+ auto lock=gate();if(!lock.owns_lock())return busy();bool started=false;
+ try{
+ require(ORTTS_WITH_SPEECH&&e&&cb,"Invalid incremental ASR handle/callback");
+ if(e->cancelled){error="ASR stream cancelled; reset before reuse";return ORTTS_CANCELLED;}
+ require(!e->faulted,"ASR stream failed; reset before reuse");
+ if(!finish){require(n<=32000,"Incremental input call exceeds 2s; split input");pcm(p,n,16000,1);}
+#if ORTTS_WITH_SPEECH
+ auto sink=[&](const engine::models::moonshine_asr::MoonshineIncrementalEvent&v){
+  ortts_asr_stream_event event{sizeof(event),v.endpoint,v.segment,v.start,v.end,v.revision,v.text.c_str(),"en"};
+  if(cb(user,&event))e->cancelled=true;return e->cancelled.load();
+ };
+ auto cancel=[&](){return e->cancelled.load();};started=true;
+ bool ok=finish?e->native->finish(sink,cancel):e->native->accept(p,n,sink,cancel);
+ if(!ok||e->cancelled){e->cancelled=true;error="ASR stream cancelled; reset before reuse";return ORTTS_CANCELLED;}
+#endif
+ return ORTTS_OK;
+ }catch(...){if(started&&e)e->faulted=true;return failure();}
+}
+}
+extern "C" {
+ortts_status ortts_asr_stream_accept(ortts_asr_stream*e,const float*p,size_t n,ortts_asr_stream_callback cb,void*u){return incremental_operation(e,p,n,false,cb,u);}
+ortts_status ortts_asr_stream_finish(ortts_asr_stream*e,ortts_asr_stream_callback cb,void*u){return incremental_operation(e,nullptr,0,true,cb,u);}
+ortts_status ortts_asr_stream_reset(ortts_asr_stream*e){auto lock=gate();if(!lock.owns_lock())return busy();try{require(ORTTS_WITH_SPEECH&&e,"Invalid incremental ASR handle");
+#if ORTTS_WITH_SPEECH
+ e->native->reset();e->faulted=false;e->cancelled=false;
+#endif
+ return ORTTS_OK;}catch(...){return failure();}}
+void ortts_asr_stream_cancel(ortts_asr_stream*e){if(e)e->cancelled=true;}
+ortts_status ortts_asr_stream_get_stats(ortts_asr_stream*e,ortts_asr_stream_stats*out){auto lock=gate();if(!lock.owns_lock())return busy();try{require(ORTTS_WITH_SPEECH&&e&&out&&out->struct_size==sizeof(*out),"Invalid ASR stream stats");
+#if ORTTS_WITH_SPEECH
+ auto s=e->native->stats();*out={sizeof(*out),s.received,s.processed,s.encoded,s.updates,s.buffered,s.cached_frames,s.segment_samples,s.peak_buffered,s.peak_cached_frames,s.encoder_ms,s.decoder_ms};
+#endif
+ return ORTTS_OK;}catch(...){return failure();}}
+void ortts_asr_stream_free(ortts_asr_stream*e){if(e){std::lock_guard<std::mutex>l(execution_gate);delete e;}}
 }

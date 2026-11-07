@@ -1,0 +1,484 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "scope": "synthetic fixed voices; no natural human-speech or mobile certification",
+  "gate": "normalized WER <= 15% and no more than 3 percentage points worse than matched offline; partial before final",
+  "library_sha256": "c2c3f4f9ab70f52970c91cb24d914c9da4e0c32e17de79e1aab2f4c26450866f",
+  "model_sha256": "0f795f14924dbfe40d2ee0e220382c9b23cd9e89064c6ffb97e236d81f1d7020",
+  "cases": [
+    {
+      "fixture": "kokoro-af_heart.wav",
+      "fixture_sha256": "78d1e7c1172af414c6ef3e756bd742e1b46802f5235ec42959f67301b960b8d6",
+      "reference": "At nine thirty, please check the train ticket and call the station.",
+      "audio_s": 4.15,
+      "offline": "At 9:30, please check the train ticket and call the station.",
+      "stream_final": "At 9:30, please check the train ticket and call the station.",
+      "exact_final_match": true,
+      "offline_wer": 0.0,
+      "stream_wer": 0.0,
+      "offline_s": 0.065597917,
+      "stream_s": 0.17679904199999996,
+      "stream_compute_rtf": 0.04260217879518071,
+      "events": [
+        {
+          "endpoint": 0,
+          "start": 1600,
+          "end": 17600,
+          "revision": 1,
+          "text": "At nine-thinth"
+        },
+        {
+          "endpoint": 0,
+          "start": 1600,
+          "end": 24000,
+          "revision": 2,
+          "text": "At 9.30,"
+        },
+        {
+          "endpoint": 0,
+          "start": 1600,
+          "end": 30400,
+          "revision": 3,
+          "text": "At 9.30, please"
+        },
+        {
+          "endpoint": 0,
+          "start": 1600,
+          "end": 36800,
+          "revision": 4,
+          "text": "At 9:30, please check the"
+        },
+        {
+          "endpoint": 0,
+          "start": 1600,
+          "end": 43200,
+          "revision": 5,
+          "text": "At 9:30, please check the train"
+        },
+        {
+          "endpoint": 0,
+          "start": 1600,
+          "end": 49600,
+          "revision": 6,
+          "text": "At 9:30, please check the train ticket and"
+        },
+        {
+          "endpoint": 0,
+          "start": 1600,
+          "end": 56000,
+          "revision": 7,
+          "text": "At 9:30, please check the train ticket and call the"
+        },
+        {
+          "endpoint": 0,
+          "start": 1600,
+          "end": 62400,
+          "revision": 8,
+          "text": "At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "endpoint": 1,
+          "start": 1600,
+          "end": 66400,
+          "revision": 9,
+          "text": "At 9:30, please check the train ticket and call the station."
+        }
+      ],
+      "passed": true
+    },
+    {
+      "fixture": "kokoro-am_adam.wav",
+      "fixture_sha256": "83560bdcf78d73fb7883be163c06cb437fc778044a2ee2233e8bd40145ab67d0",
+      "reference": "At nine thirty, please check the train ticket and call the station.",
+      "audio_s": 4.15,
+      "offline": "At 9:30, please check the train ticket and call the station.",
+      "stream_final": "At 9:30, please check the train ticket and call the station.",
+      "exact_final_match": true,
+      "offline_wer": 0.0,
+      "stream_wer": 0.0,
+      "offline_s": 0.06942325000000005,
+      "stream_s": 0.18040641600000007,
+      "stream_compute_rtf": 0.043471425542168686,
+      "events": [
+        {
+          "endpoint": 0,
+          "start": 1280,
+          "end": 17280,
+          "revision": 1,
+          "text": "At nine-thinth"
+        },
+        {
+          "endpoint": 0,
+          "start": 1280,
+          "end": 23680,
+          "revision": 2,
+          "text": "At 9.30,"
+        },
+        {
+          "endpoint": 0,
+          "start": 1280,
+          "end": 30080,
+          "revision": 3,
+          "text": "At 9.30, please, please"
+        },
+        {
+          "endpoint": 0,
+          "start": 1280,
+          "end": 36480,
+          "revision": 4,
+          "text": "At 9:30, please check the check"
+        },
+        {
+          "endpoint": 0,
+          "start": 1280,
+          "end": 42880,
+          "revision": 5,
+          "text": "At 9:30, please check the train train ticket."
+        },
+        {
+          "endpoint": 0,
+          "start": 1280,
+          "end": 49280,
+          "revision": 6,
+          "text": "At 9:30, please check the train ticket and check it."
+        },
+        {
+          "endpoint": 0,
+          "start": 1280,
+          "end": 55680,
+          "revision": 7,
+          "text": "At 9:30, please check the train ticket and call the state."
+        },
+        {
+          "endpoint": 0,
+          "start": 1280,
+          "end": 62080,
+          "revision": 8,
+          "text": "At 9:30, please check the train ticket and call the station."
+        },
+        {
+          "endpoint": 1,
+          "start": 1280,
+          "end": 66400,
+          "revision": 9,
+          "text": "At 9:30, please check the train ticket and call the station."
+        }
+      ],
+      "passed": true
+    },
+    {
+      "fixture": "pocket-anna.wav",
+      "fixture_sha256": "bb2ab99753c4be8ff89653d9c8624bfb932470bfdf5bbff815316354c6377218",
+      "reference": "At nine thirty, please check the train ticket and call the station.",
+      "audio_s": 3.92,
+      "offline": "At 9:30 please check the train ticket and call the station.",
+      "stream_final": "At 9:30, please check the train ticket and call the station.",
+      "exact_final_match": false,
+      "offline_wer": 0.0,
+      "stream_wer": 0.0,
+      "offline_s": 0.0666770000000001,
+      "stream_s": 0.15882383300000003,
+      "stream_compute_rtf": 0.040516283928571435,
+      "events": [
+        {
+          "endpoint": 0,
+          "start": 3840,
+          "end": 19840,
+          "revision": 1,
+          "text": "At nine."
+        },
+        {
+          "endpoint": 0,
+          "start": 3840,
+          "end": 26240,
+          "revision": 2,
+          "text": "At nine thirty."
+        },
+        {
+          "endpoint": 0,
+          "start": 3840,
+          "end": 32640,
+          "revision": 3,
+          "text": "At nine thirty, please."
+        },
+        {
+          "endpoint": 0,
+          "start": 3840,
+          "end": 39040,
+          "revision": 4,
+          "text": "At 9:30, please check the"
+        },
+        {
+          "endpoint": 0,
+          "start": 3840,
+          "end": 45440,
+          "revision": 5,
+          "text": "At 9:30, please check the train ticket."
+        },
+        {
+          "endpoint": 0,
+          "start": 3840,
+          "end": 51840,
+          "revision": 6,
+          "text": "At 9:30, please check the train ticket and"
+        },
+        {
+          "endpoint": 0,
+          "start": 3840,
+          "end": 58240,
+          "revision": 7,
+          "text": "At 9:30, please check the train ticket and call the school."
+        },
+        {
+          "endpoint": 1,
+          "start": 3840,
+          "end": 62720,
+          "revision": 8,
+          "text": "At 9:30, please check the train ticket and call the station."
+        }
+      ],
+      "passed": true
+    },
+    {
+      "fixture": "natural-long-alba.wav",
+      "fixture_sha256": "d551db380a914f5eec7c775b24de6a1ff09821e4235d91faa34c9fe6dff87846",
+      "reference": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the station so we can decide where to meet for dinner.",
+      "audio_s": 13.04,
+      "offline": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the station so we can decide where to meet for dinner.",
+      "stream_final": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the station so we can decide where to meet for dinner.",
+      "exact_final_match": true,
+      "offline_wer": 0.0,
+      "stream_wer": 0.0,
+      "offline_s": 0.14694695800000002,
+      "stream_s": 1.2148557079999998,
+      "stream_compute_rtf": 0.09316378128834354,
+      "events": [
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 16000,
+          "revision": 1,
+          "text": "Before you eat, you"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 22400,
+          "revision": 2,
+          "text": "Before you leave the house."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 28800,
+          "revision": 3,
+          "text": "Before you leave the house, check"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 35200,
+          "revision": 4,
+          "text": "Before you leave the house, check that the"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 41600,
+          "revision": 5,
+          "text": "Before you leave the house, check that the windows are closed."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 48000,
+          "revision": 6,
+          "text": "Before you leave the house, check that the windows are closed."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 54400,
+          "revision": 7,
+          "text": "Before you leave the house, check that the windows are closed and"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 60800,
+          "revision": 8,
+          "text": "Before you leave the house, check that the windows are closed and the back door is closed."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 67200,
+          "revision": 9,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 73600,
+          "revision": 10,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 80000,
+          "revision": 11,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the window is locked,"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 86400,
+          "revision": 12,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes,"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 92800,
+          "revision": 13,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 99200,
+          "revision": 14,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the after,"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 105600,
+          "revision": 15,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon,"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 112000,
+          "revision": 16,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 118400,
+          "revision": 17,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue and blue"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 124800,
+          "revision": 18,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 131200,
+          "revision": 19,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hall from the hall."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 137600,
+          "revision": 20,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 144000,
+          "revision": 21,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a window to the hallway."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 150400,
+          "revision": 22,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm check."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 156800,
+          "revision": 23,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 163200,
+          "revision": 24,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 169600,
+          "revision": 25,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 176000,
+          "revision": 26,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 182400,
+          "revision": 27,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the state of the city."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 188800,
+          "revision": 28,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the station so that you can see the"
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 195200,
+          "revision": 29,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the station so we can decide."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 201600,
+          "revision": 30,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the station so we can decide where to decide where to go."
+        },
+        {
+          "endpoint": 0,
+          "start": 0,
+          "end": 208000,
+          "revision": 31,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the station so we can decide where to meet for dinner."
+        },
+        {
+          "endpoint": 1,
+          "start": 0,
+          "end": 208640,
+          "revision": 32,
+          "text": "Before you leave the house, check that the windows are closed and the back door is locked. If the weather changes during the afternoon, take the blue umbrella from the hallway and bring a warm jacket. Please call me when you reach the station so we can decide where to meet for dinner."
+        }
+      ],
+      "passed": true
+    }
+  ]
+}
