@@ -79,3 +79,6 @@ impl Engine {
     }
 }
 impl Drop for Engine { fn drop(&mut self) { unsafe { ortts_engine_free(self.raw) } } }
+
+/// Optional additive multi-model API; use a matched library built with --speech.
+pub mod speech;

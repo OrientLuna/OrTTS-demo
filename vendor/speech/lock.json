@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "path": "src/models/kokoro_tts/plbert.cpp",
+      "base_sha256": "eff7b3326896e366717bccf1150d5452632683d12dc9eb2a70e9a191fa0dc777",
+      "sha256": "50eb73ee91a7caecebe93689f4c4517231f3d82f18fed054e441ddc552ca7826"
+    },
+    {
+      "path": "src/community_models/sense_asr/session.cpp",
+      "base_sha256": "681a9815280d0e6d209ba6d243879912e6d4784348a090c7f4915119282969a8",
+      "sha256": "b7f2bd212035da6fdac48beee0701e6d9488fa70941c5aa8086f905efb73b07d"
+    }
+  ],
+  "patch_sha256": "fafc02ebcf5e1d4f1ad0c6cbf3a757ed350e8d4c2d98dd28d0172f58505e7555"
+}

@@ -8,8 +8,9 @@ int main(int argc,char**argv){try{
  if(ortts::pack::resolve(root.string()).liquid())throw std::runtime_error("legacy changed");
  save(root/"model.json","{}");if(ortts::pack::resolve(root.string()).liquid())throw std::runtime_error("old manifest changed");
  fs::rename(root/"model.json",root/"download-manifest.json");if(ortts::pack::resolve(root.string()).liquid())throw std::runtime_error("Apple manifest changed");fs::rename(root/"download-manifest.json",root/"model.json");
+ save(root/"model.json",R"({"schema":"ortts-download-manifest-v1","runtime":"OrTTS-demo Android ARM64 CPU"})");if(ortts::pack::resolve(root.string()).liquid())throw std::runtime_error("legacy descriptive runtime changed");
  auto reject=[&](const std::string&s){save(root/"model.json",s);bool bad=false;try{ortts::pack::resolve(root.string());}catch(const std::exception&){bad=true;}if(!bad)throw std::runtime_error("invalid manifest accepted");};
- reject(R"({"runtime":{"schema":"wrong"}})");reject(R"({"runtime":{"schema":"ortts-runtime-v1","decoder":{"kind":"unknown"}}})");
+ reject(R"({"runtime":"unknown"})");reject(R"({"runtime":{"schema":"wrong"}})");reject(R"({"runtime":{"schema":"ortts-runtime-v1","decoder":{"kind":"unknown"}}})");
  std::string cfg=R"({"schema":"ortts-liquidcodec-native-v1","source_RVQ_groups":16,"frame_samples":1920,"lookahead_frames":1})";save(root/"native/lc/runtime.json",cfg);auto h=ortts_sha256::file((root/"native/lc/runtime.json").string());
  auto manifest=[&](const std::string&kind,const std::string&v,const std::string&rel,const std::string&hash){return "{\"runtime\":{\"schema\":\"ortts-runtime-v1\",\"decoder\":{\"kind\":\""+kind+"\",\"variant\":\""+v+"\",\"manifest\":\""+rel+"\"}},\"files\":[{\"path\":\""+rel+"\",\"sha256\":\""+hash+"\"}]}";};
  auto valid=manifest("liquidcodec","base","native/lc/runtime.json",h);

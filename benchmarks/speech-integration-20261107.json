@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "host": "Darwin arm64",
+  "model_execution": "current host only; cross-builds are not device certification",
+  "checks": [
+    {
+      "step": 0,
+      "returncode": 0
+    },
+    {
+      "step": 1,
+      "returncode": 0
+    },
+    {
+      "step": 2,
+      "returncode": 0
+    }
+  ],
+  "artifact_sha256": "af5b5ed7ccf2547a8b4429bc3280b8079d58b2c9a0ebaeadf6deae84be38aeeb",
+  "artifact_bytes": 8934432,
+  "public_headers": {
+    "ortts_speech.h": "6409fdc03f00c574447a20f08230d014d0243756fdf04705fda39bc4f3f11535",
+    "ortts_engine.h": "1471c8007982d86d544030db7b2c48e2cbf87ce1f6245338750cb308de2b7027"
+  },
+  "assertions": [
+    "five native-format TTS families",
+    "Kokoro/Pocket/ZipVoice callback/pull stream cancellation and reuse",
+    "Piper/Kitten reject streaming",
+    "English model rejects zh and Han text, invalid UTF-8 and missing voice",
+    "SenseVoice/Moonshine offline equals buffered-final",
+    "ASR bounds/reset/digital silence/nonfinite input",
+    "SenseVoice explicit Silero NoSpeech does not re-transcribe whole input",
+    "legacy and speech share BUSY gate",
+    "Rust native-rate copy + ASR + Pocket stream reuse"
+  ],
+  "subjective_quality": "not certified",
+  "date": "2026-11-07",
+  "device": "M5 MacBook Air 24GB",
+  "legacy_regression": {
+    "reference_library": "build/engine-macos/libortts.dylib (existing Oct31 artifact)",
+    "reference_sha256": "d2ab7a1e706ff0186b8743d132ef88e450d2f031de968f790596204ea3b9e35b",
+    "fixture": "P3, seed20261023, max_tokens128, 你好，欢迎使用。",
+    "pcm_samples": 44160,
+    "float32_sha256": "26b7a58308f0914b6a6fc7edfda3280eb101af27a65ee3196055638889e87f5c",
+    "bitwise_equal_to_existing": true
+  },
+  "kokoro_eager_ab": {
+    "same_configuration": "same source, CPU4, arm64-i8mm, GGML_ACCELERATE OFF; only ORTTS_KOKORO_GRAPH_ALLOC toggled",
+    "optimized_wav_sha256": "d700e6987a15edb64fc3ba0a6d76d03d5e0ad89d5945b7a0fe1d9e15ff3a3380",
+    "eager_wav_sha256": "d700e6987a15edb64fc3ba0a6d76d03d5e0ad89d5945b7a0fe1d9e15ff3a3380",
+    "bitwise_equal": true,
+    "limitations": "one offline fixture; cancellation/reuse covered by integration assertions, not exhaustive waveform parity"
+  },
+  "cross_builds": [
+    {
+      "target": "ios-arm64",
+      "profile": "arm64-baseline",
+      "bytes": 8766976,
+      "sha256": "4f25b087a9fb4a2ec7f54b9372157ee4ab5464cabb9e149aafbee0ad510ac726",
+      "runtime_tested": false,
+      "source_receipt_matches": true
+    },
+    {
+      "target": "android-arm64",
+      "profile": "arm64-baseline",
+      "bytes": 6587288,
+      "sha256": "461a4a4854d4d3c3508e6aa6673f0e2a7c70cec75e03e7a8ef4cd5cac06f199a",
+      "runtime_tested": false,
+      "source_receipt_matches": true,
+      "stripped": true
+    }
+  ],
+  "link_checks": {
+    "ios_swift_public_header_typecheck": true,
+    "android_load_alignment": "0x4000",
+    "android_needed": [
+      "liblog.so",
+      "libm.so",
+      "libdl.so",
+      "libc++_shared.so",
+      "libc.so"
+    ],
+    "android_exports_ggml_or_audiocpp": false,
+    "mobile_model_execution": "not tested",
+    "exported_ortts_symbols": 34
+  },
+  "models_verified_against_catalog": true,
+  "limitations": [
+    "Mobile models not executed; iOS/Android cross-build only",
+    "P3 short fixture bitwise regression; P5/1.7B not newly benchmarked",
+    "No automatic endpoint/partial ASR or per-engine parallel scheduling",
+    "F5/Whisper/ONNX not integrated",
+    "Android stripped install excludes debug sections; unstripped build retained locally"
+  ]
+}

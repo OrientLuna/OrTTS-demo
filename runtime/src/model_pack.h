@@ -32,6 +32,12 @@ inline Decoder resolve(const std::string&root) {
  if(!fs::exists(path))return d;
  if(!fs::is_regular_file(path)||fs::file_size(path)>2*1024*1024)throw std::invalid_argument("Invalid model manifest");
  auto m=engine::io::json::parse_file(path);auto*r=m.find("runtime");if(!r)return d;
+ // v0.1 download manifests used a descriptive string, not a decoder selector.
+ if(r->is_string()) {
+  auto*schema=m.find("schema");
+  if(schema&&schema->is_string()&&schema->as_string()=="ortts-download-manifest-v1")return d;
+  throw std::invalid_argument("Unrecognized legacy runtime descriptor");
+ }
  if(r->require("schema").as_string()!="ortts-runtime-v1")throw std::invalid_argument("Unsupported runtime manifest schema");
  auto&spec=r->require("decoder");d.kind=spec.require("kind").as_string();
  if(d.kind=="qwen_lfm")return d;

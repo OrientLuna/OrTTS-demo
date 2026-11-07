@@ -2,7 +2,7 @@
 from pathlib import Path
 import json,hashlib
 ROOT=Path(__file__).resolve().parents[1]
-def identity(source,liquidcodec=False):
+def identity(source,liquidcodec=False,speech=False):
  source=Path(source);lock=json.loads((ROOT/'vendor/runtime.lock.json').read_text())
  receipt=json.loads((source/'ORTTS_SOURCE_RECEIPT.json').read_text())
  for k in ('base_commit','patch_sha256'):
@@ -26,6 +26,14 @@ def identity(source,liquidcodec=False):
   if rr!=rl or hashlib.sha256((ROOT/'vendor/release-compat/audio.patch').read_bytes()).hexdigest()!=rl['patch_sha256']:raise ValueError('Release source receipt mismatch')
   expected.update({x['path']:x['sha256'] for x in rl['files']})
   lock={**lock,'release_compat':rl}
+ sr=source/'ORTTS_SPEECH_SOURCE_RECEIPT.json'
+ if sr.exists():
+  if not speech:raise ValueError('Speech source requires --speech')
+  sl=json.loads((ROOT/'vendor/speech/lock.json').read_text())
+  if json.loads(sr.read_text())!=sl or hashlib.sha256((ROOT/'vendor/speech/audio.patch').read_bytes()).hexdigest()!=sl['patch_sha256']:raise ValueError('Speech source receipt mismatch')
+  expected.update({x['path']:x['sha256'] for x in sl['files']})
+  lock={**lock,'speech':sl}
+ elif speech:raise ValueError('Prepare speech sources before using --speech')
  for rel,digest in expected.items():
   if hashlib.sha256((source/rel).read_bytes()).hexdigest()!=digest:raise ValueError('Prepared source modified: '+rel)
  return lock

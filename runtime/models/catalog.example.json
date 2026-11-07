@@ -1,0 +1,200 @@
+{
+  "schema": "ortts-speech-catalog-v1",
+  "description": "Host-side pinned examples; C ABI consumes resolved config, not this JSON. validated_languages/voice_sample are tested subsets, not exhaustive capability declarations. No default is selected automatically.",
+  "models": [
+    {
+      "id": "kokoro-82m-q8",
+      "family": "kokoro_tts",
+      "task": "tts",
+      "model_path": "Kokoro-82M-GGUF/kokoro-82m-q8_0.gguf",
+      "validated_languages": [
+        "zh",
+        "en-us",
+        "en-gb"
+      ],
+      "voice_sample": [
+        "zf_xiaobei",
+        "zf_xiaoyi",
+        "zm_yunjian",
+        "zm_yunxi",
+        "af_heart",
+        "am_adam",
+        "bf_emma"
+      ],
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "Kokoro-82M-GGUF/kokoro-82m-q8_0.gguf",
+          "bytes": 189550976,
+          "sha256": "9a4ca6176460cdc8c7845b804c0bbe85a4791ee3ffff568a3fdadbb708c63f47"
+        }
+      ],
+      "external_espeak": true,
+      "status": "macos-cpu-tested; mobile-unverified",
+      "notes": "Single-language support accepted; no implied mixed-language pass"
+    },
+    {
+      "id": "piper-lessac-medium",
+      "family": "piper_tts",
+      "task": "tts",
+      "model_path": "Piper-TTS-GGUF/piper-en-us-lessac-medium-orig.gguf",
+      "validated_languages": [
+        "en"
+      ],
+      "voice_sample": [],
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "Piper-TTS-GGUF/piper-en-us-lessac-medium-orig.gguf",
+          "bytes": 62662016,
+          "sha256": "12432fab389024e7f839fbc0d989afba46e74bf0d2fa75495642b3ae44a4b093"
+        }
+      ],
+      "external_espeak": true,
+      "status": "macos-cpu-tested; mobile-unverified",
+      "notes": "Single-language support accepted; no implied mixed-language pass"
+    },
+    {
+      "id": "kitten-mini-0.8",
+      "family": "kitten_tts",
+      "task": "tts",
+      "model_path": "KittenTTS-GGUF/kitten-tts-mini-0.8-orig.gguf",
+      "validated_languages": [
+        "en"
+      ],
+      "voice_sample": [
+        "Bella",
+        "Leo"
+      ],
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "KittenTTS-GGUF/kitten-tts-mini-0.8-orig.gguf",
+          "bytes": 302167648,
+          "sha256": "485a50101b6c16e98c842f231780789d54136ffb07a6cacb33dc0735103274d7"
+        }
+      ],
+      "external_espeak": true,
+      "status": "macos-cpu-tested; mobile-unverified",
+      "notes": "Single-language support accepted; no implied mixed-language pass"
+    },
+    {
+      "id": "pocket-english-q8",
+      "family": "pocket_tts",
+      "task": "tts",
+      "model_path": "PocketTTS-GGUF/english/pocket-tts-english-q8_0.gguf",
+      "validated_languages": [
+        "en"
+      ],
+      "voice_sample": [
+        "alba",
+        "anna",
+        "george"
+      ],
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "PocketTTS-GGUF/english/pocket-tts-english-q8_0.gguf",
+          "bytes": 127867968,
+          "sha256": "3f71cf6a51f93c2f2e554e98970a3f49fb9a98d0c64bed5a815e65be3d2ff588"
+        },
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "PocketTTS-GGUF/english/embeddings/alba.safetensors",
+          "bytes": 6194424,
+          "sha256": "69c32db63ca56843d994f81f343f62e0bf2d73f7e4c9bc73e44bb1110b1d8845"
+        },
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "PocketTTS-GGUF/english/embeddings/anna.safetensors",
+          "bytes": 7816440,
+          "sha256": "5ea82f78db006c9fd34e32ddd5aae82674b5b32646097977436458d00af80dfa"
+        },
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "PocketTTS-GGUF/english/embeddings/george.safetensors",
+          "bytes": 6243576,
+          "sha256": "0c1c6c57c55a98d81254b33728150c7776f40647fe95258d1a6c1a02780b5d02"
+        }
+      ],
+      "external_espeak": true,
+      "status": "macos-cpu-tested; mobile-unverified",
+      "notes": "Single-language support accepted; no implied mixed-language pass"
+    },
+    {
+      "id": "zipvoice-distill-q8",
+      "family": "zipvoice",
+      "task": "clon",
+      "model_path": "zipvoice-distill-q8_0.gguf",
+      "validated_languages": [
+        "zh",
+        "en"
+      ],
+      "voice_sample": [],
+      "assets": [
+        {
+          "repo": "davidxifeng/zipvoice-gguf",
+          "revision": "cf07ad4c9f87cf4b5cd99e140d6935b157c41347",
+          "path": "zipvoice-distill-q8_0.gguf",
+          "bytes": 158356128,
+          "sha256": "827c9dd7701890cdde19c1a267e8e5577cdeeaa699f5fec01742873c6dea7121"
+        }
+      ],
+      "external_espeak": true,
+      "status": "macos-cpu-tested; mobile-unverified",
+      "notes": "Optional; user reports poor phone behavior"
+    },
+    {
+      "id": "sensevoice-small-q8",
+      "family": "sense_asr",
+      "task": "asr",
+      "model_path": "sensevoice-small-q8-audiocpp-v1.gguf",
+      "validated_languages": [
+        "zh",
+        "en"
+      ],
+      "voice_sample": [],
+      "assets": [
+        {
+          "repo": "FunAudioLLM/SenseVoiceSmall-GGUF-audiocpp",
+          "revision": "5c3fcfe748a8714216bc135476d5863084fddb72",
+          "path": "sensevoice-small-q8-audiocpp-v1.gguf",
+          "bytes": 254211200,
+          "sha256": "4dedf169f625437fb336f2959674f399819729a765e184128c0e25a6e16ff0ec"
+        }
+      ],
+      "external_espeak": false,
+      "status": "macos-cpu-tested; mobile-unverified",
+      "notes": "Buffered final only, not true partial ASR"
+    },
+    {
+      "id": "moonshine-tiny-q8",
+      "family": "moonshine_asr",
+      "task": "asr",
+      "model_path": "Moonshine-Streaming-GGUF/moonshine-streaming-tiny-q8_0.gguf",
+      "validated_languages": [
+        "en"
+      ],
+      "voice_sample": [],
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "Moonshine-Streaming-GGUF/moonshine-streaming-tiny-q8_0.gguf",
+          "bytes": 60409088,
+          "sha256": "0f795f14924dbfe40d2ee0e220382c9b23cd9e89064c6ffb97e236d81f1d7020"
+        }
+      ],
+      "external_espeak": false,
+      "status": "macos-cpu-tested; mobile-unverified",
+      "notes": "Buffered final only, not true partial ASR"
+    }
+  ]
+}

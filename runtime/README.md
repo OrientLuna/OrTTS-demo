@@ -4,6 +4,10 @@ Embed P3/P5 speech synthesis in your application through a small C ABI. Linux an
 
 The API supports model loading, offline synthesis, incremental float PCM, cancellation, timing and explicit release. It does not create an app, play audio, download weights or write generated files. Audio is mono float32 at 24 kHz.
 
+## Optional multi-model speech SDK
+
+The additive [speech API](SPEECH.md) adds five TTS and two ASR families to the same CPU library/ggml build. Use `--speech` with separately prepared speech sources; existing P3/P5 calls keep ABI1. Output formats are native per model, and ASR has its own bounded input/final/reset API. This is model-specific execution, not a general ONNX importer. Mobile cross-builds do not certify model execution.
+
 ## Build
 
 Use the verified local audio.cpp source prepared by `tools/prepare_runtime.py`, plus existing compilers and SDKs. Nothing is downloaded by the build tool.

@@ -1,4 +1,5 @@
 #include "ortts_engine.h"
+#include "runtime_internal.h"
 #include "audiocpp.h"
 #include "inference_defaults.h"
 #include "model_pack.h"
@@ -16,10 +17,15 @@
 #include <utility>
 #include <vector>
 
-namespace {
-using Clock = std::chrono::steady_clock;
+namespace ortts::detail {
 thread_local std::string error;
 std::mutex execution_gate;
+}
+
+namespace {
+using Clock = std::chrono::steady_clock;
+using ortts::detail::error;
+using ortts::detail::execution_gate;
 double elapsed(Clock::time_point start) {
  return std::chrono::duration<double,std::milli>(Clock::now()-start).count();
 }
