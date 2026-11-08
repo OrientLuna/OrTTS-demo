@@ -9,6 +9,7 @@
 | 多模型 TTS/ASR 切换 | [手机语音 Demo](MOBILE_SPEECH_DEMO.md) | 菜单模型、固定下载、导入、录音和验证范围 |
 | iOS / macOS 使用 | [Apple Demo](../apple/README.md) | 应用功能、产物、安装边界及验证范围 |
 | 从源码构建 | [BUILD](BUILD.md) | 环境、准备源码、平台构建命令 |
+| TestFlight 归档上传 | [TESTFLIGHT](TESTFLIGHT.md) | 可复现项目、签名与上传状态 |
 | 选择 CPU 优化参数 | [CPU_PROFILES](CPU_PROFILES.md) | 指令集、兼容性、优化构建示例 |
 | 选择解码器与新模型接入 | [DECODERS](DECODERS.md) | 自动选择、兼容清单与可选构建 |
 | 准备模型 | [MODEL_ASSETS](MODEL_ASSETS.md) | 清单、目录、平台导入方式 |
