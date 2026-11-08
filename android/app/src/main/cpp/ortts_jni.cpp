@@ -45,14 +45,14 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_NativeBridge_run
 
 #if ORTTS_WITH_SPEECH
 namespace {
-std::mutex speechPointers;
+std::mutex speechPointers;std::string speechTtsKey;
 ortts_tts *speechTts=nullptr;ortts_asr *speechAsr=nullptr;ortts_asr_stream *speechStream=nullptr;
 void speechCheck(ortts_status s){if(s!=ORTTS_OK)throw std::runtime_error(ortts_last_error());}
 jstring unicode(JNIEnv*e,const std::string&s){auto u=std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t>{}.from_bytes(s);return e->NewString(reinterpret_cast<const jchar*>(u.data()),u.size());}
 void speechError(JNIEnv*e,const std::exception&x){if(!e->ExceptionCheck())e->ThrowNew(e->FindClass("java/lang/IllegalStateException"),x.what());}
 void speechClose(){
  std::lock_guard<std::mutex>guard(speechPointers);
- ortts_tts_free(speechTts);speechTts=nullptr;ortts_asr_free(speechAsr);speechAsr=nullptr;ortts_asr_stream_free(speechStream);speechStream=nullptr;
+ ortts_tts_free(speechTts);speechTts=nullptr;speechTtsKey.clear();ortts_asr_free(speechAsr);speechAsr=nullptr;ortts_asr_stream_free(speechStream);speechStream=nullptr;
 }
 struct SpeechSink{JNIEnv*env;jobject object;jmethodID method;};
 int speechPcm(void*user,const float*pcm,size_t n,int32_t rate,int32_t channels){
@@ -83,21 +83,22 @@ extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_close(
  std::lock_guard<std::mutex>guard(mu);try{speechClose();}catch(const std::exception&x){speechError(e,x);}
 #endif
 }
-extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_synthesize(JNIEnv*e,jclass,jstring familyJ,jstring libraryJ,jstring dataJ,jstring pathJ,jstring voiceJ,jstring textJ,jboolean streaming,jobject sink,jstring outJ){
+extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_synthesize(JNIEnv*e,jclass,jstring familyJ,jstring libraryJ,jstring dataJ,jstring identityJ,jstring pathJ,jstring voiceJ,jstring textJ,jboolean streaming,jobject sink,jstring outJ){
 #if ORTTS_WITH_SPEECH
  std::lock_guard<std::mutex>guard(mu);ortts_speech_audio*audio=nullptr;
  try{
-  release();speechClose();auto family=str(e,familyJ),library=str(e,libraryJ),data=str(e,dataJ),path=str(e,pathJ),voice=str(e,voiceJ),text=str(e,textJ),out=str(e,outJ);
+  release();auto family=str(e,familyJ),library=str(e,libraryJ),data=str(e,dataJ),identity=str(e,identityJ),path=str(e,pathJ),voice=str(e,voiceJ),text=str(e,textJ),out=str(e,outJ);
   ortts_speech_config c{};c.struct_size=sizeof(c);c.family=family.c_str();c.espeak_library=library.empty()?nullptr:library.c_str();c.espeak_data=data.empty()?nullptr:data.c_str();c.model_path=path.c_str();c.threads=4;c.streaming=streaming;
-  ortts_tts*engine=nullptr;speechCheck(ortts_tts_create(&c,&engine));{std::lock_guard<std::mutex>p(speechPointers);speechTts=engine;}
+  std::string key=family+"|"+path+"|"+library+"|"+data+"|"+identity+"|"+std::to_string(streaming);bool reused=speechTts&&speechTtsKey==key;
+  if(!reused){speechClose();ortts_tts*created=nullptr;speechCheck(ortts_tts_create(&c,&created));std::lock_guard<std::mutex>p(speechPointers);speechTts=created;speechTtsKey=key;}ortts_tts*engine=speechTts;
   auto cl=e->GetObjectClass(sink);auto method=e->GetMethodID(cl,"onPcm","([FI)V");e->DeleteLocalRef(cl);if(!method)throw std::runtime_error("PCM sink unavailable");SpeechSink receiver{e,sink,method};
   ortts_tts_request request{};request.struct_size=sizeof(request);request.text=text.c_str();request.language=voice.size()&&voice[0]=='z'?"zh":"en";request.voice_id=family=="piper_tts"?nullptr:voice.c_str();request.seed_set=1;request.seed=42;
   speechCheck(ortts_tts_synthesize(engine,&request,streaming?speechPcm:nullptr,&receiver,&audio));
   const float*pcm=ortts_speech_audio_samples(audio);size_t n=ortts_speech_audio_frames(audio);int rate=ortts_speech_audio_sample_rate(audio);
   if(!streaming&&speechPcm(&receiver,pcm,n,rate,1))throw std::runtime_error("Playback callback failed");
   nativeWav(out,pcm,n,rate);ortts_metrics metrics{};speechCheck(ortts_speech_audio_metrics(audio,&metrics));
-  std::ostringstream report;report<<"{\"audio_s\":"<<double(n)/rate<<",\"api_ms\":"<<metrics.api_ms<<",\"sample_rate\":"<<rate<<",\"RTF\":"<<metrics.api_ms/(1000.0*n/rate)<<"}";
-  ortts_speech_audio_free(audio);audio=nullptr;speechClose();return unicode(e,report.str());
+  std::ostringstream report;report<<"{\"engine_reused\":"<<(reused?"true":"false")<<",\"audio_s\":"<<double(n)/rate<<",\"api_ms\":"<<metrics.api_ms<<",\"sample_rate\":"<<rate<<",\"RTF\":"<<metrics.api_ms/(1000.0*n/rate)<<"}";
+  ortts_speech_audio_free(audio);audio=nullptr;return unicode(e,report.str());
  }catch(const std::exception&x){ortts_speech_audio_free(audio);speechClose();speechError(e,x);return nullptr;}
 #else
  e->ThrowNew(e->FindClass("java/lang/IllegalStateException"),"Speech feature disabled");return nullptr;
@@ -125,5 +126,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_finish
  std::lock_guard<std::mutex>guard(mu);ortts_transcript*result=nullptr;
  try{auto receiver=textSink(e,sink);if(speechStream)speechCheck(ortts_asr_stream_finish(speechStream,speechText,&receiver));else if(speechAsr){speechCheck(ortts_asr_finish(speechAsr,nullptr,&result));ortts_asr_stream_event event{sizeof(event),ORTTS_ASR_FLUSH,0,0,0,1,ortts_transcript_text(result),"auto"};speechText(&receiver,&event);ortts_transcript_free(result);result=nullptr;}else throw std::runtime_error("ASR is not open");
  }catch(const std::exception&x){ortts_transcript_free(result);speechError(e,x);}
+#endif
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_endTask(JNIEnv*,jclass){
+#if ORTTS_WITH_SPEECH
+ std::lock_guard<std::mutex>guard(mu);std::lock_guard<std::mutex>p(speechPointers);
+ ortts_asr_free(speechAsr);speechAsr=nullptr;ortts_asr_stream_free(speechStream);speechStream=nullptr;
 #endif
 }

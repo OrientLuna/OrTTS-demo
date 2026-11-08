@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /** Pinned application catalog; no remote manifest or implicit model download. */
 final class SpeechModels {
  interface Progress {void update(String message);}
- final JSONArray models;final File root;private final Progress progress;
+ private File preparedG2p;final JSONArray models;final File root;private final Progress progress;
  final AtomicBoolean cancelled=new AtomicBoolean();private volatile HttpURLConnection connection;
  SpeechModels(Context context,Progress progress)throws Exception {
   this.progress=progress;root=new File(context.getFilesDir(),"speech-models");
@@ -38,6 +38,11 @@ final class SpeechModels {
  }
  void cancel(){cancelled.set(true);HttpURLConnection c=connection;if(c!=null)c.disconnect();}
  void prepare(){cancelled.set(false);}
+ String identity(JSONObject model)throws Exception {
+  StringBuilder key=new StringBuilder(model.getString("id"));JSONArray assets=model.getJSONArray("assets");
+  for(int i=0;i<assets.length();i++){JSONObject asset=assets.getJSONObject(i);File file=child(asset.getString("path"));java.nio.file.attribute.BasicFileAttributes attrs=Files.readAttributes(file.toPath(),java.nio.file.attribute.BasicFileAttributes.class);key.append('|').append(asset.getString("sha256")).append(':').append(attrs.size()).append(':').append(attrs.lastModifiedTime()).append(':').append(attrs.fileKey());}
+  return key.toString();
+ }
  File requireReady(JSONObject model)throws Exception {
   JSONArray assets=model.getJSONArray("assets");for(int i=0;i<assets.length();i++){
    JSONObject a=assets.getJSONObject(i);if(!valid(child(a.getString("path")),a))throw new IOException("请先下载 / 检查所选模型");
@@ -85,7 +90,7 @@ final class SpeechModels {
   }finally{removeStage(stage);}
  }
  File prepareG2p(Context context)throws IOException {
-  File target=new File(context.getFilesDir(),"espeak-ng-data");copyData(context,"espeak-ng-data",target);return target;
+  if(preparedG2p!=null&&new File(preparedG2p,"phontab").isFile())return preparedG2p;File target=new File(context.getFilesDir(),"espeak-ng-data");copyData(context,"espeak-ng-data",target);preparedG2p=target;return target;
  }
  private void copyData(Context context,String path,File target)throws IOException {
   if(cancelled.get())throw new IOException("Cancelled");String[] entries=context.getAssets().list(path);

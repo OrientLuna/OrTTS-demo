@@ -4,16 +4,18 @@
 @property AVAudioPlayerNode *node;
 @property NSUInteger pending, samples, epoch;
 @property BOOL ended, started, active;
+@property double sampleRate;
 @end
 @implementation StreamPlayback
 - (BOOL)prepare:(NSError **)error { return [self prepareRate:24000 error:error]; }
 - (BOOL)prepareRate:(double)rate error:(NSError **)error {
-    self.engine=[AVAudioEngine new]; self.node=[AVAudioPlayerNode new];
+    [self stop];self.ended=NO;self.started=NO;self.samples=0;
+    if(!self.engine){self.engine=[AVAudioEngine new];self.node=[AVAudioPlayerNode new];[self.engine attachNode:self.node];}
     AVAudioSession *session=AVAudioSession.sharedInstance;
     if (![session setCategory:AVAudioSessionCategoryPlayback mode:AVAudioSessionModeDefault options:0 error:error] || ![session setActive:YES error:error]) return NO;
-    [self.engine attachNode:self.node];
+    if(self.sampleRate!=rate)[self.engine disconnectNodeOutput:self.node];
     AVAudioFormat *format=[[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32 sampleRate:rate channels:1 interleaved:NO];
-    [self.engine connect:self.node to:self.engine.mainMixerNode format:format];
+    if(self.sampleRate!=rate){[self.engine connect:self.node to:self.engine.mainMixerNode format:format];self.sampleRate=rate;}
     self.active=[self.engine startAndReturnError:error]; return self.active;
 }
 - (void)drained {

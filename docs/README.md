@@ -13,6 +13,9 @@
 | 选择 CPU 优化参数 | [CPU_PROFILES](CPU_PROFILES.md) | 指令集、兼容性、优化构建示例 |
 | 选择解码器与新模型接入 | [DECODERS](DECODERS.md) | 自动选择、兼容清单与可选构建 |
 | 准备模型 | [MODEL_ASSETS](MODEL_ASSETS.md) | 清单、目录、平台导入方式 |
+| iPhone 热 RTF 与缓存 | [验证记录](development/tts-warm-cache-2026-11-08.md) | 多模型中英文长短句、生命周期与播放器回归 |
+| P3 新旧 codec 为什么不同 | [性能归因](development/p3-codec-performance-2026-11-08.md) | 同音色、baseline/I8MM、固定codes的codec隔离 |
+| Kokoro 后端对照 | [Mac A/B](../experiments/kokoro-ab/README.md) | 同机 ggml、Sherpa FP32/INT8，量化与前端差异 |
 | 查看性能证据 | [BENCHMARKS](BENCHMARKS.md) | RTF、测试条件、原始数据及局限 |
 | 嵌入其他应用 | [运行时](../runtime/README.md) | C ABI、Rust、PCM及取消、并发约束 |
 | ggml 流式 ASR 与 FunASR | [增量验证](development/ggml-streaming-asr-2026-11-07.md) | 本机原型、数值筛查、中文在线模型与移植边界 |

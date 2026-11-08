@@ -1,0 +1,575 @@
+{
+  "cases": [
+    {
+      "variant": "P3",
+      "language": "zh",
+      "length": "short",
+      "text": "今天上午九点半，请检查车票和随身行李。",
+      "result": {
+        "run_id": "P3-zh-short-6d844568",
+        "ok": 1,
+        "pack": "v0.2.0-preview legacy LFM",
+        "runs": [
+          {
+            "audio_s": 3.92,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2138.002333,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 3.92,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 1993.582416,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 3.92,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2038.062292,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 3.92,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2055.494542,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "今天上午九点半，请检查车票和随身行李。",
+        "voice": "female",
+        "error": "",
+        "variant": "P3"
+      },
+      "warm_rtf": {
+        "median": 0.51991385,
+        "min": 0.5085669428571429,
+        "max": 0.5243608525510204
+      }
+    },
+    {
+      "variant": "P3",
+      "language": "zh",
+      "length": "long",
+      "text": "今天上午九点半，我们准备乘坐高铁去参加会议。出发前，请仔细检查车票、身份证和随身行李，确认手机已经充满电。如果途中遇到列车晚点，请及时联系同事，并在车站服务台附近耐心等候。",
+      "result": {
+        "run_id": "P3-zh-long-eb5dbb4e",
+        "ok": 1,
+        "pack": "v0.2.0-preview legacy LFM",
+        "runs": [
+          {
+            "audio_s": 18,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 11169.656167,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 18,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 12198.909417,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 18,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 13268.416,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 18,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 13487.420542,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "今天上午九点半，我们准备乘坐高铁去参加会议。出发前，请仔细检查车票、身份证和随身行李，确认手机已经充满电。如果途中遇到列车晚点，请及时联系同事，并在车站服务台附近耐心等候。",
+        "voice": "female",
+        "error": "",
+        "variant": "P3"
+      },
+      "warm_rtf": {
+        "median": 0.7371342222222221,
+        "min": 0.6777171898333334,
+        "max": 0.7493011412222222
+      }
+    },
+    {
+      "variant": "P3",
+      "language": "en",
+      "length": "short",
+      "text": "At nine thirty, please check the train ticket and call the station.",
+      "result": {
+        "run_id": "P3-en-short-b4c896dc",
+        "ok": 1,
+        "pack": "v0.2.0-preview legacy LFM",
+        "runs": [
+          {
+            "audio_s": 4.56,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 2834.063083,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 4.56,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 3105.465792,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 4.56,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 3186.952041,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 4.56,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 3178.05925,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "At nine thirty, please check the train ticket and call the station.",
+        "voice": "female",
+        "error": "",
+        "variant": "P3"
+      },
+      "warm_rtf": {
+        "median": 0.6969428179824562,
+        "min": 0.6810232,
+        "max": 0.6988929914473685
+      }
+    },
+    {
+      "variant": "P3",
+      "language": "en",
+      "length": "long",
+      "text": "At nine thirty, please check the train ticket and call the station. Before leaving home, make sure you have your keys, wallet, and phone. If the train is delayed, send a message to your family and wait near the information desk.",
+      "result": {
+        "run_id": "P3-en-long-8f301a64",
+        "ok": 1,
+        "pack": "v0.2.0-preview legacy LFM",
+        "runs": [
+          {
+            "audio_s": 17.28,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 13177.895333,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 17.28,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 13675.307416,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 17.28,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 13266.239791,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 17.28,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 13259.060625,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "At nine thirty, please check the train ticket and call the station. Before leaving home, make sure you have your keys, wallet, and phone. If the train is delayed, send a message to your family and wait near the information desk.",
+        "voice": "female",
+        "error": "",
+        "variant": "P3"
+      },
+      "warm_rtf": {
+        "median": 0.7677222101273148,
+        "min": 0.7673067491319444,
+        "max": 0.7913951050925925
+      }
+    },
+    {
+      "variant": "P5",
+      "language": "zh",
+      "length": "short",
+      "text": "今天上午九点半，请检查车票和随身行李。",
+      "result": {
+        "run_id": "P5-zh-short-d9c9091c",
+        "ok": 1,
+        "pack": "v0.2.0-preview legacy LFM",
+        "runs": [
+          {
+            "audio_s": 3.68,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 3052.150292,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 3.68,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 3411.523209,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 3.68,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 3454.05775,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 3.68,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 3405.717584,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "今天上午九点半，请检查车票和随身行李。",
+        "voice": "female",
+        "error": "",
+        "variant": "P5"
+      },
+      "warm_rtf": {
+        "median": 0.927044350271739,
+        "min": 0.9254667347826087,
+        "max": 0.9386026494565217
+      }
+    },
+    {
+      "variant": "P5",
+      "language": "zh",
+      "length": "long",
+      "text": "今天上午九点半，我们准备乘坐高铁去参加会议。出发前，请仔细检查车票、身份证和随身行李，确认手机已经充满电。如果途中遇到列车晚点，请及时联系同事，并在车站服务台附近耐心等候。",
+      "result": {
+        "run_id": "P5-zh-long-1c9c8c71",
+        "ok": 1,
+        "pack": "v0.2.0-preview legacy LFM",
+        "runs": [
+          {
+            "audio_s": 40.96,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 45409.249167,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 40.96,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 49088.989167,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 40.96,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 49027.588625,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 40.96,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 50171.672166,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "今天上午九点半，我们准备乘坐高铁去参加会议。出发前，请仔细检查车票、身份证和随身行李，确认手机已经充满电。如果途中遇到列车晚点，请及时联系同事，并在车站服务台附近耐心等候。",
+        "voice": "female",
+        "error": "",
+        "variant": "P5"
+      },
+      "warm_rtf": {
+        "median": 1.198461649584961,
+        "min": 1.196962612915039,
+        "max": 1.2248943399902341
+      }
+    },
+    {
+      "variant": "P5",
+      "language": "en",
+      "length": "short",
+      "text": "At nine thirty, please check the train ticket and call the station.",
+      "result": {
+        "run_id": "P5-en-short-588ae1f8",
+        "ok": 1,
+        "pack": "v0.2.0-preview legacy LFM",
+        "runs": [
+          {
+            "audio_s": 4.4,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 4163.590833,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 4.4,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 4512.887375,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 4.4,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 4297.10275,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 4.4,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 4429.913625,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "At nine thirty, please check the train ticket and call the station.",
+        "voice": "female",
+        "error": "",
+        "variant": "P5"
+      },
+      "warm_rtf": {
+        "median": 1.0067985511363635,
+        "min": 0.9766142613636362,
+        "max": 1.025656221590909
+      }
+    },
+    {
+      "variant": "P5",
+      "language": "en",
+      "length": "long",
+      "text": "At nine thirty, please check the train ticket and call the station. Before leaving home, make sure you have your keys, wallet, and phone. If the train is delayed, send a message to your family and wait near the information desk.",
+      "result": {
+        "run_id": "P5-en-long-9a0a717a",
+        "ok": 1,
+        "pack": "v0.2.0-preview legacy LFM",
+        "runs": [
+          {
+            "audio_s": 17.52,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 18326.183709,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 17.52,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 18256.93825,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 17.52,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 18443.415917,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 17.52,
+            "sample_rate": 24000,
+            "thermal_state": 2,
+            "ok": true,
+            "api_ms": 18385.923375,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "At nine thirty, please check the train ticket and call the station. Before leaving home, make sure you have your keys, wallet, and phone. If the train is delayed, send a message to your family and wait near the information desk.",
+        "voice": "female",
+        "error": "",
+        "variant": "P5"
+      },
+      "warm_rtf": {
+        "median": 1.0494248501712327,
+        "min": 1.042062685502283,
+        "max": 1.052706387956621
+      }
+    }
+  ],
+  "date": "2026-11-08",
+  "device": "iPhone 17 standard 8GB/256GB",
+  "threads": 4,
+  "backend": "CPU arm64-baseline",
+  "playback": false,
+  "asset_pack": "v0.2.0-preview legacy LFM",
+  "limitations": [
+    "fixed female voice and seed20261029",
+    "one warmup plus three consecutive warm calls",
+    "thermal fair/serious observed; no cooling between cases",
+    "P5 Chinese long hits40.96s; readback captures only first sentence, not accepted as complete quality"
+  ],
+  "audio_checks": {
+    "checks": [
+      {
+        "case": "P3-en-long",
+        "rate": 24000,
+        "frames": 414720,
+        "duration_s": 17.28,
+        "rms": 0.03178392876627206,
+        "peak": 0.3076542317867279,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "e38de5465f5e0df19bd4c3e3526546aa64453bbc27735e9151f0412f1d6429d1"
+      },
+      {
+        "case": "P3-en-short",
+        "rate": 24000,
+        "frames": 109440,
+        "duration_s": 4.56,
+        "rms": 0.03583781902629406,
+        "peak": 0.515450656414032,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "b01f9ec6f6c8f0f287196e6c12786fa0ccb1a35e2d4a91af8f265ca1e2b67bf1"
+      },
+      {
+        "case": "P3-zh-long",
+        "rate": 24000,
+        "frames": 432000,
+        "duration_s": 18.0,
+        "rms": 0.03154713329699891,
+        "peak": 0.3114275634288788,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "2e9279576fa30b9123b505d97b053dd6ac1a77b9663841a37ff6ed6fa16d2ad6"
+      },
+      {
+        "case": "P3-zh-short",
+        "rate": 24000,
+        "frames": 94080,
+        "duration_s": 3.92,
+        "rms": 0.047897068082550405,
+        "peak": 0.5723704695701599,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "c7622fd8612106a7b70e2a27c1affc3fe15e146f23e9b1cfc739f19917afcca9"
+      },
+      {
+        "case": "P5-en-long",
+        "rate": 24000,
+        "frames": 420480,
+        "duration_s": 17.52,
+        "rms": 0.03366684987335651,
+        "peak": 0.3188369572162628,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "ecc660423123a67235721f9e86d3dd53ad5a17c1c800bcd195d3208f433c9a53"
+      },
+      {
+        "case": "P5-en-short",
+        "rate": 24000,
+        "frames": 105600,
+        "duration_s": 4.4,
+        "rms": 0.03654859800977469,
+        "peak": 0.3457111120223999,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "0f2cb6852867278535b6294e6287d88d9491087e4050b0f3a5fb55408f52ec1d"
+      },
+      {
+        "case": "P5-zh-long",
+        "rate": 24000,
+        "frames": 983040,
+        "duration_s": 40.96,
+        "rms": 0.013108389878371365,
+        "peak": 0.3733258545398712,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "592a01a9a50318721d9e54c37de1377fb6a9e1f4aca51f2c0ddc6e701695c754"
+      },
+      {
+        "case": "P5-zh-short",
+        "rate": 24000,
+        "frames": 88320,
+        "duration_s": 3.68,
+        "rms": 0.04952995222972121,
+        "peak": 0.5441011190414429,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "87b6d78ff2b22be375b4a1a715276d96ded01b43d9b55ba5c070308757d0d12e"
+      }
+    ],
+    "scope": "format/finite/nonempty signal, native rate, distinct Kitten waveforms; no perceptual quality certification"
+  },
+  "asr_diagnostics": [
+    {
+      "file": "P3-en-long.wav",
+      "text": "At 9,30, please check the train ticket and call the station. before leaving home, make sure you have your keys, wallet and phone. If the train is delayed, send a message to your family and wait near the information desk."
+    },
+    {
+      "file": "P3-en-short.wav",
+      "text": "At 9,30, please check the train ticket and call the station."
+    },
+    {
+      "file": "P3-zh-long.wav",
+      "text": "今天上午9点半，我们准备乘坐高铁去参加会议。出发前请仔细检查车票、身份证和随身行李，确认手机已经充满电。如果途中遇到列车晚点，请及时联系同事，并在车站服务台附近耐心等候。"
+    },
+    {
+      "file": "P3-zh-short.wav",
+      "text": "今天上午9点半，请检查车票和随身行李。"
+    },
+    {
+      "file": "P5-en-long.wav",
+      "text": "At 9,30, please check the train ticket and call the station. before leaving home, make sure you have your keys, wallet and phone. If the train is delayed, send a message to your family and wait near the information desk."
+    },
+    {
+      "file": "P5-en-short.wav",
+      "text": "At 9,30, please check the train ticket and call the station."
+    },
+    {
+      "file": "P5-zh-long.wav",
+      "text": "今天上午9点半，我们准备乘坐高铁去参加会议。"
+    },
+    {
+      "file": "P5-zh-short.wav",
+      "text": "今天上午9点半，请检查车票和随身行李。"
+    }
+  ]
+}

@@ -21,6 +21,30 @@ F5、Whisper、VITS ONNX、CosyVoice、MeloTTS不在这个交付库的新模型�
 
 模型语言声明来自实际加载包，显式不支持的language返回INVALID。没有自动替换模型。Kitten不声明language请求选项，适配层只设置转写语言，不向它误传该选项；ASR不注入seed。没有中文能力的包还会拒绝Han文本，包括language省略时；这只是脚本范围检查，不是通用语言检测。宿主应明确选择语言和模型，不能用英语ASR自动兜底中文。合法UTF-8、非空文本、选项数组和有限PCM均在边界验证。
 
+## 热启动与有界引擎缓存
+
+同一句话反复 create/synthesize/free 会反复承担首次构图开销。2026-11-08 两端多模型合成页改为在所属串行 worker 上保留**一个** TTS 句柄，音色变化复用，模型、任务、配置或资产身份变化先释放旧句柄；成功后空闲 30 秒释放，取消、错误、退到后台及 Apple 内存警告均清理。首次仍然慢，模型本身的工作内存没有因此消失。手机数据与复现步骤见[热启动验证](../docs/development/tts-warm-cache-2026-11-08.md)。
+
+Rust 新增 `speech::cache::TtsCache`，原 C ABI 不变。它必须留在创建它的 worker，不是全局可并发引擎池：
+
+```rust,ignore
+use ortts_engine::speech::{cache::TtsCache, Config, Request};
+use std::time::Duration;
+let mut cache = TtsCache::new(Duration::from_secs(30));
+let config = Config::new("pocket_tts", "/models/pocket.gguf");
+let request = Request::new("Hello, welcome home.");
+// identity 来自已经校验的完整模型包，包括外部音色资产。
+let (audio, reused) = cache.synthesize(&config, verified_pack_identity, &request)?;
+// 宿主 idle timer 在同一个 worker 上调用，不是 UI 线程：
+cache.evict_expired();
+// 切任务、后台、内存压力或宿主不再需要它时：
+cache.clear();
+```
+
+缓存键包括模型路径、族、线程数、streaming、session options、G2P 路径、输入上限和调用者提供的资产身份；音色属于请求，不为每种音色复制权重。推理错误或回调取消会逐出句柄。缓存不下载也不替宿主验证资产，身份不能为空；宿主不得只用文件名。Demo 首次完整 SHA 校验，后续用预期 SHA 加 inode/大小/纳秒修改时间检查本地替换，变化后重新校验；这不是对恶意保留元数据篡改的持续扫描。
+
+`evict_expired` 同时在请求入口执行，但没有内建线程。宿主不安排 idle timer，就不能声称空闲时已经释放。升级 submodule 而继续逐次 create/free 也不会获得热启动收益。可执行验证见 `rust/examples/tts_cache.rs`。
+
 ## 准备和构建
 
 模型和SDK/工具链均由调用者准备，构建脚本不下载。Python工具使用3.11+，本轮为3.12。
@@ -42,7 +66,7 @@ python3 tools/build_engine.py --target android-arm64 --profile arm64-baseline \
   --out build/speech-android
 ```
 
-SDK 初始验收在 macOS arm64 真实运行，Linux、Windows 尚未验收。后续手机 Demo 已接线 PocketTTS、SenseVoice 和 Moonshine，详见[手机语音 Demo](../docs/MOBILE_SPEECH_DEMO.md)。Android 将新 C ABI 加入现有 libaudiocpp.so，由 JNI 调用，避免加载第二份 ggml；Apple 使用同一框架。其余 SDK 模型不能据此宣称手机通过。LiquidCodec 与 speech 可组合构建；这也不等于全部自研权重已在该组合重新验收。
+SDK 初始验收在 macOS arm64 真实运行，Linux、Windows 尚未验收。后续手机 Demo 已接线 Kokoro、PocketTTS、Kitten、Piper、SenseVoice 和 Moonshine，详见[手机语音 Demo](../docs/MOBILE_SPEECH_DEMO.md)。Android 将新 C ABI 加入现有 libaudiocpp.so，由 JNI 调用，避免加载第二份 ggml；Apple 使用同一框架。其余 SDK 模型不能据此宣称手机通过。LiquidCodec 与 speech 可组合构建；这也不等于全部自研权重已在该组合重新验收。
 
 同配置增量重建可加`--rebuild`，只接受目标/profile/configure命令/语音补丁receipt相同且未标记BUILDING的目录；改变配置使用新目录。receipt包含源指纹、实际产物SHA与CMakeCache SHA，不包含模型权重。
 

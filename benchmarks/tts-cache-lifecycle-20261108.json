@@ -1,0 +1,1410 @@
+{
+  "date": "2026-11-08",
+  "scope": "Lifecycle on iOS/Android simulators plus iPhone continuous-playback; no physical Android performance",
+  "lifecycle": {
+    "tts-cache-android-final-cancel": {
+      "ok": true,
+      "status": "完成 · 4.13s · 接口RTF 1.676 · 首次构图",
+      "text": "",
+      "model": "kokoro-82m-q8",
+      "engine_reused": false,
+      "api_ms": 6914.74,
+      "audio_s": 4.125,
+      "runs": [
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 2.087 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 8610.1,
+          "audio_s": 4.125
+        },
+        {
+          "ok": false,
+          "status": "已停止",
+          "text": "",
+          "model": "kokoro-82m-q8"
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.676 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 6914.74,
+          "audio_s": 4.125
+        }
+      ],
+      "case": "kokoro-en",
+      "process_wall_s": 35.52652533398941,
+      "audio_sample_rate": 24000
+    },
+    "tts-cache-android-final-reuse": {
+      "ok": true,
+      "status": "完成 · 4.13s · 接口RTF 0.661 · 复用引擎",
+      "text": "",
+      "model": "kokoro-82m-q8",
+      "engine_reused": true,
+      "api_ms": 2724.8,
+      "audio_s": 4.125,
+      "runs": [
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.285 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 5298.86,
+          "audio_s": 4.125
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 0.491 · 复用引擎",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": true,
+          "api_ms": 2026.02,
+          "audio_s": 4.125
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 0.661 · 复用引擎",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": true,
+          "api_ms": 2724.8,
+          "audio_s": 4.125
+        }
+      ],
+      "case": "kokoro-en",
+      "process_wall_s": 26.067058291984722,
+      "audio_sample_rate": 24000
+    },
+    "tts-cache-android-final-switch": {
+      "ok": true,
+      "status": "完成 · 4.13s · 接口RTF 1.627 · 首次构图",
+      "text": "",
+      "model": "kokoro-82m-q8",
+      "engine_reused": false,
+      "api_ms": 6712.24,
+      "audio_s": 4.125,
+      "runs": [
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.598 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 6590.99,
+          "audio_s": 4.125
+        },
+        {
+          "ok": true,
+          "status": "完成 · 3.20s · 接口RTF 0.564 · 首次构图",
+          "text": "",
+          "model": "pocket-english-q8",
+          "engine_reused": false,
+          "api_ms": 1805.13,
+          "audio_s": 3.2
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.627 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 6712.24,
+          "audio_s": 4.125
+        }
+      ],
+      "case": "kokoro-en",
+      "process_wall_s": 32.202682540984824,
+      "audio_sample_rate": 24000
+    },
+    "tts-cache-android-final-ttl": {
+      "ok": true,
+      "status": "完成 · 4.13s · 接口RTF 1.671 · 首次构图",
+      "text": "",
+      "model": "kokoro-82m-q8",
+      "engine_reused": false,
+      "api_ms": 6894.25,
+      "audio_s": 4.125,
+      "runs": [
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.428 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 5889.25,
+          "audio_s": 4.125
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.671 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 6894.25,
+          "audio_s": 4.125
+        }
+      ],
+      "case": "kokoro-en",
+      "process_wall_s": 58.22829008300323,
+      "audio_sample_rate": 24000
+    },
+    "tts-cache-android-final-voice": {
+      "ok": true,
+      "status": "完成 · 4.13s · 接口RTF 0.537 · 复用引擎",
+      "text": "",
+      "model": "kokoro-82m-q8",
+      "engine_reused": true,
+      "api_ms": 2216.93,
+      "audio_s": 4.125,
+      "runs": [
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.309 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 5398.88,
+          "audio_s": 4.125
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.15s · 接口RTF 0.551 · 复用引擎",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": true,
+          "api_ms": 2288.44,
+          "audio_s": 4.15
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 0.537 · 复用引擎",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": true,
+          "api_ms": 2216.93,
+          "audio_s": 4.125
+        }
+      ],
+      "case": "kokoro-en",
+      "process_wall_s": 25.926249708049,
+      "audio_sample_rate": 24000
+    },
+    "tts-cache-simulator": {
+      "status": "完成 · 4.12s · 接口RTF 0.447 · 复用引擎",
+      "run_id": "kokoro-en-e86671ce",
+      "engine_reused": true,
+      "ok": 1,
+      "api_ms": 1845.093583,
+      "model": "kokoro-82m-q8",
+      "runs": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.598 · 首次构图",
+          "run_id": "kokoro-en-e86671ce",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 6590.894417,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 0.429 · 复用引擎",
+          "run_id": "kokoro-en-e86671ce",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 1771.407583,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 0.447 · 复用引擎",
+          "run_id": "kokoro-en-e86671ce",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 1845.093583,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        }
+      ],
+      "text": "",
+      "audio_s": 4.125,
+      "input_frames": 0,
+      "case": "kokoro-en",
+      "process_wall_s": 14.424594542011619,
+      "audio_sample_rate": 24000
+    },
+    "tts-cache-simulator-cancel": {
+      "status": "完成 · 4.12s · 接口RTF 1.776 · 首次构图",
+      "run_id": "kokoro-en-8dcf5381",
+      "engine_reused": false,
+      "ok": 1,
+      "api_ms": 7326.441084,
+      "model": "kokoro-82m-q8",
+      "runs": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.916 · 首次构图",
+          "run_id": "kokoro-en-8dcf5381",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 7903.5565,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "已停止",
+          "run_id": "kokoro-en-8dcf5381",
+          "engine_reused": true,
+          "ok": 0,
+          "api_ms": 0,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 0,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.776 · 首次构图",
+          "run_id": "kokoro-en-8dcf5381",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 7326.441084,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        }
+      ],
+      "text": "",
+      "audio_s": 4.125,
+      "input_frames": 0,
+      "case": "kokoro-en",
+      "process_wall_s": 23.36574899998959,
+      "audio_sample_rate": 24000
+    },
+    "tts-cache-simulator-switch": {
+      "status": "完成 · 4.12s · 接口RTF 1.823 · 首次构图",
+      "run_id": "kokoro-en-d4a475a2",
+      "engine_reused": false,
+      "ok": 1,
+      "api_ms": 7521.838625,
+      "model": "kokoro-82m-q8",
+      "runs": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.830 · 首次构图",
+          "run_id": "kokoro-en-d4a475a2",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 7549.622708,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 3.20s · 接口RTF 0.290 · 首次构图",
+          "run_id": "kokoro-en-d4a475a2",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 929.159167,
+          "model": "pocket-english-q8",
+          "text": "",
+          "audio_s": 3.2,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.823 · 首次构图",
+          "run_id": "kokoro-en-d4a475a2",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 7521.838625,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        }
+      ],
+      "text": "",
+      "audio_s": 4.125,
+      "input_frames": 0,
+      "case": "kokoro-en",
+      "process_wall_s": 22.416429625009187,
+      "audio_sample_rate": 24000
+    },
+    "tts-cache-simulator-ttl": {
+      "status": "完成 · 4.12s · 接口RTF 1.680 · 首次构图",
+      "run_id": "kokoro-en-38ac22f5",
+      "engine_reused": false,
+      "ok": 1,
+      "api_ms": 6929.061667,
+      "model": "kokoro-82m-q8",
+      "runs": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.917 · 首次构图",
+          "run_id": "kokoro-en-38ac22f5",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 7906.245459,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.680 · 首次构图",
+          "run_id": "kokoro-en-38ac22f5",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 6929.061667,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        }
+      ],
+      "text": "",
+      "audio_s": 4.125,
+      "input_frames": 0,
+      "case": "kokoro-en",
+      "process_wall_s": 53.48377183300909,
+      "audio_sample_rate": 24000
+    },
+    "tts-cache-simulator-voice": {
+      "status": "完成 · 4.12s · 接口RTF 0.602 · 复用引擎",
+      "run_id": "kokoro-en-663e5c8d",
+      "engine_reused": true,
+      "ok": 1,
+      "api_ms": 2481.53425,
+      "model": "kokoro-82m-q8",
+      "runs": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.604 · 首次构图",
+          "run_id": "kokoro-en-663e5c8d",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 6618.059792,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.15s · 接口RTF 0.444 · 复用引擎",
+          "run_id": "kokoro-en-663e5c8d",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 1842.676125,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.15,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 0.602 · 复用引擎",
+          "run_id": "kokoro-en-663e5c8d",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 2481.53425,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        }
+      ],
+      "text": "",
+      "audio_s": 4.125,
+      "input_frames": 0,
+      "case": "kokoro-en",
+      "process_wall_s": 14.306658582994714,
+      "audio_sample_rate": 24000
+    },
+    "playback-fix-simulator": {
+      "status": "完成 · 4.12s · 接口RTF 0.664 · 复用引擎",
+      "run_id": "kokoro-en-05287f42",
+      "engine_reused": true,
+      "ok": 1,
+      "api_ms": 2737.395542,
+      "model": "kokoro-82m-q8",
+      "runs": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.602 · 首次构图",
+          "run_id": "kokoro-en-05287f42",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 6609.116583,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 0.431 · 复用引擎",
+          "run_id": "kokoro-en-05287f42",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 1776.33525,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 0.481 · 复用引擎",
+          "run_id": "kokoro-en-05287f42",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 1982.461,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 0.664 · 复用引擎",
+          "run_id": "kokoro-en-05287f42",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 2737.395542,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        }
+      ],
+      "text": "",
+      "audio_s": 4.125,
+      "input_frames": 0,
+      "playback_enabled": true,
+      "case": "kokoro-en",
+      "process_wall_s": 17.323081292,
+      "audio_sample_rate": 24000
+    },
+    "playback-rate-android": {
+      "ok": true,
+      "status": "完成 · 4.13s · 接口RTF 1.794 · 首次构图",
+      "text": "",
+      "model": "kokoro-82m-q8",
+      "engine_reused": false,
+      "api_ms": 7399.61,
+      "audio_s": 4.125,
+      "runs": [
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.445 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 5960.29,
+          "audio_s": 4.125
+        },
+        {
+          "ok": true,
+          "status": "完成 · 3.69s · 接口RTF 0.104 · 首次构图",
+          "text": "",
+          "model": "piper-lessac-medium",
+          "engine_reused": false,
+          "api_ms": 384.208,
+          "audio_s": 3.69197
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.794 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 7399.61,
+          "audio_s": 4.125
+        }
+      ],
+      "playback_enabled": true,
+      "case": "kokoro-en",
+      "process_wall_s": 32.297122333999994,
+      "audio_sample_rate": 24000
+    },
+    "playback-rate-simulator": {
+      "status": "完成 · 4.12s · 接口RTF 1.811 · 首次构图",
+      "run_id": "kokoro-en-5d14d1b3",
+      "engine_reused": false,
+      "ok": 1,
+      "api_ms": 7471.607291,
+      "model": "kokoro-82m-q8",
+      "runs": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.635 · 首次构图",
+          "run_id": "kokoro-en-5d14d1b3",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 6744.092875,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 3.69s · 接口RTF 0.065 · 首次构图",
+          "run_id": "kokoro-en-5d14d1b3",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 239.025166,
+          "model": "piper-lessac-medium",
+          "text": "",
+          "audio_s": 3.6919727891156464,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.811 · 首次构图",
+          "run_id": "kokoro-en-5d14d1b3",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 7471.607291,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        }
+      ],
+      "text": "",
+      "audio_s": 4.125,
+      "input_frames": 0,
+      "playback_enabled": true,
+      "case": "kokoro-en",
+      "process_wall_s": 20.361569166000002,
+      "audio_sample_rate": 24000
+    },
+    "playback-fix-iphone": {
+      "status": "完成 · 4.12s · 接口RTF 0.902 · 复用引擎",
+      "run_id": "kokoro-en-1ca163a7",
+      "engine_reused": true,
+      "ok": 1,
+      "api_ms": 3719.51675,
+      "model": "kokoro-82m-q8",
+      "runs": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 2.429 · 首次构图",
+          "run_id": "kokoro-en-1ca163a7",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 10020.698417,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 0.870 · 复用引擎",
+          "run_id": "kokoro-en-1ca163a7",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 3588.610916,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 0.886 · 复用引擎",
+          "run_id": "kokoro-en-1ca163a7",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 3656.036166,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        },
+        {
+          "status": "完成 · 4.12s · 接口RTF 0.902 · 复用引擎",
+          "run_id": "kokoro-en-1ca163a7",
+          "engine_reused": true,
+          "ok": 1,
+          "api_ms": 3719.51675,
+          "model": "kokoro-82m-q8",
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0
+        }
+      ],
+      "text": "",
+      "audio_s": 4.125,
+      "input_frames": 0,
+      "playback_enabled": true,
+      "case": "kokoro-en",
+      "process_wall_s": 25.589697958,
+      "audio_sample_rate": 24000
+    },
+    "playback-i8mm-iphone": {
+      "profile": "arm64-i8mm",
+      "result": {
+        "status": "完成 · 4.12s · 接口RTF 0.878 · 复用引擎",
+        "run_id": "kokoro-en-99012a25",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 3623.560208,
+        "model": "kokoro-82m-q8",
+        "runs": [
+          {
+            "status": "完成 · 4.12s · 接口RTF 2.596 · 首次构图",
+            "run_id": "kokoro-en-99012a25",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 10708.471042,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 4.125,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 4.12s · 接口RTF 0.964 · 复用引擎",
+            "run_id": "kokoro-en-99012a25",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 3977.936833,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 4.125,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 4.12s · 接口RTF 0.878 · 复用引擎",
+            "run_id": "kokoro-en-99012a25",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 3623.560208,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 4.125,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 4.125,
+        "input_frames": 0,
+        "playback_enabled": true,
+        "case": "kokoro-en",
+        "process_wall_s": 22.115414125,
+        "audio_sample_rate": 24000
+      }
+    },
+    "playback-rate-iphone": {
+      "profile": "arm64-i8mm",
+      "result": {
+        "status": "完成 · 4.12s · 接口RTF 2.469 · 首次构图",
+        "run_id": "kokoro-en-eb18c50a",
+        "engine_reused": false,
+        "ok": 1,
+        "api_ms": 10183.025833,
+        "model": "kokoro-82m-q8",
+        "runs": [
+          {
+            "status": "完成 · 4.12s · 接口RTF 2.313 · 首次构图",
+            "run_id": "kokoro-en-eb18c50a",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 9539.500042,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 4.125,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 3.69s · 接口RTF 0.088 · 首次构图",
+            "run_id": "kokoro-en-eb18c50a",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 324.491958,
+            "model": "piper-lessac-medium",
+            "text": "",
+            "audio_s": 3.6919727891156464,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 4.12s · 接口RTF 2.469 · 首次构图",
+            "run_id": "kokoro-en-eb18c50a",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 10183.025833,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 4.125,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 4.125,
+        "input_frames": 0,
+        "playback_enabled": true,
+        "case": "kokoro-en",
+        "process_wall_s": 27.101736125000002,
+        "audio_sample_rate": 24000
+      }
+    }
+  },
+  "regression": {
+    "android": {
+      "schema": 1,
+      "version": "0.4.0",
+      "target": "android",
+      "cases": [
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.452 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 5991.49,
+          "audio_s": 4.125,
+          "runs": [
+            {
+              "ok": true,
+              "status": "完成 · 4.13s · 接口RTF 1.452 · 首次构图",
+              "text": "",
+              "model": "kokoro-82m-q8",
+              "engine_reused": false,
+              "api_ms": 5991.49,
+              "audio_s": 4.125
+            }
+          ],
+          "case": "kokoro-en",
+          "process_wall_s": 16.231259000021964,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "完成 · 5.58s · 接口RTF 1.239 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 6906.95,
+          "audio_s": 5.575,
+          "runs": [
+            {
+              "ok": true,
+              "status": "完成 · 5.58s · 接口RTF 1.239 · 首次构图",
+              "text": "",
+              "model": "kokoro-82m-q8",
+              "engine_reused": false,
+              "api_ms": 6906.95,
+              "audio_s": 5.575
+            }
+          ],
+          "case": "kokoro-zh",
+          "process_wall_s": 16.73468579200562,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "完成 · 5.72s · 接口RTF 0.604 · 首次构图",
+          "text": "",
+          "model": "kitten-mini-0.8",
+          "engine_reused": false,
+          "api_ms": 3453.37,
+          "audio_s": 5.71667,
+          "runs": [
+            {
+              "ok": true,
+              "status": "完成 · 5.72s · 接口RTF 0.604 · 首次构图",
+              "text": "",
+              "model": "kitten-mini-0.8",
+              "engine_reused": false,
+              "api_ms": 3453.37,
+              "audio_s": 5.71667
+            }
+          ],
+          "case": "kitten-bella",
+          "process_wall_s": 11.539099124958739,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "完成 · 5.59s · 接口RTF 0.626 · 首次构图",
+          "text": "",
+          "model": "kitten-mini-0.8",
+          "engine_reused": false,
+          "api_ms": 3499.61,
+          "audio_s": 5.59167,
+          "runs": [
+            {
+              "ok": true,
+              "status": "完成 · 5.59s · 接口RTF 0.626 · 首次构图",
+              "text": "",
+              "model": "kitten-mini-0.8",
+              "engine_reused": false,
+              "api_ms": 3499.61,
+              "audio_s": 5.59167
+            }
+          ],
+          "case": "kitten-leo",
+          "process_wall_s": 11.500159959075972,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "完成 · 3.69s · 接口RTF 0.155 · 首次构图",
+          "text": "",
+          "model": "piper-lessac-medium",
+          "engine_reused": false,
+          "api_ms": 570.95,
+          "audio_s": 3.69197,
+          "runs": [
+            {
+              "ok": true,
+              "status": "完成 · 3.69s · 接口RTF 0.155 · 首次构图",
+              "text": "",
+              "model": "piper-lessac-medium",
+              "engine_reused": false,
+              "api_ms": 570.95,
+              "audio_s": 3.69197
+            }
+          ],
+          "case": "piper-lessac",
+          "process_wall_s": 6.275035624974407,
+          "audio_sample_rate": 22050
+        },
+        {
+          "ok": true,
+          "status": "完成 · 18.83s · 接口RTF 0.185 · 首次构图",
+          "text": "",
+          "model": "piper-lessac-medium",
+          "engine_reused": false,
+          "api_ms": 3485.33,
+          "audio_s": 18.8269,
+          "runs": [
+            {
+              "ok": true,
+              "status": "完成 · 18.83s · 接口RTF 0.185 · 首次构图",
+              "text": "",
+              "model": "piper-lessac-medium",
+              "engine_reused": false,
+              "api_ms": 3485.33,
+              "audio_s": 18.8269
+            }
+          ],
+          "case": "piper-long",
+          "process_wall_s": 24.01585512503516,
+          "audio_sample_rate": 22050
+        },
+        {
+          "ok": true,
+          "status": "完成 · 3.20s · 接口RTF 0.700 · 首次构图",
+          "text": "",
+          "model": "pocket-english-q8",
+          "engine_reused": false,
+          "api_ms": 2240.04,
+          "audio_s": 3.2,
+          "runs": [
+            {
+              "ok": true,
+              "status": "完成 · 3.20s · 接口RTF 0.700 · 首次构图",
+              "text": "",
+              "model": "pocket-english-q8",
+              "engine_reused": false,
+              "api_ms": 2240.04,
+              "audio_s": 3.2
+            }
+          ],
+          "case": "pocket-alba",
+          "process_wall_s": 6.340450249961577,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": false,
+          "status": "已停止",
+          "text": "",
+          "model": "pocket-english-q8",
+          "runs": [
+            {
+              "ok": false,
+              "status": "已停止",
+              "text": "",
+              "model": "pocket-english-q8"
+            }
+          ],
+          "case": "pocket-cancel",
+          "process_wall_s": 2.210658625001088
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.24s · 接口RTF 0.720 · 首次构图",
+          "text": "",
+          "model": "pocket-english-q8",
+          "engine_reused": false,
+          "api_ms": 3051.01,
+          "audio_s": 4.24,
+          "runs": [
+            {
+              "ok": true,
+              "status": "完成 · 4.24s · 接口RTF 0.720 · 首次构图",
+              "text": "",
+              "model": "pocket-english-q8",
+              "engine_reused": false,
+              "api_ms": 3051.01,
+              "audio_s": 4.24
+            }
+          ],
+          "case": "pocket-anna",
+          "process_wall_s": 7.322124458965845,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 3.69s",
+          "text": "At 9:30, please check the train ticket and call the station.",
+          "model": "moonshine-tiny-q8",
+          "runs": [
+            {
+              "ok": true,
+              "status": "识别完成 · 3.69s",
+              "text": "At 9:30, please check the train ticket and call the station.",
+              "model": "moonshine-tiny-q8"
+            }
+          ],
+          "case": "moonshine-en",
+          "process_wall_s": 2.1547918749274686
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 5.58s",
+          "text": "今天上午9点半，请检查车票和随身行李。谢。",
+          "model": "sensevoice-small-q8",
+          "runs": [
+            {
+              "ok": true,
+              "status": "识别完成 · 5.58s",
+              "text": "今天上午9点半，请检查车票和随身行李。谢。",
+              "model": "sensevoice-small-q8"
+            }
+          ],
+          "case": "sensevoice-zh",
+          "process_wall_s": 3.277775499969721
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 4.24s",
+          "text": "At 9.30, please check the train ticket and call the station.",
+          "model": "moonshine-tiny-q8",
+          "runs": [
+            {
+              "ok": true,
+              "status": "识别完成 · 4.24s",
+              "text": "At 9.30, please check the train ticket and call the station.",
+              "model": "moonshine-tiny-q8"
+            }
+          ],
+          "case": "roundtrip",
+          "process_wall_s": 3.2720462090801448
+        },
+        {
+          "ok": true,
+          "status": "模型已就绪，文件大小与SHA256均通过",
+          "text": "",
+          "model": "pocket-english-q8",
+          "runs": [
+            {
+              "ok": true,
+              "status": "模型已就绪，文件大小与SHA256均通过",
+              "text": "",
+              "model": "pocket-english-q8"
+            }
+          ],
+          "case": "download-check",
+          "process_wall_s": 2.2563537089154124
+        }
+      ],
+      "scope": "Foreground actual-model Demo pipelines; cached download SHA validation; no microphone recording or new large-model download",
+      "limitations": [
+        "microphone permission/live capture needs separate interactive validation",
+        "cached model check does not certify CDN reachability or full download"
+      ]
+    },
+    "simulator": {
+      "schema": 1,
+      "version": "0.4.0",
+      "target": "simulator",
+      "cases": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 1.880 · 首次构图",
+          "run_id": "kokoro-en-4dc8cf16",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 7754.983333,
+          "model": "kokoro-82m-q8",
+          "runs": [
+            {
+              "status": "完成 · 4.12s · 接口RTF 1.880 · 首次构图",
+              "run_id": "kokoro-en-4dc8cf16",
+              "engine_reused": false,
+              "ok": 1,
+              "api_ms": 7754.983333,
+              "model": "kokoro-82m-q8",
+              "text": "",
+              "audio_s": 4.125,
+              "input_frames": 0
+            }
+          ],
+          "text": "",
+          "audio_s": 4.125,
+          "input_frames": 0,
+          "case": "kokoro-en",
+          "process_wall_s": 12.319606625009328,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "完成 · 5.58s · 接口RTF 1.679 · 首次构图",
+          "run_id": "kokoro-zh-b7a83554",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 9360.544292,
+          "model": "kokoro-82m-q8",
+          "runs": [
+            {
+              "status": "完成 · 5.58s · 接口RTF 1.679 · 首次构图",
+              "run_id": "kokoro-zh-b7a83554",
+              "engine_reused": false,
+              "ok": 1,
+              "api_ms": 9360.544292,
+              "model": "kokoro-82m-q8",
+              "text": "",
+              "audio_s": 5.575,
+              "input_frames": 0
+            }
+          ],
+          "text": "",
+          "audio_s": 5.575,
+          "input_frames": 0,
+          "case": "kokoro-zh",
+          "process_wall_s": 13.473973624990322,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "完成 · 5.72s · 接口RTF 0.600 · 首次构图",
+          "run_id": "kitten-bella-0c694790",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 3430.784333,
+          "model": "kitten-mini-0.8",
+          "runs": [
+            {
+              "status": "完成 · 5.72s · 接口RTF 0.600 · 首次构图",
+              "run_id": "kitten-bella-0c694790",
+              "engine_reused": false,
+              "ok": 1,
+              "api_ms": 3430.784333,
+              "model": "kitten-mini-0.8",
+              "text": "",
+              "audio_s": 5.716666666666667,
+              "input_frames": 0
+            }
+          ],
+          "text": "",
+          "audio_s": 5.716666666666667,
+          "input_frames": 0,
+          "case": "kitten-bella",
+          "process_wall_s": 5.604100666940212,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "完成 · 5.59s · 接口RTF 0.581 · 首次构图",
+          "run_id": "kitten-leo-f3da7ec5",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 3246.302291,
+          "model": "kitten-mini-0.8",
+          "runs": [
+            {
+              "status": "完成 · 5.59s · 接口RTF 0.581 · 首次构图",
+              "run_id": "kitten-leo-f3da7ec5",
+              "engine_reused": false,
+              "ok": 1,
+              "api_ms": 3246.302291,
+              "model": "kitten-mini-0.8",
+              "text": "",
+              "audio_s": 5.591666666666667,
+              "input_frames": 0
+            }
+          ],
+          "text": "",
+          "audio_s": 5.591666666666667,
+          "input_frames": 0,
+          "case": "kitten-leo",
+          "process_wall_s": 4.333920874982141,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "完成 · 3.69s · 接口RTF 0.116 · 首次构图",
+          "run_id": "piper-lessac-1ef54899",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 429.271666,
+          "model": "piper-lessac-medium",
+          "runs": [
+            {
+              "status": "完成 · 3.69s · 接口RTF 0.116 · 首次构图",
+              "run_id": "piper-lessac-1ef54899",
+              "engine_reused": false,
+              "ok": 1,
+              "api_ms": 429.271666,
+              "model": "piper-lessac-medium",
+              "text": "",
+              "audio_s": 3.6919727891156464,
+              "input_frames": 0
+            }
+          ],
+          "text": "",
+          "audio_s": 3.6919727891156464,
+          "input_frames": 0,
+          "case": "piper-lessac",
+          "process_wall_s": 1.4078836250118911,
+          "audio_sample_rate": 22050
+        },
+        {
+          "status": "完成 · 18.82s · 接口RTF 0.113 · 首次构图",
+          "run_id": "piper-long-c925acf8",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 2130.531916,
+          "model": "piper-lessac-medium",
+          "runs": [
+            {
+              "status": "完成 · 18.82s · 接口RTF 0.113 · 首次构图",
+              "run_id": "piper-long-c925acf8",
+              "engine_reused": false,
+              "ok": 1,
+              "api_ms": 2130.531916,
+              "model": "piper-lessac-medium",
+              "text": "",
+              "audio_s": 18.81528344671202,
+              "input_frames": 0
+            }
+          ],
+          "text": "",
+          "audio_s": 18.81528344671202,
+          "input_frames": 0,
+          "case": "piper-long",
+          "process_wall_s": 3.5219495419878513,
+          "audio_sample_rate": 22050
+        },
+        {
+          "status": "完成 · 3.20s · 接口RTF 0.215 · 首次构图",
+          "run_id": "pocket-alba-58ab119b",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 688.309791,
+          "model": "pocket-english-q8",
+          "runs": [
+            {
+              "status": "完成 · 3.20s · 接口RTF 0.215 · 首次构图",
+              "run_id": "pocket-alba-58ab119b",
+              "engine_reused": false,
+              "ok": 1,
+              "api_ms": 688.309791,
+              "model": "pocket-english-q8",
+              "text": "",
+              "audio_s": 3.2,
+              "input_frames": 0
+            }
+          ],
+          "text": "",
+          "audio_s": 3.2,
+          "input_frames": 0,
+          "case": "pocket-alba",
+          "process_wall_s": 2.332340957946144,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "已停止",
+          "run_id": "pocket-cancel-58877b6e",
+          "engine_reused": false,
+          "ok": 0,
+          "api_ms": 0,
+          "model": "pocket-english-q8",
+          "runs": [
+            {
+              "status": "已停止",
+              "run_id": "pocket-cancel-58877b6e",
+              "engine_reused": false,
+              "ok": 0,
+              "api_ms": 0,
+              "model": "pocket-english-q8",
+              "text": "",
+              "audio_s": 0,
+              "input_frames": 0
+            }
+          ],
+          "text": "",
+          "audio_s": 0,
+          "input_frames": 0,
+          "case": "pocket-cancel",
+          "process_wall_s": 1.294553374988027
+        },
+        {
+          "status": "完成 · 4.24s · 接口RTF 0.302 · 首次构图",
+          "run_id": "pocket-anna-62fd3e32",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 1282.275666,
+          "model": "pocket-english-q8",
+          "runs": [
+            {
+              "status": "完成 · 4.24s · 接口RTF 0.302 · 首次构图",
+              "run_id": "pocket-anna-62fd3e32",
+              "engine_reused": false,
+              "ok": 1,
+              "api_ms": 1282.275666,
+              "model": "pocket-english-q8",
+              "text": "",
+              "audio_s": 4.24,
+              "input_frames": 0
+            }
+          ],
+          "text": "",
+          "audio_s": 4.24,
+          "input_frames": 0,
+          "case": "pocket-anna",
+          "process_wall_s": 2.7090068749384955,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "识别完成 · 输入 3.69s",
+          "run_id": "moonshine-en-547ee9ec",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 0,
+          "model": "moonshine-tiny-q8",
+          "runs": [],
+          "text": "At 9:30, please check the train ticket and call the station.",
+          "audio_s": 0,
+          "input_frames": 59072,
+          "case": "moonshine-en",
+          "process_wall_s": 1.4647499999264255
+        },
+        {
+          "status": "识别完成 · 输入 5.58s",
+          "run_id": "sensevoice-zh-85e57d85",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 0,
+          "model": "sensevoice-small-q8",
+          "runs": [],
+          "text": "今天上午9点半，请检查车票和随身行李。谢。",
+          "audio_s": 0,
+          "input_frames": 89200,
+          "case": "sensevoice-zh",
+          "process_wall_s": 1.3245819160947576
+        },
+        {
+          "status": "识别完成 · 输入 4.24s",
+          "run_id": "roundtrip-35e3f93d",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 0,
+          "model": "moonshine-tiny-q8",
+          "runs": [],
+          "text": "At nine thirty, please check the train ticket and call the station.",
+          "audio_s": 0,
+          "input_frames": 67840,
+          "case": "roundtrip",
+          "process_wall_s": 1.320501417038031
+        },
+        {
+          "status": "模型已就绪，大小与SHA256均通过",
+          "run_id": "download-check-7ad10e30",
+          "engine_reused": false,
+          "ok": 1,
+          "api_ms": 0,
+          "model": "pocket-english-q8",
+          "runs": [],
+          "text": "",
+          "audio_s": 0,
+          "input_frames": 0,
+          "case": "download-check",
+          "process_wall_s": 1.3122608750127256
+        }
+      ],
+      "scope": "Foreground actual-model Demo pipelines; cached download SHA validation; no microphone recording or new large-model download",
+      "limitations": [
+        "microphone permission/live capture needs separate interactive validation",
+        "cached model check does not certify CDN reachability or full download"
+      ]
+    },
+    "android_final_client": {
+      "schema": 1,
+      "version": "0.4.0",
+      "target": "android",
+      "cases": [
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 1.322 · 首次构图",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "engine_reused": false,
+          "api_ms": 5454.62,
+          "audio_s": 4.125,
+          "runs": [
+            {
+              "ok": true,
+              "status": "完成 · 4.13s · 接口RTF 1.322 · 首次构图",
+              "text": "",
+              "model": "kokoro-82m-q8",
+              "engine_reused": false,
+              "api_ms": 5454.62,
+              "audio_s": 4.125
+            }
+          ],
+          "playback_enabled": true,
+          "case": "kokoro-en",
+          "process_wall_s": 13.575327166000001,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 5.58s",
+          "text": "今天上午9点半，请检查车票和随身行李。谢。",
+          "model": "sensevoice-small-q8",
+          "runs": [
+            {
+              "ok": true,
+              "status": "识别完成 · 5.58s",
+              "text": "今天上午9点半，请检查车票和随身行李。谢。",
+              "model": "sensevoice-small-q8"
+            }
+          ],
+          "playback_enabled": true,
+          "case": "sensevoice-zh",
+          "process_wall_s": 2.281275959000002
+        }
+      ],
+      "scope": "Foreground actual-model Demo pipelines; cached download SHA validation; no microphone recording or new large-model download",
+      "limitations": [
+        "microphone permission/live capture needs separate interactive validation",
+        "cached model check does not certify CDN reachability or full download"
+      ]
+    }
+  },
+  "rust_cache": {
+    "result": "PASS: warm reuse, voice/config/identity changes, cancellation, explicit/idle eviction",
+    "same_seed_waveform_exact_match": true
+  },
+  "normal_liquid_i8mm_playback": {
+    "target": "iphone",
+    "pack": "liquid",
+    "variant": "P3",
+    "voice": "female",
+    "text": "你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。",
+    "synthesis_completed": true,
+    "playback_drained": true,
+    "ok": true,
+    "error": "",
+    "scope": "normal UI synthesis and CoreAudio queue drain; no acoustic listening certificate"
+  }
+}

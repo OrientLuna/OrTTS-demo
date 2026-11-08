@@ -1,0 +1,646 @@
+{
+  "schema": 1,
+  "date": "2026-11-08",
+  "host": {
+    "cpu": "Apple M5",
+    "memory_bytes": 25769803776,
+    "physical_cores": 10
+  },
+  "configuration": {
+    "backend": "CPU only; no CoreML/Metal execution",
+    "threads_configured": 4,
+    "ggml_profile": "arm64-baseline; Apple BLAS enabled",
+    "sherpa_version": "1.13.8",
+    "sherpa_git": "11afbd00",
+    "onnxruntime_version": "1.28.2",
+    "iterations": 4,
+    "warm_samples": 3,
+    "playback": false,
+    "timing": "separate engine create, first synchronous inference, 3 engine-reuse inference calls; finite PCM scan and WAV write excluded",
+    "order": [
+      "sherpa-int8-en",
+      "ggml-en",
+      "ggml-zh",
+      "sherpa-int8-zh",
+      "sherpa-int8-long",
+      "ggml-long",
+      "sherpa-fp32-en",
+      "sherpa-fp32-zh",
+      "sherpa-fp32-long"
+    ]
+  },
+  "inputs": {
+    "en": "At nine thirty, please check the train ticket and call the station.",
+    "zh": "今天上午九点半，请检查车票和随身行李。",
+    "long": "English sentence repeated three times with spaces",
+    "voice_en": "af_heart, Sherpa sid3",
+    "voice_zh": "zf_xiaobei, Sherpa sid45",
+    "speed": "1.0 Sherpa explicit; ggml default1.0"
+  },
+  "voice_identity": [
+    {
+      "voice": "af_heart",
+      "gguf_bytes": 522240,
+      "onnx_bytes": 522240,
+      "identical": true,
+      "gguf_sha256": "d583ccff3cdca2f7fae535cb998ac07e9fcb90f09737b9a41fa2734ec44a8f0b",
+      "onnx_sha256": "d583ccff3cdca2f7fae535cb998ac07e9fcb90f09737b9a41fa2734ec44a8f0b"
+    },
+    {
+      "voice": "zf_xiaobei",
+      "gguf_bytes": 522240,
+      "onnx_bytes": 522240,
+      "identical": true,
+      "gguf_sha256": "5dde6e1c9c4f12c8b327bc29c0cee361a23b52b952c04636858ba637ec66e640",
+      "onnx_sha256": "5dde6e1c9c4f12c8b327bc29c0cee361a23b52b952c04636858ba637ec66e640"
+    }
+  ],
+  "fp32_and_int8_voice_tables_identical": true,
+  "artifacts": {
+    "ggml_model": {
+      "bytes": 189550976,
+      "sha256": "9a4ca6176460cdc8c7845b804c0bbe85a4791ee3ffff568a3fdadbb708c63f47"
+    },
+    "onnx_int8": {
+      "bytes": 114202993,
+      "sha256": "75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e"
+    },
+    "onnx_fp32": {
+      "bytes": 325560556,
+      "sha256": "b40f62b166ac8164b0627ef48a0b358eda0985e272fb03ef5252e7206305da11"
+    },
+    "ggml_library": {
+      "bytes": 9993312,
+      "sha256": "c42671a3ce94e39f38529c4023dc0aae3dadf02bd34a9e0e6141cb292661407b"
+    },
+    "bench_ggml": {
+      "bytes": 41112,
+      "sha256": "3ceee9c0a7e66fdc11acc25a7edc4741e93b26ea4e2895f28a19459f6f623a84"
+    },
+    "bench_sherpa_int8": {
+      "bytes": 33076944,
+      "sha256": "78cf2779cc0948397c4a9bb8624d3be66121ba8a31013d3bf2b17da63ecd3923"
+    },
+    "bench_sherpa_fp32": {
+      "bytes": 33076944,
+      "sha256": "93adfc73d876e37872529e88727d502c84b9bf695d6be5491e5d59ec23acefe3"
+    },
+    "sherpa_header": {
+      "bytes": 167657,
+      "sha256": "2a1b95084be8fd1deb3228fcad2fd3f7f0258b64582f7402281ec174c7b7f4ce"
+    },
+    "bench_source": {
+      "bytes": 4652,
+      "sha256": "34b16f0fbda5daff1b1a20723ebcd19beea825c471fbb8d49c104c04ae2483f5"
+    }
+  },
+  "results": [
+    {
+      "load_ms": 2617.63,
+      "rss_before": 6750208,
+      "rss_loaded": 812580864,
+      "threads": 4,
+      "runs": [
+        {
+          "iteration": 0,
+          "wall_ms": 7030.55,
+          "cpu_s": 12.3125,
+          "audio_s": 4.125,
+          "rtf": 1.70438,
+          "rss": 1190379520
+        },
+        {
+          "iteration": 1,
+          "wall_ms": 2060.72,
+          "cpu_s": 8.15814,
+          "audio_s": 4.125,
+          "rtf": 0.499569,
+          "rss": 1190395904
+        },
+        {
+          "iteration": 2,
+          "wall_ms": 1948.82,
+          "cpu_s": 7.73466,
+          "audio_s": 4.125,
+          "rtf": 0.472442,
+          "rss": 1190412288
+        },
+        {
+          "iteration": 3,
+          "wall_ms": 1935.8,
+          "cpu_s": 7.6782,
+          "audio_s": 4.125,
+          "rtf": 0.469286,
+          "rss": 1190445056
+        }
+      ],
+      "peak_rss_bytes": 1190576128,
+      "backend": "ggml-q8",
+      "case": "en",
+      "warm_rtf_median": 0.472442,
+      "warm_ms_median": 1948.82
+    },
+    {
+      "load_ms": 2487.63,
+      "rss_before": 6717440,
+      "rss_loaded": 812679168,
+      "threads": 4,
+      "runs": [
+        {
+          "iteration": 0,
+          "wall_ms": 8047.49,
+          "cpu_s": 15.4857,
+          "audio_s": 5.575,
+          "rtf": 1.4435,
+          "rss": 1094909952
+        },
+        {
+          "iteration": 1,
+          "wall_ms": 2631.5,
+          "cpu_s": 10.4372,
+          "audio_s": 5.575,
+          "rtf": 0.472017,
+          "rss": 1094926336
+        },
+        {
+          "iteration": 2,
+          "wall_ms": 2689.56,
+          "cpu_s": 10.6671,
+          "audio_s": 5.575,
+          "rtf": 0.482432,
+          "rss": 1094942720
+        },
+        {
+          "iteration": 3,
+          "wall_ms": 2984.57,
+          "cpu_s": 11.5785,
+          "audio_s": 5.575,
+          "rtf": 0.535349,
+          "rss": 1094959104
+        }
+      ],
+      "peak_rss_bytes": 1095090176,
+      "backend": "ggml-q8",
+      "case": "zh",
+      "warm_rtf_median": 0.482432,
+      "warm_ms_median": 2689.56
+    },
+    {
+      "load_ms": 2625.37,
+      "rss_before": 6750208,
+      "rss_loaded": 812548096,
+      "threads": 4,
+      "runs": [
+        {
+          "iteration": 0,
+          "wall_ms": 11882.7,
+          "cpu_s": 29.5796,
+          "audio_s": 12.15,
+          "rtf": 0.977999,
+          "rss": 2028929024
+        },
+        {
+          "iteration": 1,
+          "wall_ms": 6292.08,
+          "cpu_s": 24.8835,
+          "audio_s": 12.15,
+          "rtf": 0.517867,
+          "rss": 2028929024
+        },
+        {
+          "iteration": 2,
+          "wall_ms": 6386.05,
+          "cpu_s": 25.3529,
+          "audio_s": 12.15,
+          "rtf": 0.525601,
+          "rss": 2028961792
+        },
+        {
+          "iteration": 3,
+          "wall_ms": 6443.48,
+          "cpu_s": 25.5772,
+          "audio_s": 12.15,
+          "rtf": 0.530327,
+          "rss": 2029010944
+        }
+      ],
+      "peak_rss_bytes": 2029158400,
+      "backend": "ggml-q8",
+      "case": "long",
+      "warm_rtf_median": 0.525601,
+      "warm_ms_median": 6386.05
+    },
+    {
+      "load_ms": 433.576,
+      "rss_before": 7405568,
+      "rss_loaded": 369868800,
+      "threads": 4,
+      "runs": [
+        {
+          "iteration": 0,
+          "wall_ms": 2315.24,
+          "cpu_s": 6.10455,
+          "audio_s": 3.20208,
+          "rtf": 0.723042,
+          "rss": 457998336
+        },
+        {
+          "iteration": 1,
+          "wall_ms": 2243.24,
+          "cpu_s": 6.00313,
+          "audio_s": 3.19837,
+          "rtf": 0.701367,
+          "rss": 536821760
+        },
+        {
+          "iteration": 2,
+          "wall_ms": 2274.84,
+          "cpu_s": 6.00219,
+          "audio_s": 3.19829,
+          "rtf": 0.711269,
+          "rss": 536821760
+        },
+        {
+          "iteration": 3,
+          "wall_ms": 2294.5,
+          "cpu_s": 6.05716,
+          "audio_s": 3.19837,
+          "rtf": 0.717396,
+          "rss": 536838144
+        }
+      ],
+      "peak_rss_bytes": 536838144,
+      "backend": "sherpa-int8",
+      "case": "en",
+      "warm_rtf_median": 0.711269,
+      "warm_ms_median": 2274.84
+    },
+    {
+      "load_ms": 384.087,
+      "rss_before": 7356416,
+      "rss_loaded": 349929472,
+      "threads": 4,
+      "runs": [
+        {
+          "iteration": 0,
+          "wall_ms": 4030.35,
+          "cpu_s": 10.9215,
+          "audio_s": 4.64825,
+          "rtf": 0.867068,
+          "rss": 438304768
+        },
+        {
+          "iteration": 1,
+          "wall_ms": 4411.78,
+          "cpu_s": 11.8918,
+          "audio_s": 4.64883,
+          "rtf": 0.949009,
+          "rss": 536674304
+        },
+        {
+          "iteration": 2,
+          "wall_ms": 4259.16,
+          "cpu_s": 11.4689,
+          "audio_s": 4.64833,
+          "rtf": 0.916277,
+          "rss": 536690688
+        },
+        {
+          "iteration": 3,
+          "wall_ms": 3944.17,
+          "cpu_s": 10.6953,
+          "audio_s": 4.65017,
+          "rtf": 0.848179,
+          "rss": 536707072
+        }
+      ],
+      "peak_rss_bytes": 536707072,
+      "backend": "sherpa-int8",
+      "case": "zh",
+      "warm_rtf_median": 0.916277,
+      "warm_ms_median": 4259.16
+    },
+    {
+      "load_ms": 413.635,
+      "rss_before": 7421952,
+      "rss_loaded": 370376704,
+      "threads": 4,
+      "runs": [
+        {
+          "iteration": 0,
+          "wall_ms": 7087.28,
+          "cpu_s": 18.6105,
+          "audio_s": 9.60538,
+          "rtf": 0.737845,
+          "rss": 538836992
+        },
+        {
+          "iteration": 1,
+          "wall_ms": 7248.7,
+          "cpu_s": 18.8564,
+          "audio_s": 9.60258,
+          "rtf": 0.75487,
+          "rss": 538869760
+        },
+        {
+          "iteration": 2,
+          "wall_ms": 7222.32,
+          "cpu_s": 18.7933,
+          "audio_s": 9.60208,
+          "rtf": 0.752162,
+          "rss": 527859712
+        },
+        {
+          "iteration": 3,
+          "wall_ms": 7179.4,
+          "cpu_s": 18.7754,
+          "audio_s": 9.60192,
+          "rtf": 0.747705,
+          "rss": 528105472
+        }
+      ],
+      "peak_rss_bytes": 538886144,
+      "backend": "sherpa-int8",
+      "case": "long",
+      "warm_rtf_median": 0.752162,
+      "warm_ms_median": 7222.32
+    },
+    {
+      "load_ms": 381.608,
+      "rss_before": 7356416,
+      "rss_loaded": 616660992,
+      "threads": 4,
+      "runs": [
+        {
+          "iteration": 0,
+          "wall_ms": 761.907,
+          "cpu_s": 3.00263,
+          "audio_s": 3.27292,
+          "rtf": 0.232792,
+          "rss": 707149824
+        },
+        {
+          "iteration": 1,
+          "wall_ms": 796.305,
+          "cpu_s": 3.14132,
+          "audio_s": 3.273,
+          "rtf": 0.243295,
+          "rss": 779436032
+        },
+        {
+          "iteration": 2,
+          "wall_ms": 895.412,
+          "cpu_s": 3.56653,
+          "audio_s": 3.27296,
+          "rtf": 0.273579,
+          "rss": 779452416
+        },
+        {
+          "iteration": 3,
+          "wall_ms": 891.758,
+          "cpu_s": 3.54066,
+          "audio_s": 3.27296,
+          "rtf": 0.272462,
+          "rss": 779452416
+        }
+      ],
+      "peak_rss_bytes": 779452416,
+      "backend": "sherpa-fp32",
+      "case": "en",
+      "warm_rtf_median": 0.272462,
+      "warm_ms_median": 891.758
+    },
+    {
+      "load_ms": 329.835,
+      "rss_before": 7356416,
+      "rss_loaded": 596901888,
+      "threads": 4,
+      "runs": [
+        {
+          "iteration": 0,
+          "wall_ms": 1488.11,
+          "cpu_s": 5.89209,
+          "audio_s": 4.60125,
+          "rtf": 0.323414,
+          "rss": 683245568
+        },
+        {
+          "iteration": 1,
+          "wall_ms": 1471.44,
+          "cpu_s": 5.85601,
+          "audio_s": 4.60137,
+          "rtf": 0.319783,
+          "rss": 712048640
+        },
+        {
+          "iteration": 2,
+          "wall_ms": 1463.03,
+          "cpu_s": 5.81953,
+          "audio_s": 4.60058,
+          "rtf": 0.318009,
+          "rss": 712065024
+        },
+        {
+          "iteration": 3,
+          "wall_ms": 1419.32,
+          "cpu_s": 5.63586,
+          "audio_s": 4.60125,
+          "rtf": 0.308465,
+          "rss": 712065024
+        }
+      ],
+      "peak_rss_bytes": 712065024,
+      "backend": "sherpa-fp32",
+      "case": "zh",
+      "warm_rtf_median": 0.318009,
+      "warm_ms_median": 1463.03
+    },
+    {
+      "load_ms": 389.116,
+      "rss_before": 7421952,
+      "rss_loaded": 615661568,
+      "threads": 4,
+      "runs": [
+        {
+          "iteration": 0,
+          "wall_ms": 2688.05,
+          "cpu_s": 10.6295,
+          "audio_s": 9.81904,
+          "rtf": 0.273758,
+          "rss": 778928128
+        },
+        {
+          "iteration": 1,
+          "wall_ms": 2902.72,
+          "cpu_s": 11.3117,
+          "audio_s": 9.819,
+          "rtf": 0.295622,
+          "rss": 778960896
+        },
+        {
+          "iteration": 2,
+          "wall_ms": 2800.8,
+          "cpu_s": 11.0838,
+          "audio_s": 9.819,
+          "rtf": 0.285243,
+          "rss": 778977280
+        },
+        {
+          "iteration": 3,
+          "wall_ms": 3063.05,
+          "cpu_s": 11.5506,
+          "audio_s": 9.81925,
+          "rtf": 0.311944,
+          "rss": 779845632
+        }
+      ],
+      "peak_rss_bytes": 779845632,
+      "backend": "sherpa-fp32",
+      "case": "long",
+      "warm_rtf_median": 0.295622,
+      "warm_ms_median": 2902.72
+    }
+  ],
+  "readback": [
+    {
+      "audio": "ggml-en.wav",
+      "sensevoice_transcript": "At 930, please check the train ticket and call the station."
+    },
+    {
+      "audio": "ggml-long.wav",
+      "sensevoice_transcript": "At 930, please check the train ticket and call the station at 930, please check the train ticket and call the station At 930, please check the train ticket and call the station."
+    },
+    {
+      "audio": "ggml-zh.wav",
+      "sensevoice_transcript": "今天上午9点半，请检查车票和随身行李。"
+    },
+    {
+      "audio": "sherpa-en.wav",
+      "sensevoice_transcript": "At 9-30, please check the train ticket and call the station."
+    },
+    {
+      "audio": "sherpa-fp32-en.wav",
+      "sensevoice_transcript": "At 9-30, please check the train ticket and call the station."
+    },
+    {
+      "audio": "sherpa-fp32-long.wav",
+      "sensevoice_transcript": "At 930, please check the train ticket and call the station at 930, please check the train ticket and call the station at 930, please check the train ticket and call the station."
+    },
+    {
+      "audio": "sherpa-fp32-zh.wav",
+      "sensevoice_transcript": "今天上午9点半，请检查车票和随身行李。"
+    },
+    {
+      "audio": "sherpa-long.wav",
+      "sensevoice_transcript": "At 9-30, please check the train ticket and call the stationio at 9-30, please check the train ticket and call the stationio at 9-30, please check the train ticket and call the stationd>."
+    },
+    {
+      "audio": "sherpa-zh.wav",
+      "sensevoice_transcript": "今天上午9点半，请检查车票和随身行李。"
+    }
+  ],
+  "pcm_checks": {
+    "checks": [
+      {
+        "case": "ggml-en",
+        "rate": 24000,
+        "frames": 99000,
+        "duration_s": 4.125,
+        "rms": 0.04854347422780549,
+        "peak": 0.4411452114582062,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "fed5b0b3cd95863a1fc44ff0d50f20cbf3fa4524eac25db403ac9234baa6568c"
+      },
+      {
+        "case": "ggml-long",
+        "rate": 24000,
+        "frames": 291600,
+        "duration_s": 12.15,
+        "rms": 0.05248148860692989,
+        "peak": 0.49016258120536804,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "8e76b129aee3082640eb73eeae98bd33f0f6a233ed963a8386e3c820dc925793"
+      },
+      {
+        "case": "ggml-zh",
+        "rate": 24000,
+        "frames": 133800,
+        "duration_s": 5.575,
+        "rms": 0.06384867432617185,
+        "peak": 0.4310106039047241,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "8852a8e57775f3fc3078b15ab4ea7897c1ba703db402629a863bf6c52a0c1a1f"
+      },
+      {
+        "case": "sherpa-en",
+        "rate": 24000,
+        "frames": 76761,
+        "duration_s": 3.198375,
+        "rms": 0.06098360918456597,
+        "peak": 0.33373650908470154,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "d7d8e57c268a4a46bed48f2e26c3ed828793998c9d53c0a21ddd353cd808deb8"
+      },
+      {
+        "case": "sherpa-fp32-en",
+        "rate": 24000,
+        "frames": 78551,
+        "duration_s": 3.2729583333333334,
+        "rms": 0.06282466002619978,
+        "peak": 0.41913601756095886,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "d8f270f69744ead0dc6f26af4ba862a5d8084356db337c39a958ce9202be08b1"
+      },
+      {
+        "case": "sherpa-fp32-long",
+        "rate": 24000,
+        "frames": 235662,
+        "duration_s": 9.81925,
+        "rms": 0.06281859959412163,
+        "peak": 0.4322495758533478,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "cacb40fa7481d9986976675156f0f4b665e5e62d405a0327fb0c67218144c856"
+      },
+      {
+        "case": "sherpa-fp32-zh",
+        "rate": 24000,
+        "frames": 110430,
+        "duration_s": 4.60125,
+        "rms": 0.07583824670434734,
+        "peak": 0.39641284942626953,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "6e25f6370ce4852b37143240e1b5069541d40dad71e1114fddba86b596aaf11f"
+      },
+      {
+        "case": "sherpa-long",
+        "rate": 24000,
+        "frames": 230446,
+        "duration_s": 9.601916666666666,
+        "rms": 0.06057670212763211,
+        "peak": 0.34390681982040405,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "3591852cca9321760b90df84bc4bb47666d1205a66464b9321354b2cc0e20029"
+      },
+      {
+        "case": "sherpa-zh",
+        "rate": 24000,
+        "frames": 111604,
+        "duration_s": 4.650166666666666,
+        "rms": 0.07174497932546625,
+        "peak": 0.3143467605113983,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "b34f841bc4a4ddd0313a0342e834343f15bdb5162f5f0932ab1d27db080092fe"
+      }
+    ],
+    "scope": "format/finite/nonempty signal, native rate, distinct Kitten waveforms; no perceptual quality certification"
+  },
+  "limitations": [
+    "practical pipeline comparison, not weight-identical tensor-backend ablation: Q8_0 vs ONNX INT8 vs FP32",
+    "GGUF lineage inferred from official converter and matching voices; exact checkpoint revision not reconstructed",
+    "G2P/tokenization/quantization differ and generated audio durations differ materially; report wall time and RTF together",
+    "3 warm observations, single session; no thermal/power certification or randomized multi-session statistics",
+    "these are Mac results, not iPhone measurements",
+    "ASR readback and finite PCM checks do not certify listening quality; INT8 long readback has extra syllables",
+    "no Sherpa integration into main runtime; standalone experiment only"
+  ]
+}

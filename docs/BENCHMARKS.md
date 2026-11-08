@@ -1,5 +1,7 @@
 # CPU性能参考
 
+最新多模型实测：[iPhone 中英文长短句热 RTF](development/tts-warm-cache-2026-11-08.md)、[Mac Kokoro ggml / Sherpa 对照](../experiments/kokoro-ab/README.md)。两者分别记录设备、量化和首次/复用条件，不与下列历史模型包混算。
+
 ## Android
 
 CPU4线程，原生Qwen生成端混合Q8＋LiquidCodec混合Q8。下表为男女声短中长测试中的热请求加权RTF，不含模型加载；越低越快。

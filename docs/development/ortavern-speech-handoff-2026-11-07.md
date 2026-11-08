@@ -1,3 +1,19 @@
+> 2026-11-08 更新：本轮缓存修复、手机接线和同机性能证据见[新增记录](tts-warm-cache-2026-11-08.md)。下文 11-07 平台未测状态是历史快照，已由新记录覆盖；当前推送计划也覆盖文末“只本地提交”。
+
+## 最新宿主集成增量（2026-11-08）
+
+用户要求以 `https://github.com/OrientLuna/OrTTS-demo` 为运行时 submodule，固定到本轮通知中的提交 SHA，不自动跟随 main。若宿主已有 vendor/submodule，先核对现有布局并复用，不重复嵌套，也不覆盖宿主独立推进的 provider/UI。
+
+Apple 自研页新增默认 LiquidCodec v0.3.1 与旧 LFM v0.2.0 独立入口，按各自清单传递 dequant/bridge SHA；不能把编译了 LiquidCodec 等同于已加载新版资产。Android 原本已默认 v0.3.1；补修旧版下载清单 runtime 描述字符串的Java兼容解析，与原生SDK规则对齐。
+
+C ABI 不变，Rust 新增 `speech::cache::TtsCache`，需在 owning worker 上保留单个模型并安排30秒 idle timer 调用 `evict_expired()`；换任务/模型、后台、内存压力调用 `clear()`。完整配置及已验证资产身份作为键，音色变化可复用。**只升级 submodule，仍逐句 new/free，不会获得本次热启动收益。** Android/iOS Demo 已同步对应实现；生命周期和播放器回归见新增记录。
+
+P3新旧codec评估见[同机归因](p3-codec-performance-2026-11-08.md)：高温baseline矩阵不能与历史冷却I8MM单次比较；相同男声I8MM下旧/新约0.492/0.495，当前继续LC默认、保留旧包。新旧female向量不同；不要仅按音色名称认定资产相同。
+
+Kokoro iPhone 首次仍约2以上RTF，连续复用约0.85英文短句；中文长句约1.07。单句内存峰值没有在手机重新测得，缓存不代表 kernel 优化。Mac Sherpa FP32 更快、动态INT8反而慢，独立比较未引入 Sherpa 依赖。保留宿主已有 Sherpa 路线，不恢复已停止的 Sherpa submodule 或全运行时重写。
+
+Pocket 长句回读疑似包含标点标签，需试听，不默认为质量通过；ZipVoice 手机菜单参考资产尚未接线；F5/Whisper独立基线及负面结论仍有效。eSpeak 组合 Demo 的 GPL 对应源码义务不变，模型许可分别展示，不把仓库 Apache 许可套在整个分发二进制上。TestFlight/发行已由用户暂停，本轮不要求宿主处理发行。
+
 # OrTavern 音频后端迭代交接
 
 ## 2026-11-08：Kokoro / Kitten / Piper 双端接入

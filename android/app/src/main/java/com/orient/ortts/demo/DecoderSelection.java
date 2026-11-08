@@ -8,6 +8,11 @@ final class DecoderSelection {
  private DecoderSelection(String k,String v,String m){kind=k;variant=v;manifest=m;}
  static DecoderSelection from(JSONObject pack)throws Exception{
   if(!pack.has("runtime"))return new DecoderSelection("qwen_lfm","","");
+  // Published v0.2 manifests used a descriptive string, before decoder objects.
+  if(pack.get("runtime") instanceof String){
+   if(pack.optString("schema").equals("ortts-download-manifest-v1"))return new DecoderSelection("qwen_lfm","","");
+   throw new IOException("不支持的旧版运行时描述");
+  }
   JSONObject runtime=pack.getJSONObject("runtime");
   if(!runtime.getString("schema").equals("ortts-runtime-v1"))throw new IOException("不支持的运行时清单");
   JSONObject decoder=runtime.getJSONObject("decoder");String kind=decoder.getString("kind");

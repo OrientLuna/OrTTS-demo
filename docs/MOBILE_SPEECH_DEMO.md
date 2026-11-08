@@ -21,13 +21,17 @@ ASR 支持麦克风权限、录音停止、取消和音频文件输入；Android
 
 ## 下载和本地导入
 
-下载清单来自 [共享模型目录](../runtime/models/catalog.example.json)。该文件保留 example 文件名，手机实际内置它的副本；每个资产包括 HTTPS 地址、固定 revision、大小和 SHA256，不跟踪远端 main。Android 原有模型入口仍使用固定 ModelScope 0.3.1-preview 清单；Apple 原有入口仍使用固定 0.2.0-preview 清单。
+下载清单来自 [共享模型目录](../runtime/models/catalog.example.json)。该文件保留 example 文件名，手机实际内置它的副本；每个资产包括 HTTPS 地址、固定 revision、大小和 SHA256，不跟踪远端 main。Android 原有模型入口仍使用固定 ModelScope 0.3.1-preview 清单；Apple 自研入口默认固定 0.3.1-preview LiquidCodec，并保留独立 0.2.0-preview LFM 兼容入口及旧模型目录。
 
 下载到临时文件，校验后替换；已通过校验的文件直接复用，取消时不会把未完成文件当作可用模型。未完成的大文件重新下载，不保证 HTTP 断点续传。保持应用在前台。Android 多模型支持 ZIP 导入（保留清单相对路径），iOS 导入包含同样相对路径的模型文件夹；导入也必须匹配大小和 SHA256，不接受任意 GGUF。
 
 没有将权重嵌入 APK/应用，也没有把目录的 `distribution_cleared` 自动改成 true。模型/音色许可提示与权重限制分别保留；Piper Lessac 的研究语料使用限制不能当作通用商用许可。ZipVoice 仍需参考音频/转写接线，未列入手机菜单。
 
 Kokoro、Kitten、Piper 共用随应用分发的 eSpeak NG 1.52.0 库和字典。组合应用发行需要履行 GPL-3.0-or-later 的源码及许可义务；不能只按仓库 Apache-2.0 声称整个二进制是 Apache。构建脚本生成对应 eSpeak 源码归档，公开发行时应与 OrTTS 对应源码/构建说明一起提供。eSpeak 是 G2P，不是第二份神经网络推理框架。
+
+## 引擎缓存与性能
+
+两端多模型合成页保留单个 TTS 引擎，界面区分首次构图与复用引擎；音色切换复用，模型/任务切换、取消/错误、后台及 30 秒空闲后释放。iOS 同时复用播放器图，采样率变化时重新连接，避免连续播放反复创建 AVAudioEngine。首次完整校验模型，未改变的文件不逐句重复扫描全部权重。详见[缓存修复与 iPhone 热 RTF](development/tts-warm-cache-2026-11-08.md)和 [Mac Kokoro 后端对照](../experiments/kokoro-ab/README.md)。
 
 ## 验证范围
 

@@ -50,6 +50,9 @@ macOS 使用 `ortts-apple MODEL_ROOT P3|P5 TRUSTED_BRIDGE_SHA TEXT` 离线合成
 - [解码器兼容](docs/DECODERS.md)
 - [CPU参数](docs/CPU_PROFILES.md)与[手机性能](docs/BENCHMARKS.md)
 - [C ABI／Rust集成](runtime/README.md)
+- [iPhone 多模型热 RTF 与缓存修复](docs/development/tts-warm-cache-2026-11-08.md)
+- [P3 新旧 codec 性能归因](docs/development/p3-codec-performance-2026-11-08.md)
+- [Kokoro Mac 后端实测对照](experiments/kokoro-ab/README.md)
 - [完整文档索引](docs/README.md)
 
 ## 致谢与许可

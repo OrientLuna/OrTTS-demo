@@ -27,12 +27,19 @@ def main():
     p.add_argument('--device',required=True)
     p.add_argument('--install',type=Path)
     p.add_argument('--seed',action='store_true')
+    p.add_argument('--no-playback',action='store_true',help='Time synthesis and export PCM without audio playback')
+    p.add_argument('--text',help='Override TTS input for short/long benchmark matrices')
+    p.add_argument('--scenario',choices=['voice','switch','cancel','ttl','rate'],default='')
+    p.add_argument('--repeat',type=int,choices=range(1,5),default=1,help='Consecutive TTS calls in one app process')
     p.add_argument('--case',action='append',help='Run only the named case(s)')
     p.add_argument('--assets',type=Path,default=Path('local/compat/assets'))
     p.add_argument('--fixtures',type=Path,default=Path('outputs/demo-0.4-fixtures'))
     p.add_argument('--out',type=Path,required=True)
     p.add_argument('--adb',type=Path,default=Path.home()/'Library/Android/sdk/platform-tools/adb')
-    a=p.parse_args();a.out.mkdir(parents=True,exist_ok=True)
+    a=p.parse_args();
+    if a.scenario in ('voice','switch','cancel','rate') and a.repeat!=3:p.error('scenario requires --repeat 3')
+    if a.scenario=='ttl' and a.repeat!=2:p.error('ttl requires --repeat 2')
+    a.out.mkdir(parents=True,exist_ok=True)
     def run(cmd,check=True,**kwargs):
         result=subprocess.run(cmd,capture_output=True,**kwargs)
         if check and result.returncode:
@@ -90,17 +97,19 @@ def main():
     observations=[]
     for name,mode,model,voice,audio,cancel in cases:
         test_id=name+'-'+uuid.uuid4().hex[:8];start=time.monotonic()
+        request_text=a.text if a.text is not None else ('今天上午九点半，请检查车票和随身行李。' if name=='kokoro-zh' else ('At nine thirty, please check the train ticket and call the station. '*5 if name=='piper-long' else 'At nine thirty, please check the train ticket and call the station.'))
         if a.target=='android':
             run(adb+['shell','am','force-stop',ANDROID])
             cmd=adb+['shell','am','start','-n',ANDROID+'/com.orient.ortts.demo.MainActivity','--ez','speech_qa','true',
                 '--es','speech_action',mode,'--es','speech_model',model,'--es','speech_qa_id',test_id,
-                '--es','speech_text',('今天上午九点半，请检查车票和随身行李。' if name=='kokoro-zh' else ('At nine thirty, please check the train ticket and call the station. '*5 if name=='piper-long' else 'At nine thirty, please check the train ticket and call the station.')),'--es','speech_voice',voice,'--es','speech_audio',audio,'--ei','speech_cancel_ms',str(cancel)]
+                '--es','speech_text',request_text,'--es','speech_voice',voice,'--es','speech_audio',audio,'--ei','speech_cancel_ms',str(cancel),'--ei','speech_repeat',str(a.repeat),'--es','speech_scenario',a.scenario,'--ez','speech_no_playback',str(a.no_playback).lower()]
             # adb shell joins argv; quote even empty strings to preserve extras.
             cmd=adb+['shell',shlex.join(cmd[len(adb)+1:])]
         else:
-            args=['--speech-text',('今天上午九点半，请检查车票和随身行李。' if name=='kokoro-zh' else ('At nine thirty, please check the train ticket and call the station. '*5 if name=='piper-long' else 'At nine thirty, please check the train ticket and call the station.')),'--speech-smoke',mode,'--speech-model',model,'--speech-run-id',test_id,
+            args=['--speech-scenario',a.scenario,'--speech-repeat',str(a.repeat),'--speech-text',request_text,'--speech-smoke',mode,'--speech-model',model,'--speech-run-id',test_id,
                   '--speech-voice',voice or 'alba','--speech-audio',audio or 'speech-test-en.wav',
                   '--speech-cancel-ms',str(cancel)]
+            if a.no_playback:args+=['--speech-no-playback']
             if container:
                 run(['xcrun','simctl','terminate',a.device,IOS],check=False)
                 cmd=['xcrun','simctl','launch',a.device,IOS]+args
@@ -125,9 +134,18 @@ def main():
             if record is not None:break
             time.sleep(1)
         if record is None:raise RuntimeError('Demo timeout: '+name)
+        record['playback_enabled']=not a.no_playback
         record['case']=name;record['process_wall_s']=time.monotonic()-start
         expected=not bool(cancel)
         if bool(record.get('ok'))!=expected:raise RuntimeError(json.dumps(record,ensure_ascii=False))
+        if mode=='tts' and not cancel and a.repeat>1:
+            runs=record.get('runs',[])
+            if len(runs)!=a.repeat:raise RuntimeError('Missing repeated calls')
+            expected_reuse=[False]+[True]*(a.repeat-1)
+            if a.scenario in ('switch','ttl','rate'):expected_reuse=[False]*a.repeat
+            if a.scenario=='cancel':expected_reuse=[False,None,False]
+            if any(expected is not None and bool(run.get('engine_reused'))!=expected for run,expected in zip(runs,expected_reuse)):raise RuntimeError('Unexpected cache lifecycle: '+json.dumps(runs,ensure_ascii=False))
+            if a.scenario=='cancel' and [bool(r.get('ok')) for r in runs]!=[True,False,True]:raise RuntimeError('Cancel/reset/reload failed')
         text=record.get('text','')
         if (name=='moonshine-en' or (name=='roundtrip' and any(o['case']=='pocket-anna' for o in observations))) and 'station' not in text.lower():raise RuntimeError('English content missing: '+text)
         if name=='sensevoice-zh' and not ('车票' in text or '車票' in text):raise RuntimeError('Chinese content missing: '+text)
@@ -137,8 +155,10 @@ def main():
                 if data[:4]!=b'RIFF' or len(data)<44:raise RuntimeError('Missing generated WAV')
                 record['audio_sample_rate']=struct.unpack_from('<I',data,24)[0]
                 (a.out/(name+'.wav')).write_bytes(data)
-            elif container:
-                audio_path=a.out/(name+'.caf');shutil.copyfile(container/'speech-last.caf',audio_path)
+            elif container or a.target=='iphone':
+                audio_path=a.out/(name+'.caf')
+                if container:shutil.copyfile(container/'speech-last.caf',audio_path)
+                else:run(device+['copy','from','--device',a.device,'--domain-type','appDataContainer','--domain-identifier',IOS,'--source','Documents/speech-last.caf','--destination',str(audio_path),'--quiet'])
                 description=run(['/usr/bin/afinfo',str(audio_path)]).stdout.decode()
                 match=re.search(r'(\d+) Hz',description)
                 if not match:raise RuntimeError('Missing generated audio rate')

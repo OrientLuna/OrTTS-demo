@@ -13,7 +13,7 @@ ZIP导入使用`model.json`清单，包含其中登记的全部文件；不需�
 
 ## iOS 与 macOS
 
-iOS Demo 固定下载 v0.2.0-preview 清单并校验内置清单SHA256，再逐文件校验大小、SHA256；支持原生模型文件夹导入，不支持 Android ZIP 或自定义下载源。导入后需点“下载 / 检查所选模型”补齐、校验，已有同名子目录不覆盖。
+iOS 自研 Demo 默认固定 v0.3.1-preview LiquidCodec，另有 v0.2.0-preview LFM 兼容入口，分别存放 `models-liquid/` 与 `models/`。两者校验各自内置清单 SHA256，再逐文件校验大小、SHA256。原生模型文件夹导入必须包含匹配的固定清单，逐文件校验后复制，已有相同文件复用，内容冲突明确报错；不支持 Android ZIP 或自定义下载源。LiquidCodec 使用清单绑定的 dequant 身份，不能传旧 bridge SHA。
 
 macOS CLI / C ABI 不负责下载；需在调用前准备并验证原生模型目录：
 

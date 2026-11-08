@@ -1,0 +1,963 @@
+{
+  "cases": [
+    {
+      "model": "kokoro",
+      "language": "en",
+      "length": "short",
+      "text": "At nine thirty, please check the train ticket and call the station.",
+      "result": {
+        "status": "完成 · 4.12s · 接口RTF 0.864 · 复用引擎",
+        "run_id": "kokoro-en-4214b9e3",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 3564.217166,
+        "model": "kokoro-82m-q8",
+        "runs": [
+          {
+            "status": "完成 · 4.12s · 接口RTF 2.373 · 首次构图",
+            "run_id": "kokoro-en-4214b9e3",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 9790.064375,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 4.125,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 4.12s · 接口RTF 0.834 · 复用引擎",
+            "run_id": "kokoro-en-4214b9e3",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 3441.505625,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 4.125,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 4.12s · 接口RTF 0.853 · 复用引擎",
+            "run_id": "kokoro-en-4214b9e3",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 3518.038375,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 4.125,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 4.12s · 接口RTF 0.864 · 复用引擎",
+            "run_id": "kokoro-en-4214b9e3",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 3564.217166,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 4.125,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 4.125,
+        "input_frames": 0,
+        "case": "kokoro-en",
+        "process_wall_s": 24.035545749939047,
+        "audio_sample_rate": 24000
+      },
+      "warm_rtf": {
+        "median": 0.852857787878788,
+        "min": 0.8343043939393938,
+        "max": 0.8640526463030302
+      },
+      "voice": "af_heart"
+    },
+    {
+      "model": "kokoro",
+      "language": "en",
+      "length": "long",
+      "text": "At nine thirty, please check the train ticket and call the station. Before leaving home, make sure you have your keys, wallet, and phone. If the train is delayed, send a message to your family and wait near the information desk.",
+      "result": {
+        "status": "完成 · 13.40s · 接口RTF 0.934 · 复用引擎",
+        "run_id": "kokoro-en-076fc88a",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 12516.433334,
+        "model": "kokoro-82m-q8",
+        "runs": [
+          {
+            "status": "完成 · 13.40s · 接口RTF 1.411 · 首次构图",
+            "run_id": "kokoro-en-076fc88a",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 18905.038666,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 13.4,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 13.40s · 接口RTF 0.929 · 复用引擎",
+            "run_id": "kokoro-en-076fc88a",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 12442.556916,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 13.4,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 13.40s · 接口RTF 0.926 · 复用引擎",
+            "run_id": "kokoro-en-076fc88a",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 12414.911042,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 13.4,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 13.40s · 接口RTF 0.934 · 复用引擎",
+            "run_id": "kokoro-en-076fc88a",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 12516.433334,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 13.4,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 13.4,
+        "input_frames": 0,
+        "case": "kokoro-en",
+        "process_wall_s": 60.54374137497507,
+        "audio_sample_rate": 24000
+      },
+      "warm_rtf": {
+        "median": 0.9285490235820895,
+        "min": 0.9264858986567164,
+        "max": 0.9340621891044776
+      },
+      "voice": "af_heart"
+    },
+    {
+      "model": "kokoro",
+      "language": "zh",
+      "length": "short",
+      "text": "今天上午九点半，请检查车票和随身行李。",
+      "result": {
+        "status": "完成 · 5.58s · 接口RTF 0.976 · 复用引擎",
+        "run_id": "kokoro-zh-9d48c969",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 5443.859583,
+        "model": "kokoro-82m-q8",
+        "runs": [
+          {
+            "status": "完成 · 5.58s · 接口RTF 2.204 · 首次构图",
+            "run_id": "kokoro-zh-9d48c969",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 12285.96,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 5.575,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 5.58s · 接口RTF 0.925 · 复用引擎",
+            "run_id": "kokoro-zh-9d48c969",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 5157.39475,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 5.575,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 5.58s · 接口RTF 0.937 · 复用引擎",
+            "run_id": "kokoro-zh-9d48c969",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 5225.967791,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 5.575,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 5.58s · 接口RTF 0.976 · 复用引擎",
+            "run_id": "kokoro-zh-9d48c969",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 5443.859583,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 5.575,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 5.575,
+        "input_frames": 0,
+        "case": "kokoro-zh",
+        "process_wall_s": 32.85889579204377,
+        "audio_sample_rate": 24000
+      },
+      "warm_rtf": {
+        "median": 0.9373933257399104,
+        "min": 0.9250932286995517,
+        "max": 0.9764770552466367
+      },
+      "voice": "zf_xiaobei"
+    },
+    {
+      "model": "kokoro",
+      "language": "zh",
+      "length": "long",
+      "text": "今天上午九点半，我们准备乘坐高铁去参加会议。出发前，请仔细检查车票、身份证和随身行李，确认手机已经充满电。如果途中遇到列车晚点，请及时联系同事，并在车站服务台附近耐心等候。",
+      "result": {
+        "status": "完成 · 19.15s · 接口RTF 1.068 · 复用引擎",
+        "run_id": "kokoro-zh-74586f9b",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 20451.598083,
+        "model": "kokoro-82m-q8",
+        "runs": [
+          {
+            "status": "完成 · 19.15s · 接口RTF 1.410 · 首次构图",
+            "run_id": "kokoro-zh-74586f9b",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 27007.461417,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 19.15,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 19.15s · 接口RTF 1.001 · 复用引擎",
+            "run_id": "kokoro-zh-74586f9b",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 19165.575625,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 19.15,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 19.15s · 接口RTF 1.086 · 复用引擎",
+            "run_id": "kokoro-zh-74586f9b",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 20804.835666,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 19.15,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 19.15s · 接口RTF 1.068 · 复用引擎",
+            "run_id": "kokoro-zh-74586f9b",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 20451.598083,
+            "model": "kokoro-82m-q8",
+            "text": "",
+            "audio_s": 19.15,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 19.15,
+        "input_frames": 0,
+        "case": "kokoro-zh",
+        "process_wall_s": 92.27776524994988,
+        "audio_sample_rate": 24000
+      },
+      "warm_rtf": {
+        "median": 1.0679685683028721,
+        "min": 1.000813348563969,
+        "max": 1.0864143950913838
+      },
+      "voice": "zf_xiaobei"
+    },
+    {
+      "model": "pocket",
+      "language": "en",
+      "length": "short",
+      "text": "At nine thirty, please check the train ticket and call the station.",
+      "result": {
+        "status": "完成 · 3.20s · 接口RTF 0.341 · 复用引擎",
+        "run_id": "pocket-alba-939c7102",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 1091.498958,
+        "model": "pocket-english-q8",
+        "runs": [
+          {
+            "status": "完成 · 3.20s · 接口RTF 0.327 · 首次构图",
+            "run_id": "pocket-alba-939c7102",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 1046.435459,
+            "model": "pocket-english-q8",
+            "text": "",
+            "audio_s": 3.2,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 3.20s · 接口RTF 0.310 · 复用引擎",
+            "run_id": "pocket-alba-939c7102",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 990.948833,
+            "model": "pocket-english-q8",
+            "text": "",
+            "audio_s": 3.2,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 3.20s · 接口RTF 0.326 · 复用引擎",
+            "run_id": "pocket-alba-939c7102",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 1042.481792,
+            "model": "pocket-english-q8",
+            "text": "",
+            "audio_s": 3.2,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 3.20s · 接口RTF 0.341 · 复用引擎",
+            "run_id": "pocket-alba-939c7102",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 1091.498958,
+            "model": "pocket-english-q8",
+            "text": "",
+            "audio_s": 3.2,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 3.2,
+        "input_frames": 0,
+        "case": "pocket-alba",
+        "process_wall_s": 5.15184749988839,
+        "audio_sample_rate": 24000
+      },
+      "warm_rtf": {
+        "median": 0.32577555999999996,
+        "min": 0.3096715103125,
+        "max": 0.34109342437499995
+      },
+      "voice": "alba"
+    },
+    {
+      "model": "pocket",
+      "language": "en",
+      "length": "long",
+      "text": "At nine thirty, please check the train ticket and call the station. Before leaving home, make sure you have your keys, wallet, and phone. If the train is delayed, send a message to your family and wait near the information desk.",
+      "result": {
+        "status": "完成 · 12.32s · 接口RTF 0.380 · 复用引擎",
+        "run_id": "pocket-alba-534bb68a",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 4682.831875,
+        "model": "pocket-english-q8",
+        "runs": [
+          {
+            "status": "完成 · 12.32s · 接口RTF 0.370 · 首次构图",
+            "run_id": "pocket-alba-534bb68a",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 4563.70825,
+            "model": "pocket-english-q8",
+            "text": "",
+            "audio_s": 12.32,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 12.32s · 接口RTF 0.385 · 复用引擎",
+            "run_id": "pocket-alba-534bb68a",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 4741.034125,
+            "model": "pocket-english-q8",
+            "text": "",
+            "audio_s": 12.32,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 12.32s · 接口RTF 0.380 · 复用引擎",
+            "run_id": "pocket-alba-534bb68a",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 4675.4835,
+            "model": "pocket-english-q8",
+            "text": "",
+            "audio_s": 12.32,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 12.32s · 接口RTF 0.380 · 复用引擎",
+            "run_id": "pocket-alba-534bb68a",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 4682.831875,
+            "model": "pocket-english-q8",
+            "text": "",
+            "audio_s": 12.32,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 12.32,
+        "input_frames": 0,
+        "case": "pocket-alba",
+        "process_wall_s": 20.080827625002712,
+        "audio_sample_rate": 24000
+      },
+      "warm_rtf": {
+        "median": 0.3800999898538961,
+        "min": 0.3795035308441559,
+        "max": 0.38482419845779225
+      },
+      "voice": "alba"
+    },
+    {
+      "model": "kitten",
+      "language": "en",
+      "length": "short",
+      "text": "At nine thirty, please check the train ticket and call the station.",
+      "result": {
+        "status": "完成 · 5.62s · 接口RTF 0.861 · 复用引擎",
+        "run_id": "kitten-bella-acbb5415",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 4835.995083,
+        "model": "kitten-mini-0.8",
+        "runs": [
+          {
+            "status": "完成 · 5.72s · 接口RTF 0.796 · 首次构图",
+            "run_id": "kitten-bella-acbb5415",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 4550.496875,
+            "model": "kitten-mini-0.8",
+            "text": "",
+            "audio_s": 5.716666666666667,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 5.62s · 接口RTF 0.859 · 复用引擎",
+            "run_id": "kitten-bella-acbb5415",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 4822.90625,
+            "model": "kitten-mini-0.8",
+            "text": "",
+            "audio_s": 5.616666666666666,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 5.62s · 接口RTF 0.859 · 复用引擎",
+            "run_id": "kitten-bella-acbb5415",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 4824.663,
+            "model": "kitten-mini-0.8",
+            "text": "",
+            "audio_s": 5.616666666666666,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 5.62s · 接口RTF 0.861 · 复用引擎",
+            "run_id": "kitten-bella-acbb5415",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 4835.995083,
+            "model": "kitten-mini-0.8",
+            "text": "",
+            "audio_s": 5.616666666666666,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 5.616666666666666,
+        "input_frames": 0,
+        "case": "kitten-bella",
+        "process_wall_s": 19.982953708036803,
+        "audio_sample_rate": 24000
+      },
+      "warm_rtf": {
+        "median": 0.8589904451038575,
+        "min": 0.8586776706231455,
+        "max": 0.8610080266468843
+      },
+      "voice": "Bella"
+    },
+    {
+      "model": "kitten",
+      "language": "en",
+      "length": "long",
+      "text": "At nine thirty, please check the train ticket and call the station. Before leaving home, make sure you have your keys, wallet, and phone. If the train is delayed, send a message to your family and wait near the information desk.",
+      "result": {
+        "status": "完成 · 18.67s · 接口RTF 0.657 · 复用引擎",
+        "run_id": "kitten-bella-7698f447",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 12257.7875,
+        "model": "kitten-mini-0.8",
+        "runs": [
+          {
+            "status": "完成 · 18.67s · 接口RTF 0.648 · 首次构图",
+            "run_id": "kitten-bella-7698f447",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 12102.101042,
+            "model": "kitten-mini-0.8",
+            "text": "",
+            "audio_s": 18.666666666666668,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 18.67s · 接口RTF 0.652 · 复用引擎",
+            "run_id": "kitten-bella-7698f447",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 12168.714833,
+            "model": "kitten-mini-0.8",
+            "text": "",
+            "audio_s": 18.666666666666668,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 18.67s · 接口RTF 0.652 · 复用引擎",
+            "run_id": "kitten-bella-7698f447",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 12175.482291,
+            "model": "kitten-mini-0.8",
+            "text": "",
+            "audio_s": 18.666666666666668,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 18.67s · 接口RTF 0.657 · 复用引擎",
+            "run_id": "kitten-bella-7698f447",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 12257.7875,
+            "model": "kitten-mini-0.8",
+            "text": "",
+            "audio_s": 18.666666666666668,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 18.666666666666668,
+        "input_frames": 0,
+        "case": "kitten-bella",
+        "process_wall_s": 49.98214300000109,
+        "audio_sample_rate": 24000
+      },
+      "warm_rtf": {
+        "median": 0.6522579798749999,
+        "min": 0.6518954374821427,
+        "max": 0.6566671875
+      },
+      "voice": "Bella"
+    },
+    {
+      "model": "piper",
+      "language": "en",
+      "length": "short",
+      "text": "At nine thirty, please check the train ticket and call the station.",
+      "result": {
+        "status": "完成 · 3.69s · 接口RTF 0.120 · 复用引擎",
+        "run_id": "piper-lessac-22f7977d",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 441.296583,
+        "model": "piper-lessac-medium",
+        "runs": [
+          {
+            "status": "完成 · 3.69s · 接口RTF 0.128 · 首次构图",
+            "run_id": "piper-lessac-22f7977d",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 471.328291,
+            "model": "piper-lessac-medium",
+            "text": "",
+            "audio_s": 3.6919727891156464,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 3.69s · 接口RTF 0.119 · 复用引擎",
+            "run_id": "piper-lessac-22f7977d",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 439.07525,
+            "model": "piper-lessac-medium",
+            "text": "",
+            "audio_s": 3.6919727891156464,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 3.69s · 接口RTF 0.119 · 复用引擎",
+            "run_id": "piper-lessac-22f7977d",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 439.403875,
+            "model": "piper-lessac-medium",
+            "text": "",
+            "audio_s": 3.6919727891156464,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 3.69s · 接口RTF 0.120 · 复用引擎",
+            "run_id": "piper-lessac-22f7977d",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 441.296583,
+            "model": "piper-lessac-medium",
+            "text": "",
+            "audio_s": 3.6919727891156464,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 3.6919727891156464,
+        "input_frames": 0,
+        "playback_enabled": false,
+        "case": "piper-lessac",
+        "process_wall_s": 2.7111585419625044,
+        "audio_sample_rate": 22050
+      },
+      "warm_rtf": {
+        "median": 0.11901601124889447,
+        "min": 0.11892700057119693,
+        "max": 0.11952866616487323
+      },
+      "voice": "default"
+    },
+    {
+      "model": "piper",
+      "language": "en",
+      "length": "long",
+      "text": "At nine thirty, please check the train ticket and call the station. Before leaving home, make sure you have your keys, wallet, and phone. If the train is delayed, send a message to your family and wait near the information desk.",
+      "result": {
+        "status": "完成 · 13.39s · 接口RTF 0.152 · 复用引擎",
+        "run_id": "piper-lessac-35f028a1",
+        "engine_reused": true,
+        "ok": 1,
+        "api_ms": 2038.381958,
+        "model": "piper-lessac-medium",
+        "runs": [
+          {
+            "status": "完成 · 13.39s · 接口RTF 0.144 · 首次构图",
+            "run_id": "piper-lessac-35f028a1",
+            "engine_reused": false,
+            "ok": 1,
+            "api_ms": 1930.327875,
+            "model": "piper-lessac-medium",
+            "text": "",
+            "audio_s": 13.386303854875283,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 13.39s · 接口RTF 0.150 · 复用引擎",
+            "run_id": "piper-lessac-35f028a1",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 2007.980792,
+            "model": "piper-lessac-medium",
+            "text": "",
+            "audio_s": 13.386303854875283,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 13.39s · 接口RTF 0.152 · 复用引擎",
+            "run_id": "piper-lessac-35f028a1",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 2032.476625,
+            "model": "piper-lessac-medium",
+            "text": "",
+            "audio_s": 13.386303854875283,
+            "input_frames": 0
+          },
+          {
+            "status": "完成 · 13.39s · 接口RTF 0.152 · 复用引擎",
+            "run_id": "piper-lessac-35f028a1",
+            "engine_reused": true,
+            "ok": 1,
+            "api_ms": 2038.381958,
+            "model": "piper-lessac-medium",
+            "text": "",
+            "audio_s": 13.386303854875283,
+            "input_frames": 0
+          }
+        ],
+        "text": "",
+        "audio_s": 13.386303854875283,
+        "input_frames": 0,
+        "playback_enabled": false,
+        "case": "piper-lessac",
+        "process_wall_s": 9.585184374940582,
+        "audio_sample_rate": 22050
+      },
+      "warm_rtf": {
+        "median": 0.15183254818018893,
+        "min": 0.1500026305819059,
+        "max": 0.1522736955696417
+      },
+      "voice": "default"
+    }
+  ],
+  "date": "2026-11-08",
+  "device": "iPhone 17 standard, 8GB/256GB (user supplied)",
+  "execution": {
+    "backend": "CPU ggml",
+    "profile": "arm64-baseline",
+    "threads": 4,
+    "playback": false,
+    "sequence": "one warmup then three warm calls per process",
+    "thermal_control": false,
+    "scope": "engine warm RTF; not sustained power or perceptual certification"
+  },
+  "audio_checks": {
+    "checks": [
+      {
+        "case": "kitten-en-long",
+        "rate": 24000,
+        "frames": 448000,
+        "duration_s": 18.666666666666668,
+        "rms": 0.10764431035943894,
+        "peak": 1.0473544597625732,
+        "over_one_fraction": 4.464285714285715e-06,
+        "pcm_sha256": "42c69f58df4c6f62becd0f9e9d163ae8496fb29bf279c1b042a2695ab97b9fe7"
+      },
+      {
+        "case": "kitten-en-short",
+        "rate": 24000,
+        "frames": 134800,
+        "duration_s": 5.616666666666666,
+        "rms": 0.09559855965330927,
+        "peak": 1.2877602577209473,
+        "over_one_fraction": 2.225519287833828e-05,
+        "pcm_sha256": "2e4fa815bab8cf63c2a6b462d1edfd7703f087b85dd1a7c919b5aa60d2b875b9"
+      },
+      {
+        "case": "kokoro-en-long",
+        "rate": 24000,
+        "frames": 321600,
+        "duration_s": 13.4,
+        "rms": 0.05200790049809544,
+        "peak": 0.5363319516181946,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "e088cc16efe466d57755970a9b5eb8d8cd6b87e24c9805644fc573a7ecddfe62"
+      },
+      {
+        "case": "kokoro-en-short",
+        "rate": 24000,
+        "frames": 99000,
+        "duration_s": 4.125,
+        "rms": 0.048543474546870115,
+        "peak": 0.4411451518535614,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "3f08a567f507d7349fab9f3922add6244c40f11edb64084b7213c605a582114d"
+      },
+      {
+        "case": "kokoro-zh-long",
+        "rate": 24000,
+        "frames": 459600,
+        "duration_s": 19.15,
+        "rms": 0.06595340847013856,
+        "peak": 0.6028748154640198,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "c10c7c6954dcd2b29b70796ec79c5e68c07d53aba03450a9e84f0c4935d8a291"
+      },
+      {
+        "case": "kokoro-zh-short",
+        "rate": 24000,
+        "frames": 133800,
+        "duration_s": 5.575,
+        "rms": 0.06384867349727606,
+        "peak": 0.4310106039047241,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "9c68bc2add41cca70e9486d44971c0f38317ef7512ee1af43b5dcaebba83bfe4"
+      },
+      {
+        "case": "piper-en-long",
+        "rate": 22050,
+        "frames": 295168,
+        "duration_s": 13.386303854875283,
+        "rms": 0.06519755045939532,
+        "peak": 0.5693218111991882,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "f10d138193225d4509901826320e888aff884b1185f30c9405daab6d9e3f380a"
+      },
+      {
+        "case": "piper-en-short",
+        "rate": 22050,
+        "frames": 81408,
+        "duration_s": 3.6919727891156464,
+        "rms": 0.10216173107233475,
+        "peak": 0.5880346894264221,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "94189a5a0e6d4ee226abfb01687671bce22b50520f2a762b9e77024adc8e15b9"
+      },
+      {
+        "case": "pocket-en-long",
+        "rate": 24000,
+        "frames": 295680,
+        "duration_s": 12.32,
+        "rms": 0.11750166208653305,
+        "peak": 0.6285313367843628,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "86b7907b6058b9e999025c8f872701ef849f22328ad9b62799a5eb82e593aee3"
+      },
+      {
+        "case": "pocket-en-short",
+        "rate": 24000,
+        "frames": 76800,
+        "duration_s": 3.2,
+        "rms": 0.11516228762769773,
+        "peak": 0.6132692098617554,
+        "over_one_fraction": 0.0,
+        "pcm_sha256": "fc8b7c7f6dfd780cb073716a552ec5d6f1f36d3f37c8a46702a43f8ea90a9cd9"
+      }
+    ],
+    "scope": "format/finite/nonempty signal, native rate, distinct Kitten waveforms; no perceptual quality certification"
+  },
+  "asr_diagnostics": [
+    {
+      "file": "kitten-en-long.wav",
+      "text": "At 9,30, please check the train ticket and call the station. before leaving home make sure you have your keys, wallet and phone. If the train is delayed, send a message to your family and wait near the information desk."
+    },
+    {
+      "file": "kitten-en-short.wav",
+      "text": "At 930, please check the train ticket and call the station."
+    },
+    {
+      "file": "kokoro-en-long.wav",
+      "text": "At 930, please check the train ticket and call the station, but for leaving home make sure you have your keys, wallet and phone, if the train is delayed, send a message to your family and wait near the information desk."
+    },
+    {
+      "file": "kokoro-en-short.wav",
+      "text": "At 930, please check the train ticket and call the station."
+    },
+    {
+      "file": "kokoro-zh-long.wav",
+      "text": "今天上午9点半，我们准备乘坐高铁去参加会议，出发前请仔细检查车票，身份证和随身行李，确认手机已经充满电。如果途中遇到列车晚点，请及时联系同事，并在车站服务台附近耐心等候。"
+    },
+    {
+      "file": "kokoro-zh-short.wav",
+      "text": "今天上午9点半，请检查车票和随身行李。"
+    },
+    {
+      "file": "piper-en-long.wav",
+      "text": "At 930, please check the train ticket and call the station before leading home, make sure you have your keys, wallet and phone if the train is delayed, send a message to your family and wait near the information desk."
+    },
+    {
+      "file": "piper-en-short.wav",
+      "text": "At 9-30, please check the train ticket and call the station."
+    },
+    {
+      "file": "pocket-en-long.wav",
+      "text": "At 9-3com please check the train ticket and call the stationd before leaving homecomma> make sure you have your keys,ma> wallet and phone<iod If the train is delayed, send a message to your family and wait near the information desk,<iod."
+    },
+    {
+      "file": "pocket-en-short.wav",
+      "text": "At 930, please check the train ticket and call the station."
+    }
+  ],
+  "catalog_sha256": "1927c32df59f26d30e6b517f05014ce1833a86b457b6f76c288ca3f5d3d5375e",
+  "model_assets": [
+    {
+      "id": "kokoro-82m-q8",
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "Kokoro-82M-GGUF/kokoro-82m-q8_0.gguf",
+          "bytes": 189550976,
+          "sha256": "9a4ca6176460cdc8c7845b804c0bbe85a4791ee3ffff568a3fdadbb708c63f47",
+          "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/Kokoro-82M-GGUF/kokoro-82m-q8_0.gguf"
+        }
+      ]
+    },
+    {
+      "id": "piper-lessac-medium",
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "Piper-TTS-GGUF/piper-en-us-lessac-medium-orig.gguf",
+          "bytes": 62662016,
+          "sha256": "12432fab389024e7f839fbc0d989afba46e74bf0d2fa75495642b3ae44a4b093",
+          "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/Piper-TTS-GGUF/piper-en-us-lessac-medium-orig.gguf"
+        }
+      ]
+    },
+    {
+      "id": "kitten-mini-0.8",
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "KittenTTS-GGUF/kitten-tts-mini-0.8-orig.gguf",
+          "bytes": 302167648,
+          "sha256": "485a50101b6c16e98c842f231780789d54136ffb07a6cacb33dc0735103274d7",
+          "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/KittenTTS-GGUF/kitten-tts-mini-0.8-orig.gguf"
+        }
+      ]
+    },
+    {
+      "id": "pocket-english-q8",
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "PocketTTS-GGUF/english/pocket-tts-english-q8_0.gguf",
+          "bytes": 127867968,
+          "sha256": "3f71cf6a51f93c2f2e554e98970a3f49fb9a98d0c64bed5a815e65be3d2ff588",
+          "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/PocketTTS-GGUF/english/pocket-tts-english-q8_0.gguf"
+        },
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "PocketTTS-GGUF/english/embeddings/alba.safetensors",
+          "bytes": 6194424,
+          "sha256": "69c32db63ca56843d994f81f343f62e0bf2d73f7e4c9bc73e44bb1110b1d8845",
+          "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/PocketTTS-GGUF/english/embeddings/alba.safetensors"
+        },
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "PocketTTS-GGUF/english/embeddings/anna.safetensors",
+          "bytes": 7816440,
+          "sha256": "5ea82f78db006c9fd34e32ddd5aae82674b5b32646097977436458d00af80dfa",
+          "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/PocketTTS-GGUF/english/embeddings/anna.safetensors"
+        },
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "PocketTTS-GGUF/english/embeddings/george.safetensors",
+          "bytes": 6243576,
+          "sha256": "0c1c6c57c55a98d81254b33728150c7776f40647fe95258d1a6c1a02780b5d02",
+          "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/PocketTTS-GGUF/english/embeddings/george.safetensors"
+        }
+      ]
+    }
+  ]
+}

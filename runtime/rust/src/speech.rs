@@ -2,6 +2,7 @@
 //! Handles stay on a worker (neither Send nor Sync). Asr is buffered-final;
 //! streaming::Stream provides separately versioned incremental Moonshine ASR.
 pub mod streaming;
+pub mod cache;
 use crate::{check, cstring, Metrics};
 use std::{
     ffi::{c_char, c_void, CStr, CString},

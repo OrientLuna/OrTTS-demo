@@ -1,0 +1,318 @@
+{
+  "date": "2026-11-08",
+  "device": "iPhone 17 standard 8GB/256GB",
+  "threads": 4,
+  "seed": 20261029,
+  "cooldown_s": {
+    "baseline-liquid": 120,
+    "others": 60
+  },
+  "sequence": "baseline LC female; baseline old male; baseline LC male; I8MM LC male; I8MM old male",
+  "text": "你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。",
+  "male_embedding_sha256": "d63ebf18d2de0e62c1c1dc67b850ce13a5323c36be60fb6ac32a04882bc5bd7e",
+  "female_embeddings_differ": true,
+  "cases": [
+    {
+      "case": "baseline-liquid",
+      "profile": "arm64-baseline",
+      "pack": "liquid",
+      "voice": "female",
+      "warm_rtf_median": 0.4920618617957747,
+      "warm_rtf_range": [
+        0.4518396933098592,
+        0.5021666079225352
+      ],
+      "result": {
+        "run_id": "P3-zh-short-c77d667c",
+        "ok": 1,
+        "decoder": "liquidcodec",
+        "pack": "v0.3.1-preview",
+        "runs": [
+          {
+            "audio_s": 5.68,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2409.386584,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 5.68,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2566.449458,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 5.68,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2794.911375,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 5.68,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2852.306333,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。",
+        "voice": "female",
+        "error": "",
+        "variant": "P3"
+      }
+    },
+    {
+      "case": "baseline-legacy-male",
+      "profile": "arm64-baseline",
+      "pack": "legacy",
+      "voice": "male",
+      "warm_rtf_median": 0.6458644492857144,
+      "warm_rtf_range": [
+        0.5045827232142858,
+        0.6658938169642858
+      ],
+      "result": {
+        "run_id": "P3-zh-short-ecc48c58",
+        "ok": 1,
+        "decoder": "qwen_lfm",
+        "pack": "v0.2.0-preview",
+        "runs": [
+          {
+            "audio_s": 5.6,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2460.509458,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 5.6,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2825.66325,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 5.6,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 3729.005375,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 5.6,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 3616.840916,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。",
+        "voice": "male",
+        "error": "",
+        "variant": "P3"
+      }
+    },
+    {
+      "case": "baseline-liquid-male",
+      "profile": "arm64-baseline",
+      "pack": "liquid",
+      "voice": "male",
+      "warm_rtf_median": 0.5229771610074626,
+      "warm_rtf_range": [
+        0.5125588619402984,
+        0.5334955535447762
+      ],
+      "result": {
+        "run_id": "P3-zh-short-9afb5b5f",
+        "ok": 1,
+        "decoder": "liquidcodec",
+        "pack": "v0.3.1-preview",
+        "runs": [
+          {
+            "audio_s": 5.36,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2501.087167,
+            "engine_reused": 0
+          },
+          {
+            "audio_s": 5.36,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2747.3155,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 5.36,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2803.157583,
+            "engine_reused": 1
+          },
+          {
+            "audio_s": 5.36,
+            "sample_rate": 24000,
+            "thermal_state": 1,
+            "ok": true,
+            "api_ms": 2859.536167,
+            "engine_reused": 1
+          }
+        ],
+        "playback": false,
+        "text": "你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。",
+        "voice": "male",
+        "error": "",
+        "variant": "P3"
+      }
+    },
+    {
+      "case": "i8mm-liquid-male",
+      "profile": "arm64-i8mm",
+      "pack": "liquid",
+      "voice": "male",
+      "warm_rtf_median": 0.49508855757575754,
+      "warm_rtf_range": [
+        0.4809302240530304,
+        0.5094918007575757
+      ],
+      "result": {
+        "run_id": "P3-zh-short-673b24c4",
+        "ok": 1,
+        "decoder": "liquidcodec",
+        "pack": "v0.3.1-preview",
+        "runs": [
+          {
+            "ok": true,
+            "api_ms": 2419.601667,
+            "engine_reused": 0,
+            "sample_rate": 24000,
+            "audio_s": 5.28,
+            "low_power_mode": false,
+            "process_cpu_ms": 8730.404,
+            "thermal_state": 1
+          },
+          {
+            "ok": true,
+            "api_ms": 2539.311583,
+            "engine_reused": 1,
+            "sample_rate": 24000,
+            "audio_s": 5.28,
+            "low_power_mode": false,
+            "process_cpu_ms": 9826.515,
+            "thermal_state": 1
+          },
+          {
+            "ok": true,
+            "api_ms": 2614.067584,
+            "engine_reused": 1,
+            "sample_rate": 24000,
+            "audio_s": 5.28,
+            "low_power_mode": false,
+            "process_cpu_ms": 10118.564,
+            "thermal_state": 1
+          },
+          {
+            "ok": true,
+            "api_ms": 2690.116708,
+            "engine_reused": 1,
+            "sample_rate": 24000,
+            "audio_s": 5.28,
+            "low_power_mode": false,
+            "process_cpu_ms": 10410.974,
+            "thermal_state": 1
+          }
+        ],
+        "playback": false,
+        "text": "你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。",
+        "voice": "male",
+        "error": "",
+        "variant": "P3"
+      }
+    },
+    {
+      "case": "i8mm-legacy-male",
+      "profile": "arm64-i8mm",
+      "pack": "legacy",
+      "voice": "male",
+      "warm_rtf_median": 0.4920436722014925,
+      "warm_rtf_range": [
+        0.48149394440298504,
+        0.5301612873134328
+      ],
+      "result": {
+        "run_id": "P3-zh-short-7de6da6c",
+        "ok": 1,
+        "decoder": "qwen_lfm",
+        "pack": "v0.2.0-preview",
+        "runs": [
+          {
+            "ok": true,
+            "api_ms": 2262.570959,
+            "engine_reused": 0,
+            "sample_rate": 24000,
+            "audio_s": 5.36,
+            "low_power_mode": false,
+            "process_cpu_ms": 8713.075,
+            "thermal_state": 1
+          },
+          {
+            "ok": true,
+            "api_ms": 2580.807542,
+            "engine_reused": 1,
+            "sample_rate": 24000,
+            "audio_s": 5.36,
+            "low_power_mode": false,
+            "process_cpu_ms": 9854.133,
+            "thermal_state": 1
+          },
+          {
+            "ok": true,
+            "api_ms": 2637.354083,
+            "engine_reused": 1,
+            "sample_rate": 24000,
+            "audio_s": 5.36,
+            "low_power_mode": false,
+            "process_cpu_ms": 10239.92,
+            "thermal_state": 1
+          },
+          {
+            "ok": true,
+            "api_ms": 2841.6645,
+            "engine_reused": 1,
+            "sample_rate": 24000,
+            "audio_s": 5.36,
+            "low_power_mode": false,
+            "process_cpu_ms": 11034.112,
+            "thermal_state": 1
+          }
+        ],
+        "playback": false,
+        "text": "你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。",
+        "voice": "male",
+        "error": "",
+        "variant": "P3"
+      }
+    }
+  ],
+  "limitations": [
+    "one session and three warm calls per cell; frequency unlocked; not randomized",
+    "fair is a coarse OS thermal state, not identical temperatures/frequencies",
+    "whole package comparison changes generator precision and P3 storage; use Mac identical-codes isolation for codec causality",
+    "female row is historical-text repeat, not identical embedding versus old female"
+  ]
+}
