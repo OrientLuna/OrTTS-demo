@@ -1,5 +1,15 @@
 # OrTavern 音频后端迭代交接
 
+## 2026-11-08：Kokoro / Kitten / Piper 双端接入
+
+新增两端手机菜单、音色、下载/导入、G2P 和播放接线，未改 OrTavern 主线。模型推理继续共用原 ggml；增加的是可选 eSpeak NG 1.52.0 库和字典。
+
+与宿主直接相关的修正：SDK 的 typed `espeak_library` / `espeak_data` 现在明确传给 Piper/Kitten 会话参数（此前 Mac 的默认库路径会掩盖遗漏）。Apple Kitten 构图超过 GCD 默认栈，Demo 在串行队列内使用8MiB栈合成线程；宿主应检查自己的线程栈，不必复制 Demo 调度代码。Piper 为22.05kHz，离线返回后才播放；Android 播放器先启动再阻塞写入，避免超过12秒缓冲的离线音频卡住。
+
+两端模拟器各12项回归通过，包括 Kokoro 中英文、Kitten Bella/Leo、Piper、已有 Pocket/ASR/取消；另验证18.8秒 Piper 长句与原生采样率。完整记录：[双端新增 TTS](../../benchmarks/mobile-tts-expansion-20261108.json)。物理 iPhone 暂因连接不可用而未安装本轮新增版本，不宣称真机或听感认证。
+
+SDK 本体不强制链接 eSpeak；Demo 捆绑它后的组合发行需满足 GPL 对应源码义务，不能按单独 Apache SDK 宣称整包许可。源码归档生成器及构建说明见 [MOBILE_G2P](../MOBILE_G2P.md)。Piper Lessac 的权重限制不变，ZipVoice 仍未接手机参考音频流程。宿主已有独立进展时只取所需修正，不要求统一 UI 或引入同样 G2P。
+
 ## 手机 Demo 与共用底层增量（0.4.0 候选）
 
 以下为增量信息，宿主已有独立进展时按需采用，无需复制 Demo UI、下载管理或重做已有接线。本轮没有修改 OrTavern 主线。

@@ -6,6 +6,7 @@ android {
  sourceSets { main {
   assets.srcDirs += layout.buildDirectory.dir('generated/licenseAssets')
   assets.srcDirs += layout.buildDirectory.dir('generated/speechAssets')
+  if(project.findProperty('g2pAssetsDir')) assets.srcDirs += file(project.property('g2pAssetsDir'))
   if (project.findProperty('nativeLibsDir')) jniLibs.srcDirs += file(project.property('nativeLibsDir'))
   if (project.findProperty('modelAssetsDir')) assets.srcDirs += file(project.property('modelAssetsDir'))
  } }
@@ -13,7 +14,7 @@ android {
  buildFeatures { buildConfig true }
  defaultConfig { buildConfigField 'String', 'NATIVE_CPU_PROFILE', '"'+(project.findProperty('nativeCpuProfile') ?: 'arm64-i8mm')+'"' }
  androidResources { noCompress += ['zip','gguf','f32','safetensors'] }
- packagingOptions { jniLibs { useLegacyPackaging false } }
+ packagingOptions { jniLibs { useLegacyPackaging true } }
  buildTypes { release { minifyEnabled false } }
 }
 dependencies {}

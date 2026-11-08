@@ -6,12 +6,13 @@
 @property BOOL ended, started, active;
 @end
 @implementation StreamPlayback
-- (BOOL)prepare:(NSError **)error {
+- (BOOL)prepare:(NSError **)error { return [self prepareRate:24000 error:error]; }
+- (BOOL)prepareRate:(double)rate error:(NSError **)error {
     self.engine=[AVAudioEngine new]; self.node=[AVAudioPlayerNode new];
     AVAudioSession *session=AVAudioSession.sharedInstance;
     if (![session setCategory:AVAudioSessionCategoryPlayback mode:AVAudioSessionModeDefault options:0 error:error] || ![session setActive:YES error:error]) return NO;
     [self.engine attachNode:self.node];
-    AVAudioFormat *format=[[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32 sampleRate:24000 channels:1 interleaved:NO];
+    AVAudioFormat *format=[[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32 sampleRate:rate channels:1 interleaved:NO];
     [self.engine connect:self.node to:self.engine.mainMixerNode format:format];
     self.active=[self.engine startAndReturnError:error]; return self.active;
 }

@@ -58,6 +58,8 @@ python3 tools/verify_speech_pack.py --id pocket-english-q8 --root /installed/ass
 
 Kokoro/Piper/Kitten和ZipVoice英文前端使用的eSpeak-ng不是系统内置能力（Pocket与ASR当前不需要）：宿主需带合适的平台库和数据，配置`espeak_library`/`espeak_data`绝对路径。同进程应使用一致的eSpeak库/字典；底层有缓存，环境变量按操作恢复不意味着支持同时混用不同库版本。iOS需嵌入并签名合法库，Android需匹配ABI，并携带NDK的`libc++_shared.so`。Android安装产物会strip，未剥离调试信息留在构建目录，避免将调试体积误算作发布库体积。不能把Mac的Homebrew路径带到手机。新库隐藏audio.cpp/ggml符号，Android保留16KiB页对齐并链接liblog；不要再在同进程加载另一份独立OrTTS库。
 
+2026-11-08 手机接入修正：Piper/Kitten 的 frontend 直接读取模型专用 session options，适配层现在将 typed eSpeak 路径传入这些选项，不能只依赖环境变量与 Mac 已安装库兜底。手机 G2P 构建、GPL 对应源码、Apple 工作线程栈和原生采样率接线见 [MOBILE_G2P](../docs/MOBILE_G2P.md)。两端模拟器已验收这三个 TTS；物理设备与听感另行确认。
+
 ## C ABI与生命周期
 
 1. 检查`ortts_abi_version()==1`，新增功能检查`ortts_speech_abi_version()==1`；未开启speech的新版库返回0。旧版库可能没有这个符号，动态加载方需检查符号存在。

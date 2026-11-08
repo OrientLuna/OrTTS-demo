@@ -32,7 +32,7 @@
         }
       ],
       "external_espeak": true,
-      "status": "macos-cpu-tested; mobile-unverified",
+      "status": "macos-cpu-tested; mobile-simulators-tested; physical-mobile-pending",
       "notes": "Single-language support accepted; no implied mixed-language pass",
       "license_review": {
         "checked_at": "2026-11-07",
@@ -42,9 +42,18 @@
         "distribution_cleared": false,
         "notes": "Voice/training attribution and GPL phonemizer distribution remain separate."
       },
-      "demo_enabled": false,
-      "demo_note": "SDK only: additional G2P or reference-audio integration required in mobile Demo",
-      "display_name": "Kokoro"
+      "demo_enabled": true,
+      "demo_note": "Shared mobile eSpeak G2P; Kokoro text-chunk output, Kitten/Piper offline only",
+      "display_name": "Kokoro · TTS",
+      "device_validation": {
+        "ios_arm64_simulator": "foreground fixed-text native synthesis passed; not physical-device or listening certification",
+        "android_arm64_emulator": "native synthesis passed; not physical Android certification",
+        "physical_ios_android": "pending; not a performance or listening certification"
+      },
+      "mobile_tested_voices": [
+        "af_heart",
+        "zf_xiaobei"
+      ]
     },
     {
       "id": "piper-lessac-medium",
@@ -66,7 +75,7 @@
         }
       ],
       "external_espeak": true,
-      "status": "macos-cpu-tested; mobile-unverified",
+      "status": "macos-cpu-tested; mobile-simulators-tested; physical-mobile-pending",
       "notes": "Single-language support accepted; no implied mixed-language pass",
       "license_review": {
         "checked_at": "2026-11-07",
@@ -76,9 +85,15 @@
         "distribution_cleared": false,
         "notes": "Lessac model card points to research-only corpus terms; do not assume all Piper assets share one license."
       },
-      "demo_enabled": false,
-      "demo_note": "SDK only: additional G2P or reference-audio integration required in mobile Demo",
-      "display_name": "Piper"
+      "demo_enabled": true,
+      "demo_note": "Shared mobile eSpeak G2P; Kokoro text-chunk output, Kitten/Piper offline only",
+      "display_name": "Piper · Lessac (restricted terms)",
+      "device_validation": {
+        "ios_arm64_simulator": "foreground fixed-text native synthesis passed; not physical-device or listening certification",
+        "android_arm64_emulator": "native synthesis passed; not physical Android certification",
+        "physical_ios_android": "pending; not a performance or listening certification"
+      },
+      "mobile_tested_voices": []
     },
     {
       "id": "kitten-mini-0.8",
@@ -103,7 +118,7 @@
         }
       ],
       "external_espeak": true,
-      "status": "macos-cpu-tested; mobile-unverified",
+      "status": "macos-cpu-tested; mobile-simulators-tested; physical-mobile-pending",
       "notes": "Single-language support accepted; no implied mixed-language pass",
       "license_review": {
         "checked_at": "2026-11-07",
@@ -113,9 +128,18 @@
         "distribution_cleared": false,
         "notes": "Model card declaration; preset voice/data provenance still needs release attribution."
       },
-      "demo_enabled": false,
-      "demo_note": "SDK only: additional G2P or reference-audio integration required in mobile Demo",
-      "display_name": "Kitten"
+      "demo_enabled": true,
+      "demo_note": "Shared mobile eSpeak G2P; Kokoro text-chunk output, Kitten/Piper offline only",
+      "display_name": "Kitten · TTS",
+      "device_validation": {
+        "ios_arm64_simulator": "foreground fixed-text native synthesis passed; not physical-device or listening certification",
+        "android_arm64_emulator": "native synthesis passed; not physical Android certification",
+        "physical_ios_android": "pending; not a performance or listening certification"
+      },
+      "mobile_tested_voices": [
+        "Bella",
+        "Leo"
+      ]
     },
     {
       "id": "pocket-english-q8",

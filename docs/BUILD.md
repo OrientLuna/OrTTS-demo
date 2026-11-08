@@ -14,6 +14,8 @@ python3 tools/prepare_runtime.py --source-repo /path/to/audio.cpp --out _work/ru
 
 ## Android
 
+先按 [手机 G2P](MOBILE_G2P.md) 准备固定版本 eSpeak 库与字典，以下 `--g2p-install` 指向其 mobile 输出。
+
 ```bash
 python3 tools/prepare_unified_runtime.py \
   --audio-source _work/runtime --llama-source /path/to/llama.cpp-v0.8.0 \
@@ -21,6 +23,7 @@ python3 tools/prepare_unified_runtime.py \
 python3 tools/prepare_speech_runtime.py --source _work/unified/audio.cpp \
   --out _work/demo-release/audio.cpp
 python3 tools/build_android.py --source _work/demo-release/audio.cpp --liquidcodec --speech \
+  --g2p-install build/g2p-android/mobile \
   --ndk /path/to/android-ndk --ninja /path/to/ninja \
   --gradle /path/to/gradle --sdk /path/to/android-sdk --java /path/to/jdk17
 ```
@@ -72,6 +75,7 @@ cmake -S apple -B build/apple-iphone -G Ninja \
   -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos \
   -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 \
   -DORTTS_ENGINE_INSTALL="$PWD/build/engine-iphone/install" \
+  -DORTTS_G2P_INSTALL="$PWD/build/g2p-ios/mobile" \
   -DORTTS_APP_CPU_PROFILE=arm64-baseline
 cmake --build build/apple-iphone
 ```

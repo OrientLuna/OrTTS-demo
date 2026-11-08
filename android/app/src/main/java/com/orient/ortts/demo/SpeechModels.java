@@ -84,5 +84,13 @@ final class SpeechModels {
    requireReady(model);progress.update("模型导入完成，大小及SHA256均通过");
   }finally{removeStage(stage);}
  }
+ File prepareG2p(Context context)throws IOException {
+  File target=new File(context.getFilesDir(),"espeak-ng-data");copyData(context,"espeak-ng-data",target);return target;
+ }
+ private void copyData(Context context,String path,File target)throws IOException {
+  if(cancelled.get())throw new IOException("Cancelled");String[] entries=context.getAssets().list(path);
+  if(entries!=null&&entries.length>0){if(!target.isDirectory()&&!target.mkdirs())throw new IOException("Cannot create G2P directory");for(String name:entries)copyData(context,path+"/"+name,new File(target,name));}
+  else{try(InputStream in=context.getAssets().open(path)){if(target.isFile())return;File partial=File.createTempFile("g2p-",".part",target.getParentFile());try{try(OutputStream out=new FileOutputStream(partial)){byte[] bytes=new byte[65536];int n;while((n=in.read(bytes))!=-1){if(cancelled.get())throw new IOException("Cancelled");out.write(bytes,0,n);}}Files.move(partial.toPath(),target.toPath(),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}finally{partial.delete();}}}
+ }
  private void removeStage(File file){File[] children=file.listFiles();if(children!=null)for(File child:children)removeStage(child);file.delete();}
 }

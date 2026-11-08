@@ -85,6 +85,12 @@ void init(Handle&h,const ortts_speech_config*c,bool asr){
   check(audiocpp_options_set(options.p,c->session_options[i].key,c->session_options[i].value));
   if(h.family=="sense_asr"&&std::string(c->session_options[i].key)=="sense_asr.vad_model_path")h.use_vad=true;
  }
+ // Piper/Kitten construct their frontend from session options, bypassing the
+ // environment fallback used by Kokoro. Typed paths must reach both routes.
+ if(h.family=="piper_tts"||h.family=="kitten_tts"){
+  if(!h.library.empty())check(audiocpp_options_set(options.p,(h.family+".espeak_library_path").c_str(),h.library.c_str()));
+  if(!h.data.empty())check(audiocpp_options_set(options.p,(h.family+".espeak_data_path").c_str(),h.data.c_str()));
+ }
  audiocpp_backend_config backend{"cpu",0,c->threads};check(audiocpp_session_create(h.model,h.task.c_str(),h.streaming?"streaming":"offline",&backend,options.p,&h.session));
 }
 }

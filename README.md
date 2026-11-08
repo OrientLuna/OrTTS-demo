@@ -4,7 +4,7 @@ OrTTS 的端侧语音合成应用与可嵌入 CPU 运行时，支持 **0.6B／1.
 
 ## 可选多模型语音 SDK
 
-除现有自研模型 Demo 外，后端提供可选的 [多模型 TTS / ASR C ABI 与 Rust 接口](runtime/SPEECH.md)：Kokoro、PocketTTS、Piper、Kitten、ZipVoice，以及 SenseVoice / Moonshine。Moonshine 另提供英语增量识别接口（partial/final、分段、取消）。这些流水线与原接口共用一份 ggml；不表示能执行任意 ONNX/GGUF。新版手机 Demo 已接入 PocketTTS、SenseVoice 和 Moonshine，支持固定版本下载、SHA256 校验及 TTS/ASR 切换；其余模型当前为 SDK 能力。详见 [多模型 Demo](docs/MOBILE_SPEECH_DEMO.md)。
+除现有自研模型 Demo 外，后端提供可选的 [多模型 TTS / ASR C ABI 与 Rust 接口](runtime/SPEECH.md)：Kokoro、PocketTTS、Piper、Kitten、ZipVoice，以及 SenseVoice / Moonshine。Moonshine 另提供英语增量识别接口（partial/final、分段、取消）。这些流水线与原接口共用一份 ggml；不表示能执行任意 ONNX/GGUF。新版手机 Demo 已接入 Kokoro、Kitten、Piper、PocketTTS、SenseVoice 和 Moonshine，支持固定版本下载、SHA256 校验及 TTS/ASR 切换；ZipVoice 当前仍为 SDK 能力。详见 [多模型 Demo](docs/MOBILE_SPEECH_DEMO.md)。
 
 ## 平台支持
 
@@ -53,5 +53,7 @@ macOS 使用 `ortts-apple MODEL_ROOT P3|P5 TRUSTED_BRIDGE_SHA TEXT` 离线合成
 - [完整文档索引](docs/README.md)
 
 ## 致谢与许可
+
+扩展手机 Demo 随附 eSpeak NG G2P，组合二进制发行需满足 GPL 对应源码义务；源码、构建补丁和模型权重许可分别处理，详见 [手机 G2P 与发行](docs/MOBILE_G2P.md)。
 
 运行时基于[audio.cpp](https://github.com/0xShug0/audio.cpp)与[ggml](https://github.com/ggml-org/ggml)，感谢Qwen3-TTS、Liquid AI、speech.cpp和Vocos等开源项目。组件归属与许可见[NOTICE.md](NOTICE.md)；模型权重适用各模型仓库的许可。

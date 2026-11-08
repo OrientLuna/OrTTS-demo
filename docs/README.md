@@ -5,6 +5,7 @@
 | 任务 | 文档 | 范围 |
 |---|---|---|
 | Android 安装和使用 | [首页 Android](../README.md#android) | APK、设备要求、下载及导入 |
+| 手机 G2P 与源码发行 | [MOBILE_G2P](MOBILE_G2P.md) | eSpeak 构建、路径、采样率及 GPL 对应源码 |
 | 多模型 TTS/ASR 切换 | [手机语音 Demo](MOBILE_SPEECH_DEMO.md) | 菜单模型、固定下载、导入、录音和验证范围 |
 | iOS / macOS 使用 | [Apple Demo](../apple/README.md) | 应用功能、产物、安装边界及验证范围 |
 | 从源码构建 | [BUILD](BUILD.md) | 环境、准备源码、平台构建命令 |

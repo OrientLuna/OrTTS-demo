@@ -4,6 +4,9 @@
 
 - Android 新增多模型语音页面；iOS 新增“合成与识别”标签。
 - PocketTTS 英语合成支持 alba、anna、george 选择与增量播放；固定回归 alba、anna。
+- 两端新增 Kokoro 中英文、Kitten Bella/Leo、Piper Lessac 下载与合成。Kokoro 为文本分块，Kitten/Piper 为离线输出；Piper 保留22.05kHz原生采样率。Lessac 权重限制单独保留。
+- 手机应用捆绑 eSpeak NG 1.52.0 G2P；组合发行需要满足 GPL 对应源码和许可义务，构建脚本生成 eSpeak 对应源码归档。详见 MOBILE_G2P。
+- SDK 修复 Piper/Kitten 显式 G2P 路径未传入会话的问题；Apple 修复 Kitten 构图的工作栈不足，Android 修复超过播放缓冲的离线长音频潜在阻塞。
 - SenseVoice 中文/英语离线识别；Moonshine 英语增量 partial/final、结束和取消。
 - 固定版本 HTTPS 下载、大小和 SHA256 校验；Android ZIP / iOS 文件夹导入；音频文件识别、录音入口及识别上次合成。
 - 与原有自研模型共用 ggml。Android 直接复用 libaudiocpp.so，iOS 复用 OrTTS.framework；不新增 ONNX Runtime 或 sherpa-onnx。

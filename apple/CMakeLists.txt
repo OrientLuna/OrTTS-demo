@@ -12,8 +12,18 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
   configure_file(../runtime/models/catalog.example.json "${CMAKE_CURRENT_BINARY_DIR}/SpeechModels.json" COPYONLY)
   target_sources(ortts-apple PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/SpeechModels.json")
   set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/SpeechModels.json" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  set(ORTTS_G2P_INSTALL "" CACHE PATH "build_mobile_g2p.py mobile output")
+  if(ORTTS_G2P_INSTALL)
+    add_custom_command(TARGET ortts-apple POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORTTS_G2P_INSTALL}/espeak-ng.framework" "$<TARGET_BUNDLE_DIR:ortts-apple>/Frameworks/espeak-ng.framework"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORTTS_G2P_INSTALL}/espeak-ng-data" "$<TARGET_BUNDLE_DIR:ortts-apple>/espeak-ng-data"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORTTS_G2P_INSTALL}/licenses" "$<TARGET_BUNDLE_DIR:ortts-apple>/licenses/espeak-ng")
+  else()
+    message(FATAL_ERROR "Mobile TTS catalog requires ORTTS_G2P_INSTALL; build tools/build_mobile_g2p.py first")
+  endif()
   target_link_libraries(ortts-apple PRIVATE "-framework UniformTypeIdentifiers")
   target_link_libraries(ortts-apple PRIVATE "${ORTTS_ENGINE_INSTALL}/OrTTS.framework" "-framework UIKit")
+  set_property(TARGET ortts-apple APPEND PROPERTY LINK_DEPENDS "${ORTTS_ENGINE_INSTALL}/OrTTS.framework/OrTTS")
   set_target_properties(ortts-apple PROPERTIES MACOSX_BUNDLE TRUE MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist" XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED NO BUILD_RPATH "@executable_path/Frameworks")
   add_custom_command(TARGET ortts-apple POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_DIR:ortts-apple>/Frameworks" COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORTTS_ENGINE_INSTALL}/OrTTS.framework" "$<TARGET_BUNDLE_DIR:ortts-apple>/Frameworks/OrTTS.framework")
 else()

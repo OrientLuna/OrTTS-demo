@@ -7,6 +7,8 @@ Physical device identifiers remain CLI arguments and are omitted from reports.
 """
 import argparse
 import io
+import re
+import struct
 import json
 from pathlib import Path
 import shutil
@@ -68,7 +70,13 @@ def main():
                 if container:shutil.copyfile(a.fixtures/name,container/name)
                 else:run(device+['copy','to','--device',a.device,'--domain-type','appDataContainer','--domain-identifier',IOS,'--source',str(a.fixtures/name),'--destination','Documents/'+name,'--quiet'])
         print('seeded existing local models',flush=True)
-    cases=[('pocket-alba','tts','pocket-english-q8','alba','',0),
+    cases=[('kokoro-en','tts','kokoro-82m-q8','af_heart','',0),
+           ('kokoro-zh','tts','kokoro-82m-q8','zf_xiaobei','',0),
+           ('kitten-bella','tts','kitten-mini-0.8','Bella','',0),
+           ('kitten-leo','tts','kitten-mini-0.8','Leo','',0),
+           ('piper-lessac','tts','piper-lessac-medium','','',0),
+           ('piper-long','tts','piper-lessac-medium','','',0),
+           ('pocket-alba','tts','pocket-english-q8','alba','',0),
            ('pocket-cancel','tts','pocket-english-q8','alba','',500),
            ('pocket-anna','tts','pocket-english-q8','anna','',0),
            ('moonshine-en','asr','moonshine-tiny-q8','','speech-test-en.wav',0),
@@ -86,11 +94,11 @@ def main():
             run(adb+['shell','am','force-stop',ANDROID])
             cmd=adb+['shell','am','start','-n',ANDROID+'/com.orient.ortts.demo.MainActivity','--ez','speech_qa','true',
                 '--es','speech_action',mode,'--es','speech_model',model,'--es','speech_qa_id',test_id,
-                '--es','speech_voice',voice,'--es','speech_audio',audio,'--ei','speech_cancel_ms',str(cancel)]
+                '--es','speech_text',('今天上午九点半，请检查车票和随身行李。' if name=='kokoro-zh' else ('At nine thirty, please check the train ticket and call the station. '*5 if name=='piper-long' else 'At nine thirty, please check the train ticket and call the station.')),'--es','speech_voice',voice,'--es','speech_audio',audio,'--ei','speech_cancel_ms',str(cancel)]
             # adb shell joins argv; quote even empty strings to preserve extras.
             cmd=adb+['shell',shlex.join(cmd[len(adb)+1:])]
         else:
-            args=['--speech-smoke',mode,'--speech-model',model,'--speech-run-id',test_id,
+            args=['--speech-text',('今天上午九点半，请检查车票和随身行李。' if name=='kokoro-zh' else ('At nine thirty, please check the train ticket and call the station. '*5 if name=='piper-long' else 'At nine thirty, please check the train ticket and call the station.')),'--speech-smoke',mode,'--speech-model',model,'--speech-run-id',test_id,
                   '--speech-voice',voice or 'alba','--speech-audio',audio or 'speech-test-en.wav',
                   '--speech-cancel-ms',str(cancel)]
             if container:
@@ -123,6 +131,19 @@ def main():
         text=record.get('text','')
         if (name=='moonshine-en' or (name=='roundtrip' and any(o['case']=='pocket-anna' for o in observations))) and 'station' not in text.lower():raise RuntimeError('English content missing: '+text)
         if name=='sensevoice-zh' and not ('车票' in text or '車票' in text):raise RuntimeError('Chinese content missing: '+text)
+        if mode=='tts' and expected:
+            if a.target=='android':
+                data=run(adb+['exec-out','run-as',ANDROID,'cat','files/speech-last.wav']).stdout
+                if data[:4]!=b'RIFF' or len(data)<44:raise RuntimeError('Missing generated WAV')
+                record['audio_sample_rate']=struct.unpack_from('<I',data,24)[0]
+                (a.out/(name+'.wav')).write_bytes(data)
+            elif container:
+                audio_path=a.out/(name+'.caf');shutil.copyfile(container/'speech-last.caf',audio_path)
+                description=run(['/usr/bin/afinfo',str(audio_path)]).stdout.decode()
+                match=re.search(r'(\d+) Hz',description)
+                if not match:raise RuntimeError('Missing generated audio rate')
+                record['audio_sample_rate']=int(match.group(1))
+            if 'audio_sample_rate' in record and record['audio_sample_rate']!=(22050 if name.startswith('piper-') else 24000):raise RuntimeError('Native audio rate mismatch')
         observations.append(record);print(a.target,name,'PASS',flush=True)
         (a.out/(name+'.json')).write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
     if container:run(['xcrun','simctl','io',a.device,'screenshot',str(a.out/'screen.png')])

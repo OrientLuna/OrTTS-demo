@@ -3,6 +3,7 @@
 @interface StreamPlayback : NSObject
 @property (nonatomic, copy) void (^completion)(void);
 @property (nonatomic, readonly) BOOL active;
+- (BOOL)prepareRate:(double)rate error:(NSError **)error;
 - (BOOL)prepare:(NSError **)error;
 - (void)enqueue:(AVAudioPCMBuffer *)buffer;
 - (void)finish;

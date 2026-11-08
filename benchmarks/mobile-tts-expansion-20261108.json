@@ -1,0 +1,631 @@
+{
+  "schema": 1,
+  "date": "2026-11-08",
+  "scope": "mobile Kokoro/Kitten/Piper integration; shared ggml plus separate G2P, not new neural executor",
+  "targets": {
+    "ios_arm64_simulator": {
+      "schema": 1,
+      "version": "0.4.0",
+      "target": "simulator",
+      "cases": [
+        {
+          "status": "完成 · 4.12s · 接口RTF 3.690",
+          "model": "kokoro-82m-q8",
+          "input_frames": 0,
+          "run_id": "kokoro-en-781ba2e1",
+          "ok": 1,
+          "text": "",
+          "case": "kokoro-en",
+          "process_wall_s": 21.66902079200372,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "完成 · 5.58s · 接口RTF 3.191",
+          "model": "kokoro-82m-q8",
+          "input_frames": 0,
+          "run_id": "kokoro-zh-92ab388e",
+          "ok": 1,
+          "text": "",
+          "case": "kokoro-zh",
+          "process_wall_s": 24.89013391698245,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "完成 · 5.72s · 接口RTF 1.022",
+          "model": "kitten-mini-0.8",
+          "input_frames": 0,
+          "run_id": "kitten-bella-6835ad1f",
+          "ok": 1,
+          "text": "",
+          "case": "kitten-bella",
+          "process_wall_s": 7.5925754169002175,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "完成 · 5.59s · 接口RTF 1.131",
+          "model": "kitten-mini-0.8",
+          "input_frames": 0,
+          "run_id": "kitten-leo-b9809653",
+          "ok": 1,
+          "text": "",
+          "case": "kitten-leo",
+          "process_wall_s": 8.632540582912043,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "完成 · 3.69s · 接口RTF 0.309",
+          "model": "piper-lessac-medium",
+          "input_frames": 0,
+          "run_id": "piper-lessac-70ad4efa",
+          "ok": 1,
+          "text": "",
+          "case": "piper-lessac",
+          "process_wall_s": 2.864390582893975,
+          "audio_sample_rate": 22050
+        },
+        {
+          "status": "完成 · 3.20s · 接口RTF 1.202",
+          "model": "pocket-english-q8",
+          "input_frames": 0,
+          "run_id": "pocket-alba-751be450",
+          "ok": 1,
+          "text": "",
+          "case": "pocket-alba",
+          "process_wall_s": 5.828623166074976,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "已停止",
+          "model": "pocket-english-q8",
+          "input_frames": 0,
+          "run_id": "pocket-cancel-0aef162c",
+          "ok": 0,
+          "text": "",
+          "case": "pocket-cancel",
+          "process_wall_s": 1.5433956669876352
+        },
+        {
+          "status": "完成 · 4.24s · 接口RTF 0.438",
+          "model": "pocket-english-q8",
+          "input_frames": 0,
+          "run_id": "pocket-anna-c0a5288b",
+          "ok": 1,
+          "text": "",
+          "case": "pocket-anna",
+          "process_wall_s": 3.5414901670301333,
+          "audio_sample_rate": 24000
+        },
+        {
+          "status": "识别完成 · 输入 3.69s",
+          "model": "moonshine-tiny-q8",
+          "input_frames": 59072,
+          "run_id": "moonshine-en-ccd77472",
+          "ok": 1,
+          "text": "At 9:30, please check the train ticket and call the station.",
+          "case": "moonshine-en",
+          "process_wall_s": 2.62191795790568
+        },
+        {
+          "status": "识别完成 · 输入 5.58s",
+          "model": "sensevoice-small-q8",
+          "input_frames": 89200,
+          "run_id": "sensevoice-zh-055e0a93",
+          "ok": 1,
+          "text": "今天上午9点半，请检查车票和随身行李。谢。",
+          "case": "sensevoice-zh",
+          "process_wall_s": 2.8783158749574795
+        },
+        {
+          "status": "识别完成 · 输入 4.24s",
+          "model": "moonshine-tiny-q8",
+          "input_frames": 67840,
+          "run_id": "roundtrip-84d346cf",
+          "ok": 1,
+          "text": "At nine thirty, please check the train ticket and call the station.",
+          "case": "roundtrip",
+          "process_wall_s": 2.638512625009753
+        },
+        {
+          "status": "模型已就绪，大小与SHA256均通过",
+          "model": "pocket-english-q8",
+          "input_frames": 0,
+          "run_id": "download-check-48942567",
+          "ok": 1,
+          "text": "",
+          "case": "download-check",
+          "process_wall_s": 2.0184359159320593
+        }
+      ],
+      "scope": "Foreground actual-model Demo pipelines; cached download SHA validation; no microphone recording or new large-model download",
+      "limitations": [
+        "microphone permission/live capture needs separate interactive validation",
+        "cached model check does not certify CDN reachability or full download"
+      ]
+    },
+    "android_arm64_emulator": {
+      "schema": 1,
+      "version": "0.4.0",
+      "target": "android",
+      "cases": [
+        {
+          "ok": true,
+          "status": "完成 · 4.13s · 接口RTF 3.108",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "case": "kokoro-en",
+          "process_wall_s": 28.227807083982043,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "完成 · 5.58s · 接口RTF 3.729",
+          "text": "",
+          "model": "kokoro-82m-q8",
+          "case": "kokoro-zh",
+          "process_wall_s": 36.07048583391588,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "完成 · 5.72s · 接口RTF 1.748",
+          "text": "",
+          "model": "kitten-mini-0.8",
+          "case": "kitten-bella",
+          "process_wall_s": 23.268670166027732,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "完成 · 5.59s · 接口RTF 1.244",
+          "text": "",
+          "model": "kitten-mini-0.8",
+          "case": "kitten-leo",
+          "process_wall_s": 17.500845958013088,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "完成 · 3.69s · 接口RTF 0.506",
+          "text": "",
+          "model": "piper-lessac-medium",
+          "case": "piper-lessac",
+          "process_wall_s": 8.690347791998647,
+          "audio_sample_rate": 22050
+        },
+        {
+          "ok": true,
+          "status": "完成 · 3.20s · 接口RTF 1.690",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "pocket-alba",
+          "process_wall_s": 13.201150332926773,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": false,
+          "status": "已停止",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "pocket-cancel",
+          "process_wall_s": 5.715285667101853
+        },
+        {
+          "ok": true,
+          "status": "完成 · 4.24s · 接口RTF 1.986",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "pocket-anna",
+          "process_wall_s": 15.146651708055288,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 3.69s",
+          "text": "At 9:30, please check the train ticket and call the station.",
+          "model": "moonshine-tiny-q8",
+          "case": "moonshine-en",
+          "process_wall_s": 5.617360292002559
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 5.58s",
+          "text": "今天上午9点半，请检查车票和随身行李。谢。",
+          "model": "sensevoice-small-q8",
+          "case": "sensevoice-zh",
+          "process_wall_s": 4.535781875019893
+        },
+        {
+          "ok": true,
+          "status": "识别完成 · 4.24s",
+          "text": "At 9.30, please check the train ticket and call the station.",
+          "model": "moonshine-tiny-q8",
+          "case": "roundtrip",
+          "process_wall_s": 6.887798000010662
+        },
+        {
+          "ok": true,
+          "status": "模型已就绪，文件大小与SHA256均通过",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "download-check",
+          "process_wall_s": 3.55419112497475
+        }
+      ],
+      "scope": "Foreground actual-model Demo pipelines; cached download SHA validation; no microphone recording or new large-model download",
+      "limitations": [
+        "microphone permission/live capture needs separate interactive validation",
+        "cached model check does not certify CDN reachability or full download"
+      ]
+    }
+  },
+  "long_audio_playback": {
+    "android_final_player": {
+      "schema": 1,
+      "version": "0.4.0",
+      "target": "android",
+      "cases": [
+        {
+          "ok": true,
+          "status": "完成 · 18.83s · 接口RTF 0.311",
+          "text": "",
+          "model": "piper-lessac-medium",
+          "case": "piper-long",
+          "process_wall_s": 27.715890959021635,
+          "audio_sample_rate": 22050
+        },
+        {
+          "ok": true,
+          "status": "完成 · 3.20s · 接口RTF 1.113",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "pocket-alba",
+          "process_wall_s": 7.64097316598054,
+          "audio_sample_rate": 24000
+        },
+        {
+          "ok": false,
+          "status": "已停止",
+          "text": "",
+          "model": "pocket-english-q8",
+          "case": "pocket-cancel",
+          "process_wall_s": 2.334509790991433
+        }
+      ],
+      "scope": "Foreground actual-model Demo pipelines; cached download SHA validation; no microphone recording or new large-model download",
+      "limitations": [
+        "microphone permission/live capture needs separate interactive validation",
+        "cached model check does not certify CDN reachability or full download"
+      ]
+    },
+    "ios_simulator": {
+      "schema": 1,
+      "version": "0.4.0",
+      "target": "simulator",
+      "cases": [
+        {
+          "status": "完成 · 18.82s · 接口RTF 0.206",
+          "model": "piper-lessac-medium",
+          "input_frames": 0,
+          "run_id": "piper-long-5c6e529e",
+          "ok": 1,
+          "text": "",
+          "case": "piper-long",
+          "process_wall_s": 5.818368708947673,
+          "audio_sample_rate": 22050
+        }
+      ],
+      "scope": "Foreground actual-model Demo pipelines; cached download SHA validation; no microphone recording or new large-model download",
+      "limitations": [
+        "microphone permission/live capture needs separate interactive validation",
+        "cached model check does not certify CDN reachability or full download"
+      ]
+    }
+  },
+  "pcm_quality": {
+    "ios_simulator": {
+      "checks": [
+        {
+          "case": "kitten-bella",
+          "rate": 24000,
+          "frames": 137200,
+          "duration_s": 5.716666666666667,
+          "rms": 0.09550690799586617,
+          "peak": 1.2504640817642212,
+          "over_one_fraction": 2.186588921282799e-05,
+          "pcm_sha256": "70210cd3285229de7cc0b5f6e8f233b20527051b82272000f3c83535e2b4de50"
+        },
+        {
+          "case": "kitten-leo",
+          "rate": 24000,
+          "frames": 134200,
+          "duration_s": 5.591666666666667,
+          "rms": 0.11624005807000884,
+          "peak": 0.6869372129440308,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "5164dfba2b302d6859b9f44310c7c9a8c6dff39cf4a7ea381b7a7a7c5524038f"
+        },
+        {
+          "case": "kokoro-en",
+          "rate": 24000,
+          "frames": 99000,
+          "duration_s": 4.125,
+          "rms": 0.04854347422780549,
+          "peak": 0.4411452114582062,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "fed5b0b3cd95863a1fc44ff0d50f20cbf3fa4524eac25db403ac9234baa6568c"
+        },
+        {
+          "case": "kokoro-zh",
+          "rate": 24000,
+          "frames": 133800,
+          "duration_s": 5.575,
+          "rms": 0.06384867432617185,
+          "peak": 0.4310106039047241,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "8852a8e57775f3fc3078b15ab4ea7897c1ba703db402629a863bf6c52a0c1a1f"
+        },
+        {
+          "case": "piper-lessac",
+          "rate": 22050,
+          "frames": 81408,
+          "duration_s": 3.6919727891156464,
+          "rms": 0.10216059226659677,
+          "peak": 0.5857388973236084,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "3e9bb179b3e01635190bdabfc4c227d2e08c3ea2839e09745cc24cbe1d1b9844"
+        },
+        {
+          "case": "pocket-alba",
+          "rate": 24000,
+          "frames": 76800,
+          "duration_s": 3.2,
+          "rms": 0.11516228762769566,
+          "peak": 0.6132692098617554,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "fc8b7c7f6dfd780cb073716a552ec5d6f1f36d3f37c8a46702a43f8ea90a9cd9"
+        },
+        {
+          "case": "pocket-anna",
+          "rate": 24000,
+          "frames": 101760,
+          "duration_s": 4.24,
+          "rms": 0.08395861172522809,
+          "peak": 0.5609159469604492,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "22b18635427cc81303bb9f1db9258362eadd11d27017160e0834bc27657ded51"
+        }
+      ],
+      "scope": "format/finite/nonempty signal, native rate, distinct Kitten waveforms; no perceptual quality certification"
+    },
+    "android_emulator": {
+      "checks": [
+        {
+          "case": "kitten-bella",
+          "rate": 24000,
+          "frames": 137200,
+          "duration_s": 5.716666666666667,
+          "rms": 0.09562777282845482,
+          "peak": 1.2505149841308594,
+          "over_one_fraction": 2.186588921282799e-05,
+          "pcm_sha256": "a53a2adb06e9cec4da236a1e67dea87e6d5bdb2607c15aa93a22850094178956"
+        },
+        {
+          "case": "kitten-leo",
+          "rate": 24000,
+          "frames": 134200,
+          "duration_s": 5.591666666666667,
+          "rms": 0.11543701031761394,
+          "peak": 0.6876659393310547,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "a1d85d647785423216b2cc065a5ed1eed27c6c3a0f2e4dfdfcf9079c093d80de"
+        },
+        {
+          "case": "kokoro-en",
+          "rate": 24000,
+          "frames": 99000,
+          "duration_s": 4.125,
+          "rms": 0.048532650325302476,
+          "peak": 0.43174636363983154,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "1793d8e9e4c3ee81dc47727b4ad0954722118a5b35724ee8753470261516eb2d"
+        },
+        {
+          "case": "kokoro-zh",
+          "rate": 24000,
+          "frames": 133800,
+          "duration_s": 5.575,
+          "rms": 0.063868956227097,
+          "peak": 0.41924774646759033,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "1c8f9fcbe40193080e5d023c9ce4158bf5108584d6559dde29e50d823d3a03e3"
+        },
+        {
+          "case": "piper-lessac",
+          "rate": 22050,
+          "frames": 81408,
+          "duration_s": 3.6919727891156464,
+          "rms": 0.10216298076609999,
+          "peak": 0.5878942608833313,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "05c6259f5669907352e1f1c7f941b7e5297cd0e67323ef1ae96349d23216f241"
+        },
+        {
+          "case": "pocket-alba",
+          "rate": 24000,
+          "frames": 76800,
+          "duration_s": 3.2,
+          "rms": 0.11516021773063538,
+          "peak": 0.6133365631103516,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "2c61ea000fef3944b72b5698236f9d6414ff5db5758e29e118319dc10e89eef6"
+        },
+        {
+          "case": "pocket-anna",
+          "rate": 24000,
+          "frames": 101760,
+          "duration_s": 4.24,
+          "rms": 0.08413964156507522,
+          "peak": 0.5609159469604492,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "346820ca9c708ee97f8c55c44e7ac2655d1ea2349d5cab568e4912ac93edf43b"
+        }
+      ],
+      "scope": "format/finite/nonempty signal, native rate, distinct Kitten waveforms; no perceptual quality certification"
+    },
+    "android_long": {
+      "checks": [
+        {
+          "case": "piper-long",
+          "rate": 22050,
+          "frames": 415133,
+          "duration_s": 18.82689342403628,
+          "rms": 0.08013376122549207,
+          "peak": 0.6097170114517212,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "2556c1a85ff87d9d80c050677db871d6148b95686f508a8c221fe6d70c308a6c"
+        },
+        {
+          "case": "pocket-alba",
+          "rate": 24000,
+          "frames": 76800,
+          "duration_s": 3.2,
+          "rms": 0.11516021773063538,
+          "peak": 0.6133365631103516,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "2c61ea000fef3944b72b5698236f9d6414ff5db5758e29e118319dc10e89eef6"
+        }
+      ],
+      "scope": "format/finite/nonempty signal, native rate, distinct Kitten waveforms; no perceptual quality certification"
+    },
+    "ios_long": {
+      "checks": [
+        {
+          "case": "piper-long",
+          "rate": 22050,
+          "frames": 414877,
+          "duration_s": 18.81528344671202,
+          "rms": 0.08106767427348024,
+          "peak": 0.629636824131012,
+          "over_one_fraction": 0.0,
+          "pcm_sha256": "0cda7bff9435e7f314c91b223dc698cad7e2e5f583b2c22dfde32ec236a1d125"
+        }
+      ],
+      "scope": "format/finite/nonempty signal, native rate, distinct Kitten waveforms; no perceptual quality certification"
+    }
+  },
+  "sdk_regression_macos": {
+    "schema": 1,
+    "host": "Darwin arm64",
+    "model_execution": "current host only; cross-builds are not device certification",
+    "checks": [
+      {
+        "step": 0,
+        "returncode": 0
+      },
+      {
+        "step": 1,
+        "returncode": 0
+      },
+      {
+        "step": 2,
+        "returncode": 0
+      }
+    ],
+    "artifact_sha256": "c42671a3ce94e39f38529c4023dc0aae3dadf02bd34a9e0e6141cb292661407b",
+    "artifact_bytes": 9993312,
+    "public_headers": {
+      "ortts_speech.h": "56a0fb9335de78ef8cd5efb163a0a31cbc6e620a3a43c53dd8de25f2def1c2e2",
+      "ortts_engine.h": "1471c8007982d86d544030db7b2c48e2cbf87ce1f6245338750cb308de2b7027"
+    },
+    "assertions": [
+      "five native-format TTS families",
+      "Kokoro/Pocket/ZipVoice callback/pull stream cancellation and reuse",
+      "Piper/Kitten reject streaming",
+      "English model rejects zh and Han text, invalid UTF-8 and missing voice",
+      "SenseVoice/Moonshine offline equals buffered-final",
+      "ASR bounds/reset/digital silence/nonfinite input",
+      "SenseVoice explicit Silero NoSpeech does not re-transcribe whole input",
+      "legacy and speech share BUSY gate",
+      "Rust native-rate copy + ASR + Pocket stream reuse"
+    ],
+    "subjective_quality": "not certified"
+  },
+  "binary": {
+    "apk_bytes": 16347781,
+    "libraries": [
+      {
+        "library": "libaudiocpp.so",
+        "bytes": 7501592,
+        "min_LOAD_alignment": 16384
+      },
+      {
+        "library": "libc++_shared.so",
+        "bytes": 1292896,
+        "min_LOAD_alignment": 16384
+      },
+      {
+        "library": "libespeak-ng.so",
+        "bytes": 722560,
+        "min_LOAD_alignment": 16384
+      },
+      {
+        "library": "libortts_device.so",
+        "bytes": 4056,
+        "min_LOAD_alignment": 16384
+      },
+      {
+        "library": "libortts_jni.so",
+        "bytes": 190280,
+        "min_LOAD_alignment": 16384
+      }
+    ],
+    "g2p_data_bytes": 24152227,
+    "g2p_data_files": 513,
+    "extra_ggml_library": false,
+    "signing": "unsigned release candidate; not published",
+    "apk_sha256": "13ec8ab106dc867d1a3e74ad8fd50bcd64a5fe9b7ccced158d43c40404f5bc0f"
+  },
+  "source": {
+    "espeak_tag": "1.52.0",
+    "commit": "4870adfa25b1a32b4361592f1be8a40337c58d6c",
+    "official_tar_sha256": "bb4338102ff3b49a81423da8a1a158b420124b055b60fa76cfb4b18677130a23",
+    "wrapper_sha256": "c42e2c00be08d874a221f128169e28970ba7b508e932df7bb116de8e32993d79",
+    "patch_sha256": "6258e402b132b88d76dc3dc3dd89969725a55d2b4a075c0623a5efd5639bd7d3",
+    "corresponding_source_archive_sha256": "c4699f58f66375572f90d805b0301af4d9f1955a2ebc86e7ba744bf60f60b424"
+  },
+  "fixed_failures": [
+    "iOS eSpeak 160-byte path buffer truncation; increase to4096",
+    "Piper/Kitten ignored typed G2P paths; forward to family session options",
+    "iOS Kitten ggml graph construction overflowed GCD stack; isolated8MiB synthesis stack",
+    "Android offline audio beyond12second buffer could block writes before play; start track before blocking writes"
+  ],
+  "limitations": [
+    "physical iPhone install attempted but CoreDevice4016 connection unavailable; physical run pending",
+    "Android ARM64 emulator only, not physical phone",
+    "concurrent functional runs; UI RTF diagnostic only, not comparative performance measurements",
+    "finite/nonempty/distinct PCM checks do not certify listening quality",
+    "Kitten/Piper offline only; Kokoro text chunks, not codec-level streaming",
+    "Piper Lessac weight terms remain restricted; distribution_cleared=false",
+    "expanded Demo bundles GPL eSpeak: distribute corresponding combined source/build instructions; no public signed release produced"
+  ],
+  "download_url_checks": [
+    {
+      "model": "kokoro-82m-q8",
+      "status": 200,
+      "expected_bytes": 189550976,
+      "content_length": 189550976
+    },
+    {
+      "model": "piper-lessac-medium",
+      "status": 200,
+      "expected_bytes": 62662016,
+      "content_length": 62662016
+    },
+    {
+      "model": "kitten-mini-0.8",
+      "status": 200,
+      "expected_bytes": 302167648,
+      "content_length": 302167648
+    }
+  ]
+}

@@ -16,7 +16,7 @@ OrTTS-demo integration code is licensed under Apache-2.0 (LICENSE). Third-party 
 | cpp-httplib | Optional upstream HTTP components | [MIT](licenses/cpp-httplib-MIT.txt) |
 | Optional LiquidCodec dependencies | nlohmann/json, miniaudio, stb, xxHash, rotate-bits, SHA helpers and subprocess.h | Corresponding license texts in licenses/ |
 | jieba / cppjieba | MIT-derived ZipVoice Chinese segmenter in the optional speech build; embedded model dictionaries are separate assets | [MIT attribution](licenses/zipvoice-jieba-MIT.txt) |
-| Optional eSpeak NG | External G2P library/data for Kokoro, Piper, Kitten and ZipVoice; not required by PocketTTS or ASR | [GPL-3.0-or-later](https://github.com/espeak-ng/espeak-ng/blob/master/COPYING); bundled distributions need their own source/notices and license compatibility review |
+| eSpeak NG 1.52.0 in expanded mobile Demo | Shared G2P library/data for Kokoro, Piper and Kitten; SDK-only Pocket/ASR can still omit it | [GPL-3.0-or-later](licenses/espeak-ng-GPL-3.0.txt); combined mobile distributions must meet GPL source/license obligations, not merely the repository's Apache license. `tools/build_mobile_g2p.py` produces the corresponding eSpeak source archive; distribute it together with matching OrTTS source/build instructions. |
 | Android NDK / LLVM | Distributed Android libc++ runtime | [NDK notices](licenses/Android-NDK-NOTICE.txt) |
 
 The pinned audio.cpp revision and OrTTS patches are recorded in vendor/runtime.lock.json. The speech.cpp adaptation is from commit d074e1b9d84fe5ec530c959292ffe3d94ffd288b; its original copyright notice is retained. No upstream endorsement is implied.

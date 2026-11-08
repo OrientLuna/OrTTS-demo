@@ -83,15 +83,15 @@ extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_close(
  std::lock_guard<std::mutex>guard(mu);try{speechClose();}catch(const std::exception&x){speechError(e,x);}
 #endif
 }
-extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_synthesize(JNIEnv*e,jclass,jstring pathJ,jstring voiceJ,jstring textJ,jboolean streaming,jobject sink,jstring outJ){
+extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_synthesize(JNIEnv*e,jclass,jstring familyJ,jstring libraryJ,jstring dataJ,jstring pathJ,jstring voiceJ,jstring textJ,jboolean streaming,jobject sink,jstring outJ){
 #if ORTTS_WITH_SPEECH
  std::lock_guard<std::mutex>guard(mu);ortts_speech_audio*audio=nullptr;
  try{
-  release();speechClose();auto path=str(e,pathJ),voice=str(e,voiceJ),text=str(e,textJ),out=str(e,outJ);
-  ortts_speech_config c{};c.struct_size=sizeof(c);c.family="pocket_tts";c.model_path=path.c_str();c.threads=4;c.streaming=streaming;
+  release();speechClose();auto family=str(e,familyJ),library=str(e,libraryJ),data=str(e,dataJ),path=str(e,pathJ),voice=str(e,voiceJ),text=str(e,textJ),out=str(e,outJ);
+  ortts_speech_config c{};c.struct_size=sizeof(c);c.family=family.c_str();c.espeak_library=library.empty()?nullptr:library.c_str();c.espeak_data=data.empty()?nullptr:data.c_str();c.model_path=path.c_str();c.threads=4;c.streaming=streaming;
   ortts_tts*engine=nullptr;speechCheck(ortts_tts_create(&c,&engine));{std::lock_guard<std::mutex>p(speechPointers);speechTts=engine;}
   auto cl=e->GetObjectClass(sink);auto method=e->GetMethodID(cl,"onPcm","([FI)V");e->DeleteLocalRef(cl);if(!method)throw std::runtime_error("PCM sink unavailable");SpeechSink receiver{e,sink,method};
-  ortts_tts_request request{};request.struct_size=sizeof(request);request.text=text.c_str();request.language="en";request.voice_id=voice.c_str();request.seed_set=1;request.seed=42;
+  ortts_tts_request request{};request.struct_size=sizeof(request);request.text=text.c_str();request.language=voice.size()&&voice[0]=='z'?"zh":"en";request.voice_id=family=="piper_tts"?nullptr:voice.c_str();request.seed_set=1;request.seed=42;
   speechCheck(ortts_tts_synthesize(engine,&request,streaming?speechPcm:nullptr,&receiver,&audio));
   const float*pcm=ortts_speech_audio_samples(audio);size_t n=ortts_speech_audio_frames(audio);int rate=ortts_speech_audio_sample_rate(audio);
   if(!streaming&&speechPcm(&receiver,pcm,n,rate,1))throw std::runtime_error("Playback callback failed");
