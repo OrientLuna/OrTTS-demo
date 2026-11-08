@@ -23,6 +23,8 @@ ASR 支持麦克风权限、录音停止、取消和音频文件输入；Android
 
 下载清单来自 [共享模型目录](../runtime/models/catalog.example.json)。该文件保留 example 文件名，手机实际内置它的副本；每个资产包括 HTTPS 地址、固定 revision、大小和 SHA256，不跟踪远端 main。Android 原有模型入口仍使用固定 ModelScope 0.3.1-preview 清单；Apple 自研入口默认固定 0.3.1-preview LiquidCodec，并保留独立 0.2.0-preview LFM 兼容入口及旧模型目录。
 
+[下载通道](DOWNLOAD_CHANNELS.md)默认“自动”：优先复用最近成功通道，再尝试已登记的ModelScope、HF Mirror和Hugging Face。两端均可手动指定通道；没有对应镜像的模型会明确提示，不推测仓库地址。切换通道仍校验相同大小和SHA256，失败文件不安装。
+
 下载到临时文件，校验后替换；已通过校验的文件直接复用，取消时不会把未完成文件当作可用模型。未完成的大文件重新下载，不保证 HTTP 断点续传。保持应用在前台。Android 多模型支持 ZIP 导入（保留清单相对路径），iOS 导入包含同样相对路径的模型文件夹；导入也必须匹配大小和 SHA256，不接受任意 GGUF。
 
 没有将权重嵌入 APK/应用，也没有把目录的 `distribution_cleared` 自动改成 true。模型/音色许可提示与权重限制分别保留；Piper Lessac 的研究语料使用限制不能当作通用商用许可。ZipVoice 仍需参考音频/转写接线，未列入手机菜单。

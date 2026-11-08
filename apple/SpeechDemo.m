@@ -1,3 +1,4 @@
+#import "DownloadChannels.h"
 #import "SpeechDemo.h"
 #import "StreamPlayback.h"
 #import "WorkQueue.h"
@@ -31,6 +32,7 @@ static BOOL SpeechValid(NSURL *file,NSDictionary *asset,BOOL(^cancel)(void)) {
 }
 @property UISegmentedControl *task;
 @property UIStackView *audioActions;
+@property UIButton *channelButton;
 @property UIButton *modelButton,*voiceButton,*downloadButton,*modelImportButton,*primaryButton,*importButton,*lastAudioButton,*stopButton;
 @property BOOL importingModels;
 @property UILabel *information,*status;
@@ -52,18 +54,19 @@ static int DemoSpeechPCM(void *user,const float*p,size_t n,int32_t rate,int32_t 
 static int DemoSpeechText(void *user,const ortts_asr_stream_event*event){@autoreleasepool{return [(__bridge SpeechDemo*)user receiveText:event];}}
 
 @implementation SpeechDemo
+- (void)viewWillAppear:(BOOL)animated{[super viewWillAppear:animated];OrTTSRefreshDownloadChannelButton(self.channelButton);}
 - (UIButton*)button:(NSString*)title action:(SEL)selector {
     UIButton*b=[UIButton buttonWithType:UIButtonTypeSystem];[b setTitle:title forState:UIControlStateNormal];if(selector)[b addTarget:self action:selector forControlEvents:UIControlEventTouchUpInside];NSLayoutConstraint*h=[b.heightAnchor constraintGreaterThanOrEqualToConstant:44];h.priority=999;h.active=YES;return b;
 }
 - (void)message:(NSString*)value { dispatch_async(dispatch_get_main_queue(),^{self.status.text=value;NSLog(@"SpeechDemo: %@",value);}); }
 - (void)working:(BOOL)value {
-    self.busy=value;for(UIControl*c in @[self.task,self.modelButton,self.voiceButton,self.downloadButton,self.modelImportButton,self.importButton,self.lastAudioButton])c.enabled=!value;
+    self.busy=value;for(UIControl*c in @[self.task,self.modelButton,self.voiceButton,self.channelButton,self.downloadButton,self.modelImportButton,self.importButton,self.lastAudioButton])c.enabled=!value;
     self.input.editable=!value;self.primaryButton.enabled=!value||self.recording;
     [self.primaryButton setTitle:self.recording?@"结束录音并识别":self.task.selectedSegmentIndex==0?@"合成并播放":@"开始录音识别" forState:UIControlStateNormal];self.stopButton.enabled=value||self.playback.active;
 }
 - (void)viewDidLoad {
     [super viewDidLoad];_nativeLock=[NSLock new];_captureLock=[NSLock new];_captureSlots=dispatch_semaphore_create(8);_finals=[NSMutableDictionary new];self.view.backgroundColor=UIColor.systemGroupedBackgroundColor;
-    NSURLSessionConfiguration*configuration=NSURLSessionConfiguration.ephemeralSessionConfiguration;configuration.URLCredentialStorage=nil;configuration.HTTPShouldSetCookies=NO;configuration.timeoutIntervalForRequest=30;configuration.timeoutIntervalForResource=1800;self.session=[NSURLSession sessionWithConfiguration:configuration];
+    NSURLSessionConfiguration*configuration=NSURLSessionConfiguration.ephemeralSessionConfiguration;configuration.URLCredentialStorage=nil;configuration.HTTPShouldSetCookies=NO;configuration.timeoutIntervalForRequest=15;configuration.timeoutIntervalForResource=1800;self.session=[NSURLSession sessionWithConfiguration:configuration];
     NSData*data=[NSData dataWithContentsOfURL:[NSBundle.mainBundle URLForResource:@"SpeechModels" withExtension:@"json"]];NSDictionary*document=data?[NSJSONSerialization JSONObjectWithData:data options:0 error:nil]:nil;
     self.catalog=[document[@"schema"] isEqual:@"ortts-speech-catalog-v1"]?document[@"models"]:@[];
     UIScrollView*scroll=[UIScrollView new];scroll.translatesAutoresizingMaskIntoConstraints=NO;scroll.keyboardDismissMode=UIScrollViewKeyboardDismissModeInteractive;[self.view addSubview:scroll];UIStackView*stack=[UIStackView new];stack.axis=UILayoutConstraintAxisVertical;stack.spacing=12;stack.translatesAutoresizingMaskIntoConstraints=NO;[scroll addSubview:stack];
@@ -74,6 +77,7 @@ static int DemoSpeechText(void *user,const ortts_asr_stream_event*event){@autore
     self.voiceButton=[self button:@"选择音色" action:nil];self.voiceButton.showsMenuAsPrimaryAction=YES;[stack addArrangedSubview:self.voiceButton];
     self.information=[UILabel new];self.information.numberOfLines=0;self.information.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];[stack addArrangedSubview:self.information];
     [stack addArrangedSubview:[self button:@"模型许可与来源" action:@selector(openLicense)]];
+    self.channelButton=OrTTSDownloadChannelButton(self);[stack addArrangedSubview:self.channelButton];
     self.downloadButton=[self button:@"下载 / 检查所选模型" action:@selector(downloadModel)];[stack addArrangedSubview:self.downloadButton];
     self.modelImportButton=[self button:@"导入所选模型文件夹" action:@selector(importModels)];[stack addArrangedSubview:self.modelImportButton];
     self.input=[UITextView new];self.input.text=@"Hello, welcome to local speech synthesis.";self.input.font=[UIFont preferredFontForTextStyle:UIFontTextStyleBody];NSLayoutConstraint*inputHeight=[self.input.heightAnchor constraintEqualToConstant:100];inputHeight.priority=999;inputHeight.active=YES;[stack addArrangedSubview:self.input];
@@ -93,7 +97,7 @@ static int DemoSpeechText(void *user,const ortts_asr_stream_event*event){@autore
     UIStackView*models=[[UIStackView alloc]initWithArrangedSubviews:@[self.downloadButton,self.modelImportButton]];models.spacing=8;models.distribution=UIStackViewDistributionFillEqually;
     UIStackView*audio=[[UIStackView alloc]initWithArrangedSubviews:@[self.importButton,self.lastAudioButton]];audio.spacing=8;audio.distribution=UIStackViewDistributionFillEqually;self.audioActions=audio;audio.hidden=self.task.selectedSegmentIndex==0;
     UIStackView*playback=[[UIStackView alloc]initWithArrangedSubviews:@[self.stopButton,[self button:@"重播上次合成" action:@selector(replay)]]];playback.spacing=8;playback.distribution=UIStackViewDistributionFillEqually;
-    for(UIView*v in @[title,self.task,selection,self.information,models,self.input,self.primaryButton,audio,self.status,self.result,playback,[self button:@"模型许可与来源" action:@selector(openLicense)]])[stack addArrangedSubview:v];
+    for(UIView*v in @[title,self.task,selection,self.information,self.channelButton,models,self.input,self.primaryButton,audio,self.status,self.result,playback,[self button:@"模型许可与来源" action:@selector(openLicense)]])[stack addArrangedSubview:v];
     self.status.text=@"选择任务和模型，下载一次后可离线使用。录音仅在本机处理。中文合成请使用“自研TTS”页。";
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(interrupted:) name:UIApplicationWillResignActiveNotification object:nil];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(interrupted:) name:AVAudioSessionInterruptionNotification object:nil];
@@ -156,14 +160,18 @@ if([scenario isEqual:@"ttl"])dispatch_after(dispatch_time(DISPATCH_TIME_NOW,31*N
         for(NSDictionary*a in assets){if(self.cancelled)break;NSURL*target=SpeechAsset(a[@"path"]);if(!target){error=SpeechError(@"模型路径无效");break;}[self message:[NSString stringWithFormat:@"%lu/%lu 检查 %@",(unsigned long)++index,(unsigned long)assets.count,target.lastPathComponent]];
             if(SpeechValid(target,a,^BOOL{return self.cancelled;}))continue;
             [NSFileManager.defaultManager createDirectoryAtURL:target.URLByDeletingLastPathComponent withIntermediateDirectories:YES attributes:nil error:&error];if(error)break;
-            NSURL*url=[NSURL URLWithString:a[@"url"]];if(![url.scheme isEqual:@"https"]){error=SpeechError(@"模型地址需要HTTPS");break;}dispatch_semaphore_t done=dispatch_semaphore_create(0);__block NSError*failure=nil;
-            self.downloadTask=[self.session downloadTaskWithURL:url completionHandler:^(NSURL*temp,NSURLResponse*response,NSError*network){
-                if(network)failure=network;else if(((NSHTTPURLResponse*)response).statusCode!=200)failure=SpeechError([NSString stringWithFormat:@"下载HTTP %ld",(long)((NSHTTPURLResponse*)response).statusCode]);
-                else if(!SpeechValid(temp,a,^BOOL{return self.cancelled;}))failure=SpeechError(@"模型大小或SHA256不匹配，未安装");
-                else if(self.cancelled)failure=SpeechError(@"已停止");
-                else if([NSFileManager.defaultManager fileExistsAtPath:target.path]){[NSFileManager.defaultManager replaceItemAtURL:target withItemAtURL:temp backupItemName:nil options:0 resultingItemURL:nil error:&failure];}
-                else [NSFileManager.defaultManager moveItemAtURL:temp toURL:target error:&failure];dispatch_semaphore_signal(done);
-            }];[self message:[NSString stringWithFormat:@"下载 %@（%.1f MB）",target.lastPathComponent,[a[@"bytes"] doubleValue]/1e6]];[self.downloadTask resume];if(self.cancelled)[self.downloadTask cancel];dispatch_semaphore_wait(done,DISPATCH_TIME_FOREVER);self.downloadTask=nil;if(failure){error=failure;break;}
+            NSError*routeError=nil;NSArray<NSURL*>*candidates=OrTTSDownloadCandidates(a[@"url"],a[@"download_urls"],&routeError);BOOL installed=NO;
+            for(NSURL*url in candidates){if(self.cancelled)break;dispatch_semaphore_t done=dispatch_semaphore_create(0);__block NSError*failure=nil;
+                self.downloadTask=[self.session downloadTaskWithURL:url completionHandler:^(NSURL*temp,NSURLResponse*response,NSError*network){
+                    if(network)failure=network;else if(((NSHTTPURLResponse*)response).statusCode!=200||![response.URL.scheme isEqual:@"https"])failure=SpeechError(@"模型下载HTTP失败");
+                    else if(!SpeechValid(temp,a,^BOOL{return self.cancelled;}))failure=SpeechError(@"模型大小或SHA256不匹配，未安装");
+                    else if(self.cancelled)failure=SpeechError(@"已停止");
+                    else if([NSFileManager.defaultManager fileExistsAtPath:target.path]){[NSFileManager.defaultManager replaceItemAtURL:target withItemAtURL:temp backupItemName:nil options:0 resultingItemURL:nil error:&failure];}
+                    else [NSFileManager.defaultManager moveItemAtURL:temp toURL:target error:&failure];dispatch_semaphore_signal(done);
+                }];[self message:[NSString stringWithFormat:@"%@ · 下载 %@（%.1f MB）",OrTTSDownloadChannelName(url),target.lastPathComponent,[a[@"bytes"] doubleValue]/1e6]];[self.downloadTask resume];if(self.cancelled)[self.downloadTask cancel];dispatch_semaphore_wait(done,DISPATCH_TIME_FOREVER);self.downloadTask=nil;
+                if(!failure&&!self.cancelled){OrTTSDownloadSucceeded(url);installed=YES;break;}routeError=failure;
+            }
+            if(!installed){error=routeError?:SpeechError(self.cancelled?@"已停止":@"所有可用下载通道均失败");break;}
         }
         [self done:self.cancelled?@"下载已停止，已校验文件会保留":error.localizedDescription ?: @"模型已就绪，大小与SHA256均通过"];
     });

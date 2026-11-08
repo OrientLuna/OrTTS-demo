@@ -47,7 +47,7 @@ public final class SpeechActivity extends Activity {
   stop=button("取消当前任务",()->cancel(false));
   replayButton=button("重播上次合成",()->{if(busy)return;File file=new File(getFilesDir(),"speech-last.wav");try{if(replay!=null)replay.release();replay=new MediaPlayer();replay.setDataSource(file.getPath());replay.prepare();replay.start();}catch(Exception e){message("暂无可播放音频");}});
   legacyButton=button("返回自研中文 TTS（0.6B / 1.7B）",()->{if(busy){leaveAfterStop=true;cancel(false);}else finish();});
-  result=new TextView(this);result.setTextIsSelectable(true);result.setTextSize(18);box.addView(result);status=new TextView(this);status.setTextIsSelectable(true);box.addView(status);arrange(title);
+  result=new TextView(this);result.setTextIsSelectable(true);result.setTextSize(18);box.addView(result);status=new TextView(this);status.setTextIsSelectable(true);box.addView(status);arrange(title);DownloadSources.addSelector(this,box);
   try{store=new SpeechModels(this,this::message);}catch(Exception e){message(e.getMessage());run.setEnabled(false);download.setEnabled(false);return;}
   task.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?>p){}public void onItemSelected(AdapterView<?>p,View v,int position,long id){updateModels();}});
   model.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?>p){}public void onItemSelected(AdapterView<?>p,View v,int position,long id){updateInfo();}});

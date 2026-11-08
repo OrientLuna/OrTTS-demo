@@ -1,3 +1,4 @@
+#import "DownloadChannels.h"
 #import "Demo.h"
 #import "StreamPlayback.h"
 #import "WorkQueue.h"
@@ -40,6 +41,7 @@ static BOOL Valid(NSURL *url, NSDictionary *entry) {
 @property UITextView *text;
 @property UILabel *status;
 @property UIProgressView *progress;
+@property UIButton *channelButton;
 @property UIButton *download, *synthesize, *stop, *importButton, *replay;
 @property AVAudioPlayer *player;
 @property StreamPlayback *stream;
@@ -54,6 +56,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     @autoreleasepool { return [(__bridge Demo *)user receivePCM:pcm count:count rate:rate]; }
 }
 @implementation Demo
+- (void)viewWillAppear:(BOOL)animated{[super viewWillAppear:animated];OrTTSRefreshDownloadChannelButton(self.channelButton);}
 - (int)receivePCM:(const float *)pcm count:(size_t)count rate:(int32_t)rate {
     if (self.cancelled || rate!=24000 || count>UINT32_MAX) return 1;
     AVAudioFormat *format=[[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32 sampleRate:rate channels:1 interleaved:NO];
@@ -72,7 +75,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
 - (void)message:(NSString *)message { dispatch_async(dispatch_get_main_queue(), ^{ self.status.text = message; }); }
 - (void)setWorking:(BOOL)working {
     self.busy=working;
-    for (UIControl *c in @[self.package,self.variant,self.voice,self.download,self.synthesize,self.importButton,self.replay]) c.enabled=!working;
+    for (UIControl *c in @[self.package,self.variant,self.voice,self.download,self.channelButton,self.synthesize,self.importButton,self.replay]) c.enabled=!working;
     self.stop.enabled=working || self.player.isPlaying || self.stream.active;
 }
 - (UIButton *)button:(NSString *)title action:(SEL)action {
@@ -90,6 +93,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     self.package=[[UISegmentedControl alloc] initWithItems:@[@"LiquidCodec · 新版",@"LFM · 旧版兼容"]];self.package.selectedSegmentIndex=0;[self.package addTarget:self action:@selector(packageChanged) forControlEvents:UIControlEventValueChanged];[stack addArrangedSubview:self.package];
     self.variant=[[UISegmentedControl alloc] initWithItems:@[@"P3 · 速度优先",@"P5 · 标准"]]; self.variant.selectedSegmentIndex=0; [stack addArrangedSubview:self.variant];
     self.voice=[[UISegmentedControl alloc] initWithItems:@[@"女声",@"男声"]]; self.voice.selectedSegmentIndex=0; [stack addArrangedSubview:self.voice];
+    self.channelButton=OrTTSDownloadChannelButton(self);[stack addArrangedSubview:self.channelButton];
     self.download=[self button:@"下载 / 检查所选模型" action:@selector(downloadModel)]; [stack addArrangedSubview:self.download];
     self.importButton=[self button:@"导入本地模型文件夹" action:@selector(importModel)]; [stack addArrangedSubview:self.importButton];
     self.progress=[UIProgressView new]; [stack addArrangedSubview:self.progress];
@@ -142,8 +146,9 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
 - (void)downloadModel {
     NSString *variant=[self selectedVariant]; self.cancelled=NO; [self setWorking:YES]; [self message:@"正在获取模型清单…"];
     dispatch_async(OrTTSDemoQueue(), ^{
-        NSError *error=nil; NSData *data=[NSData dataWithContentsOfURL:[NSURL URLWithString:self.legacyPack?LegacyManifestURL:LiquidManifestURL] options:0 error:&error];
-        NSDictionary *manifest=TrustedManifest(data) ? [NSJSONSerialization JSONObjectWithData:data options:0 error:&error]:nil;
+        NSError *error=nil;NSData *data=nil;NSArray<NSURL*>*manifestURLs=OrTTSDownloadCandidates(self.legacyPack?LegacyManifestURL:LiquidManifestURL,nil,&error);
+        for(NSURL*url in manifestURLs){if(self.cancelled)break;NSData*candidate=[NSData dataWithContentsOfURL:url options:0 error:&error];if(TrustedManifest(candidate)){data=candidate;error=nil;break;}error=[NSError errorWithDomain:@"OrTTSDownload" code:4 userInfo:@{NSLocalizedDescriptionKey:@"无法获取可信模型清单"}];}
+        NSDictionary *manifest=data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:&error]:nil;
         NSArray *entries=[self entries:manifest variant:variant];
         if (!entries) { [self finish:error.localizedDescription ?: @"模型清单无效"]; return; }
         NSURL *root=[self modelRoot];
@@ -154,15 +159,19 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
             [self message:[NSString stringWithFormat:@"%lu/%lu 检查 / 下载 %@",(unsigned long)index+1,(unsigned long)entries.count,entry[@"path"]]];
             if (!Valid(target,entry)) {
                 [NSFileManager.defaultManager createDirectoryAtURL:target.URLByDeletingLastPathComponent withIntermediateDirectories:YES attributes:nil error:&error];
-                dispatch_semaphore_t done=dispatch_semaphore_create(0); __block NSString *failure=nil;
-                NSURL *url=[NSURL URLWithString:[manifest[@"base_url"] stringByAppendingString:entry[@"path"]]];
-                self.task=[NSURLSession.sharedSession downloadTaskWithURL:url completionHandler:^(NSURL *temp, NSURLResponse *response, NSError *e) {
-                    if (e || ((NSHTTPURLResponse *)response).statusCode!=200) failure=e.localizedDescription ?: @"下载失败";
-                    else if (!Valid(temp,entry)) failure=@"模型大小或 SHA256 校验失败";
-                    else { [NSFileManager.defaultManager removeItemAtURL:target error:nil]; NSError *move=nil; if (![NSFileManager.defaultManager moveItemAtURL:temp toURL:target error:&move]) failure=move.localizedDescription; }
-                    dispatch_semaphore_signal(done);
-                }]; [self.task resume]; if (self.cancelled) [self.task cancel]; dispatch_semaphore_wait(done,DISPATCH_TIME_FOREVER); self.task=nil;
-                if (failure) { [self finish:self.cancelled ? @"下载已停止，可重新检查下载":failure]; return; }
+                NSString*primary=entry[@"url"]?:[manifest[@"base_url"] stringByAppendingString:entry[@"path"]];NSError*routeError=nil;NSArray<NSURL*>*candidates=OrTTSDownloadCandidates(primary,entry[@"download_urls"],&routeError);BOOL installed=NO;
+                for(NSURL*url in candidates){if(self.cancelled)break;dispatch_semaphore_t done=dispatch_semaphore_create(0);__block NSString*failure=nil;
+                    NSURLSessionConfiguration*config=NSURLSessionConfiguration.ephemeralSessionConfiguration;config.URLCredentialStorage=nil;config.HTTPShouldSetCookies=NO;config.timeoutIntervalForRequest=15;config.timeoutIntervalForResource=1800;NSURLSession*session=[NSURLSession sessionWithConfiguration:config];
+                    self.task=[session downloadTaskWithURL:url completionHandler:^(NSURL*temp,NSURLResponse*response,NSError*e){
+                        if(e||((NSHTTPURLResponse*)response).statusCode!=200||![response.URL.scheme isEqual:@"https"])failure=e.localizedDescription?:@"下载失败";
+                        else if(!Valid(temp,entry))failure=@"模型大小或SHA256校验失败";
+                        else if(self.cancelled)failure=@"已停止";
+                        else{NSError*move=nil;if([NSFileManager.defaultManager fileExistsAtPath:target.path])[NSFileManager.defaultManager replaceItemAtURL:target withItemAtURL:temp backupItemName:nil options:0 resultingItemURL:nil error:&move];else[NSFileManager.defaultManager moveItemAtURL:temp toURL:target error:&move];failure=move.localizedDescription;}
+                        dispatch_semaphore_signal(done);
+                    }];[self message:[NSString stringWithFormat:@"%@ · 下载 %@",OrTTSDownloadChannelName(url),target.lastPathComponent]];[self.task resume];if(self.cancelled)[self.task cancel];dispatch_semaphore_wait(done,DISPATCH_TIME_FOREVER);self.task=nil;[session finishTasksAndInvalidate];
+                    if(!failure&&!self.cancelled){OrTTSDownloadSucceeded(url);installed=YES;break;}routeError=[NSError errorWithDomain:@"OrTTSDownload" code:3 userInfo:@{NSLocalizedDescriptionKey:failure?:@"已停止"}];
+                }
+                if(!installed){[self finish:self.cancelled?@"下载已停止，可重新检查下载":routeError.localizedDescription?:@"所有可用下载通道均失败"];return;}
             }
             index++; float fraction=(float)index/entries.count; dispatch_async(dispatch_get_main_queue(), ^{ self.progress.progress=fraction; });
         }

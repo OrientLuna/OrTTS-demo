@@ -30,3 +30,7 @@ afplay ~/Documents/ortts-output.caf
 iOS 真机和模拟器均编译通过。iOS Scene 生命周期、键盘收起功能已接入；模拟器验证了真实P3合成、音频文件、流播放启动/排空、播放中取消、缺失小文件下载补齐及全量校验。iPhone 17 实测见 [基准数据](../benchmarks/iphone17-cpu.json)。未验证全部文件选择器交互、真机音频中断、所有设备、长文EOS或音质。
 
 显式开发启动参数：`--synthesis-smoke`、`--download-smoke`、`--cancel-stream-smoke`；文本与选择可用 `--benchmark-text TEXT`、`--benchmark-p5`、`--benchmark-male`。普通启动不自动下载或合成。性能日志不代表真实声学起播延迟。
+
+### 下载通道
+
+iOS两个模型页面均提供“自动／Hugging Face／HF Mirror／ModelScope”选择，设置共享。自动使用最近校验成功的通道，失败后尝试已登记备用地址；只有存在已核验镜像的模型才提供对应通道。切换源不改变模型版本或大小、SHA256校验。本地模型导入保持可用。
