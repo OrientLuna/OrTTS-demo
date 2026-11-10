@@ -212,13 +212,16 @@ ortts_status ortts_engine_synthesize(ortts_engine* e,const ortts_request* req,or
    check(audiocpp_request_set_option(q.p,"stream_chunk_policy","fixed"));
    check(audiocpp_stream_set_callback(e->session,capture,&c));
    auto status=audiocpp_stream_start(e->session,q.p);
+   const char* raw_error=status==AUDIOCPP_OK?nullptr:audiocpp_last_error();
+   const std::string stream_error=raw_error?raw_error:"Stream generation failed";
    (void)audiocpp_stream_set_callback(e->session,nullptr,nullptr);
    if(e->cancelled||c.failed) {
     (void)audiocpp_stream_reset(e->session);
     error=c.failed?"PCM callback failed":"Generation cancelled";
     return c.failed?ORTTS_RUNTIME_ERROR:ORTTS_CANCELLED;
    }
-   check(status);check(audiocpp_stream_finish(e->session,&result.p));
+   if(status!=AUDIOCPP_OK)throw std::runtime_error(stream_error);
+   check(audiocpp_stream_finish(e->session,&result.p));
   }else check(audiocpp_session_run(e->session,q.p,&result.p));
   if(e->cancelled){error="Generation cancelled";return ORTTS_CANCELLED;}
   const float* pcm=nullptr;size_t n=0;int rate=0,channels=0;
