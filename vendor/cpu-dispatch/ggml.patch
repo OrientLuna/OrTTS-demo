@@ -1,0 +1,48 @@
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -532,6 +532,11 @@
+             ggml_add_cpu_backend_variant(armv9.2_1    DOTPROD FP16_VECTOR_ARITHMETIC SVE MATMUL_INT8 SME)
+             ggml_add_cpu_backend_variant(armv9.2_2    DOTPROD FP16_VECTOR_ARITHMETIC SVE MATMUL_INT8 SVE2 SME)
+         elseif (CMAKE_SYSTEM_NAME MATCHES "Android")
++          if (ORTTS_ANDROID_CPU_AUTO)
++            ggml_add_cpu_backend_variant(android_armv8.0_1)
++            ggml_add_cpu_backend_variant(android_armv8.2_2 DOTPROD FP16_VECTOR_ARITHMETIC)
++            ggml_add_cpu_backend_variant(android_armv8.6_1 DOTPROD FP16_VECTOR_ARITHMETIC MATMUL_INT8)
++          else()
+             # Android-specific backends with SoC-compatible feature sets
+             ggml_add_cpu_backend_variant(android_armv8.0_1)
+             ggml_add_cpu_backend_variant(android_armv8.2_1    DOTPROD)
+@@ -540,6 +545,7 @@
+             ggml_add_cpu_backend_variant(android_armv9.0_1    DOTPROD MATMUL_INT8 FP16_VECTOR_ARITHMETIC SVE2)
+             ggml_add_cpu_backend_variant(android_armv9.2_1    DOTPROD MATMUL_INT8 FP16_VECTOR_ARITHMETIC SVE SME)
+             ggml_add_cpu_backend_variant(android_armv9.2_2    DOTPROD MATMUL_INT8 FP16_VECTOR_ARITHMETIC SVE SVE2 SME)
++          endif()
+         elseif (APPLE)
+             ggml_add_cpu_backend_variant(apple_m1             DOTPROD)
+             ggml_add_cpu_backend_variant(apple_m2_m3          DOTPROD MATMUL_INT8)
+--- a/src/ggml-cpu/CMakeLists.txt
++++ b/src/ggml-cpu/CMakeLists.txt
+@@ -250,6 +250,9 @@
+                         set(ARCH_TAGS "${ARCH_TAGS}+sme")
+                         list(APPEND ARCH_DEFINITIONS GGML_USE_SME)
+                     endif()
++                    if (ORTTS_ANDROID_CPU_AUTO)
++                        set(ARM_MCPU "armv8-a")
++                    endif()
+                     list(APPEND ARCH_FLAGS "-march=${ARM_MCPU}${ARCH_TAGS}")
+                     ggml_add_cpu_backend_features(${GGML_CPU_NAME} arm ${ARCH_DEFINITIONS})
+                 endif()
+--- a/src/ggml-cpu/ggml-cpu.cpp
++++ b/src/ggml-cpu/ggml-cpu.cpp
+@@ -656,6 +656,11 @@
+ }
+ 
+ static void * ggml_backend_cpu_get_proc_address(ggml_backend_reg_t reg, const char * name) {
++#ifdef ORTTS_ANDROID_CPU_AUTO
++    if (strcmp(name, "ggml_graph_compute_with_ctx") == 0) {
++        return (void *)ggml_graph_compute_with_ctx;
++    }
++#endif
+     if (strcmp(name, "ggml_backend_set_n_threads") == 0) {
+         ggml_backend_set_n_threads_t fct = ggml_backend_cpu_set_n_threads;
+         return (void *)fct;

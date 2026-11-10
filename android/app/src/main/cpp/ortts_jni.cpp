@@ -1,4 +1,14 @@
 #include <jni.h>
+#include <cstdlib>
+
+extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_NativeBridge_cpuModuleForQANative(JNIEnv* env,jclass,jstring module){
+#if defined(ORTTS_ANDROID_CPU_AUTO) && ORTTS_CPU_DISPATCH_QA
+ const char* value=env->GetStringUTFChars(module,nullptr);
+ if(value){setenv("ORTTS_QA_CPU_MODULE",value,1);env->ReleaseStringUTFChars(module,value);}
+#else
+ env->ThrowNew(env->FindClass("java/io/IOException"),"CPU override not compiled");
+#endif
+}
 #include <audiocpp.h>
 #include "ortts_speech.h"
 #include "../../../../../runtime/src/model_pack.h"

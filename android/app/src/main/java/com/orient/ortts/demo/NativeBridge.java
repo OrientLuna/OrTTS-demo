@@ -4,7 +4,7 @@ final class NativeBridge {
  static synchronized void ensureLoaded()throws java.io.IOException{
   if(loaded)return;
   try{
-   if(!BuildConfig.NATIVE_CPU_PROFILE.equals("arm64-baseline")&&!DeviceSupport.supportsCurrentRuntime())throw new java.io.IOException("当前设备不支持此安装包需要的CPU指令集（DotProd、I8MM、FP16）。");
+    if(!BuildConfig.NATIVE_CPU_PROFILE.equals("arm64-auto")&&!BuildConfig.NATIVE_CPU_PROFILE.equals("arm64-baseline")&&!DeviceSupport.supportsCurrentRuntime())throw new java.io.IOException("当前设备不支持此安装包需要的CPU指令集（DotProd、I8MM、FP16）。");
    System.loadLibrary("ortts_jni");loaded=true;
   }catch(LinkageError e){throw new java.io.IOException("无法加载语音引擎："+e.getMessage(),e);}
  }
@@ -18,5 +18,10 @@ final class NativeBridge {
  private static native boolean supportsLiquidCodecNative();
  static String runReference(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha,String ref,String refText,boolean icl)throws java.io.IOException{ensureLoaded();return runNative(root,variant,voice,text,threads,seed,streaming,sink,out,bridgeSha,ref,refText,icl);}
  private static native String runNative(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha,String ref,String refText,boolean icl);
- private static native void releaseNative();
+  private static native void releaseNative();
+  static void cpuModuleForQA(String module)throws java.io.IOException{
+   if(!BuildConfig.DEBUG||!BuildConfig.NATIVE_CPU_PROFILE.equals("arm64-auto"))throw new java.io.IOException("CPU override is QA auto-only");
+   ensureLoaded();cpuModuleForQANative(module);
+  }
+  private static native void cpuModuleForQANative(String module);
 }

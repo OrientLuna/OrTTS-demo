@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = {'linux-x86_64': ('x86_64-baseline','x86_64-avx2'),
            'linux-aarch64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'),
-           'android-arm64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'),
+           'android-arm64': ('arm64-baseline','arm64-dotprod','arm64-i8mm','arm64-auto'),
            'macos-arm64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'), 'macos-x86_64': ('x86_64-baseline','x86_64-avx2'),
            'ios-arm64': ('arm64-baseline','arm64-dotprod','arm64-i8mm'), 'ios-simulator-arm64': ('arm64-baseline',)}
 
@@ -37,6 +37,13 @@ def main():
          '-DFETCHCONTENT_FULLY_DISCONNECTED=ON']
     if a.speech:cmd+=['-DORTTS_ENABLE_SPEECH=ON']
     if a.liquidcodec:cmd+=['-DORTTS_ENABLE_LIQUIDCODEC=ON']
+    if 'cpu_dispatch' in lock:
+        ur=json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text())
+        cmd+=['-DORTTS_LLAMA_SOURCE_DIR='+ur['llama_source_read_only']]
+    if a.profile=='arm64-auto':
+        if 'cpu_dispatch' not in lock:raise ValueError('Prepare sources with tools/prepare_cpu_dispatch.py first')
+        cmd+=['-DORTTS_ANDROID_CPU_AUTO=ON']
+    else:cmd+=['-DORTTS_ANDROID_CPU_AUTO=OFF']
     if a.ninja:cmd+=['-DCMAKE_MAKE_PROGRAM='+str(a.ninja.resolve())]
     if apple:
         cmd+=['-DCMAKE_OSX_ARCHITECTURES='+('x86_64' if a.target=='macos-x86_64' else 'arm64'),'-DGGML_ACCELERATE=OFF']
@@ -67,6 +74,7 @@ def main():
              'plugin_source_sha256':{str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(files)},
              'argv':commands,'speech':lock.get('speech'),'models_included':False,'liquidcodec':a.liquidcodec,
              'unified_source_receipt':json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text()) if a.liquidcodec else None}
+    if 'cpu_dispatch' in lock:receipt['cpu_dispatch']=lock['cpu_dispatch']
     print(json.dumps(receipt,indent=2))
     if a.dry_run:return
     if apple and platform.system()!='Darwin':raise RuntimeError('Apple SDK builds require a Mac with Xcode')

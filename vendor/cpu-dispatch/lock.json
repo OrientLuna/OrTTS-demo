@@ -1,0 +1,105 @@
+{
+  "schema": "ortts-cpu-dispatch-v1",
+  "base_commit": "0bd756d1ede64ae812aeb972de5ae0c322983dcf",
+  "patches": {
+    "audio.patch": "2b51054d5293836b86afa2a4e9a87102c2158e279839871998a3a3032685b82c",
+    "ggml.patch": "e7e848d875d64ef6b37e19d0a22c64390dac3f2d3aeef7a92e292d339c42fc01"
+  },
+  "files": [
+    {
+      "scope": "audio",
+      "path": "CMakeLists.txt",
+      "base_sha256": "64ba8e3245bacfaf1164d4895ff0c67a1fd5da9e47776ac853259235711c0e17",
+      "sha256": "a3235ed69aa51ec3e99acad8fddf700a403d0b148aa8fe6959d7a326c756c7b6"
+    },
+    {
+      "scope": "audio",
+      "path": "include/engine/framework/core/execution_context.h",
+      "base_sha256": "eb30b5bedc675704b698f80cbef6a27329e83ebf63a20e04987aa713bb1e59bc",
+      "sha256": "8d52b509f7fab6b20dc08b3b7af766e0cfa603d4696072b9a6e91ac322ad10a5"
+    },
+    {
+      "scope": "audio",
+      "path": "src/framework/core/backend.cpp",
+      "base_sha256": "2775c727c608e678d0d7d5bf71af1ed20d86a2773b4b7f6d3b7241c5d560bb8e",
+      "sha256": "67e04a2712287abbddf9647f66a2ef8af80d966fc6375c4535195603049b8b9f"
+    },
+    {
+      "scope": "audio",
+      "path": "src/framework/core/execution_context.cpp",
+      "base_sha256": "1b9f1e2788e13b53280cfc66a6efd89d23706c77e5ab44d28e619348922586c3",
+      "sha256": "8ff8688b1c1fd5789e53ab2c812cdd89974bf7a24b127ca13ae924cb82d011e7"
+    },
+    {
+      "scope": "audio",
+      "path": "src/framework/core/android_cpu_dispatch.h",
+      "base_sha256": null,
+      "sha256": "0f89e357e4ee33b6a61aa5602a318ab6333b6c1ac5cd9f3a5f8450eb5e3870a4"
+    },
+    {
+      "scope": "audio",
+      "path": "src/framework/core/android_cpu_features.h",
+      "base_sha256": null,
+      "sha256": "0384e1c637d8644a9aea5a9bb0a1ccc56a1b894cfacfcec614744bb2b7f0981f"
+    },
+    {
+      "scope": "audio",
+      "path": "src/models/qwen3_tts/ortts_joint/cpu_graph_compute.h",
+      "base_sha256": null,
+      "sha256": "304f5704a4684c92c554e45694da593bdcebf7e02b0ee795c54e65ae7b50f197"
+    },
+    {
+      "scope": "audio",
+      "path": "src/models/qwen3_tts/ortts_joint/private_adapter.cpp",
+      "base_sha256": "86981608e059267dc2b5b7b2284cc3f25b1527c1abf19277c73736dec3846497",
+      "sha256": "9827b908cf7b43f430719ab78eb40c9307af35849855e6370e3a7aa862fe10e9"
+    },
+    {
+      "scope": "audio",
+      "path": "src/models/qwen3_tts/ortts_joint/translator.h",
+      "base_sha256": "9c40ae956007d55ce03515cbb6bb375b0bc43b161375de7107e01666389ad135",
+      "sha256": "a209b11a11b3648f7782735930a8261a8bc8859f779bca440afe5308e42bbaf0"
+    },
+    {
+      "scope": "audio",
+      "path": "src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp",
+      "base_sha256": "01a7bd04f18cf1f571377962d4db9d9e4b8310faae5382615c7df4e8fffdf713",
+      "sha256": "f185a587d62f4c3524e1a1abe1ba09ae9fcc0df93ecb20a7739c4ff75dd78e01"
+    },
+    {
+      "scope": "ggml",
+      "path": "src/CMakeLists.txt",
+      "base_sha256": "bae77e31bc3498973b435e29681c74e8a28857e84383698ef3b88ca2fb6b900a",
+      "sha256": "d24724e7b6f44b633dd806bc510c281fd4bdd84241cacfedd3cf157a7c0c83e8"
+    },
+    {
+      "scope": "ggml",
+      "path": "src/ggml-cpu/CMakeLists.txt",
+      "base_sha256": "b69ed1a14063642c47c70b7b4c67177388e02ee3c27d2e7adfde9ed5ba5859bf",
+      "sha256": "f8dbf5f59a3f35ed24ce227300945d7581a22e24780d605f5ac2b64203340bd4"
+    },
+    {
+      "scope": "ggml",
+      "path": "src/ggml-cpu/ggml-cpu.cpp",
+      "base_sha256": "ccf382d3fbf126b5ddb5850a0a970656fb24e00587da4003419439277c91cd01",
+      "sha256": "7d1d5c0e1986f4e4966d2feb51346886cfb5722828e6a9fc56889658dd6bc941"
+    },
+    {
+      "scope": "audio",
+      "path": "src/capi/audiocpp.cpp",
+      "base_sha256": "9ae9a5b133ff02e1dfafafb3a93af00760af17bdfc1b1404c7b3a7c58f657dfe",
+      "sha256": "1a76eb9701ccf380168087a65d2920fff28bc6162b4fdb3c71bc7e6902c4bc75"
+    }
+  ],
+  "modules": [
+    "android_armv8.0_1",
+    "android_armv8.2_2",
+    "android_armv8.6_1"
+  ],
+  "architectures": [
+    "armv8-a",
+    "armv8-a+dotprod+fp16",
+    "armv8-a+dotprod+fp16+i8mm"
+  ],
+  "default_static_unchanged": true
+}

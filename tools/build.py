@@ -7,22 +7,33 @@ def commands(a):
     try:from source_identity import identity
     except ModuleNotFoundError:from tools.source_identity import identity
     source=a.source.resolve();identity(source,getattr(a,'liquidcodec',False),getattr(a,'speech',False))
+    auto=getattr(a,'cpu_auto',False)
+    if auto and (a.platform!='android-arm64' or not (source/'ORTTS_CPU_DISPATCH_RECEIPT.json').exists()):raise ValueError('--cpu-auto requires Android and checked CPU dispatch sources')
     out=a.out.resolve() if a.out else ROOT/'build'/a.platform
     cmd=[a.cmake,'-S',str(ROOT),'-B',str(out),'-G','Ninja','-DCMAKE_BUILD_TYPE=Release','-DORTTS_AUDIOCPP_SOURCE='+str(source)]
+    cmd+=['-DORTTS_ANDROID_CPU_AUTO='+('ON' if auto else 'OFF')]
     if getattr(a,'liquidcodec',False):cmd+=['-DORTTS_ENABLE_LIQUIDCODEC=ON']
     if getattr(a,'speech',False):cmd+=['-DORTTS_ENABLE_SPEECH=ON','-DORTTS_CPU_PROFILE='+('x86_64-baseline' if a.platform=='linux-x86_64' else 'arm64-baseline'),'-DFETCHCONTENT_FULLY_DISCONNECTED=ON']
     if getattr(a,'android_jni',False):cmd+=['-DORTTS_BUILD_ANDROID_JNI=ON']
+    if auto:
+        cmd=[x for x in cmd if not x.startswith('-DORTTS_CPU_PROFILE=')]
+        cmd+=['-DORTTS_CPU_PROFILE=arm64-auto']
+    if (source/'ORTTS_CPU_DISPATCH_RECEIPT.json').exists():
+        ur=json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text())
+        cmd+=['-DORTTS_LLAMA_SOURCE_DIR='+ur['llama_source_read_only']]
     if a.ninja:cmd+=['-DCMAKE_MAKE_PROGRAM='+str(a.ninja.resolve())]
     if a.platform=='android-arm64':
         if not a.ndk:raise ValueError('--ndk is required; no SDK is downloaded')
-        cmd+=['-DCMAKE_TOOLCHAIN_FILE='+str(a.ndk.resolve()/'build/cmake/android.toolchain.cmake'),'-DANDROID_ABI=arm64-v8a','-DANDROID_PLATFORM=android-28','-DANDROID_STL=c++_shared','-DGGML_CPU_ARM_ARCH='+('armv8-a' if getattr(a,'speech',False) else a.android_isa)]
+        cmd+=['-DCMAKE_TOOLCHAIN_FILE='+str(a.ndk.resolve()/'build/cmake/android.toolchain.cmake'),'-DANDROID_ABI=arm64-v8a','-DANDROID_PLATFORM=android-28','-DANDROID_STL=c++_shared']
+        if not auto:cmd+=['-DGGML_CPU_ARM_ARCH='+('armv8-a' if getattr(a,'speech',False) else a.android_isa)]
     elif a.platform=='linux-aarch64':
         cmd+=['-DCMAKE_TOOLCHAIN_FILE='+str(ROOT/'platforms/linux-aarch64/toolchain.cmake'),'-DORTTS_C_COMPILER='+a.cc,'-DORTTS_CXX_COMPILER='+a.cxx,'-DGGML_CPU_ARM_ARCH='+('armv8-a' if getattr(a,'speech',False) else 'armv8.2-a+dotprod+fp16')]
         if a.sysroot:cmd+=['-DORTTS_TARGET_SYSROOT='+str(a.sysroot.resolve())]
     targets=['ortts_jni','ortts_device'] if getattr(a,'android_jni',False) else ['ortts-tts']
+    if auto:targets+=['ggml-cpu-android_armv8.0_1','ggml-cpu-android_armv8.2_2','ggml-cpu-android_armv8.6_1']
     return out,[cmd,[a.cmake,'--build',str(out),'--target',*targets,'--parallel',str(a.jobs)]]
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--cmake',default='cmake');p.add_argument('--ninja',type=Path);p.add_argument('--platform',choices=['android-arm64','linux-aarch64','linux-x86_64'],required=True);p.add_argument('--source',type=Path,default=ROOT/'_work/audio.cpp');p.add_argument('--out',type=Path);p.add_argument('--ndk',type=Path);p.add_argument('--android-isa',default='armv8.2-a+dotprod+i8mm+fp16',choices=['armv8-a','armv8.2-a+dotprod+i8mm+fp16']);p.add_argument('--sysroot',type=Path);p.add_argument('--cc',default='aarch64-linux-gnu-gcc');p.add_argument('--cxx',default='aarch64-linux-gnu-g++');p.add_argument('--jobs',type=int,default=4);p.add_argument('--dry-run',action='store_true');p.add_argument('--configure-only',action='store_true');p.add_argument('--android-jni',action='store_true');p.add_argument('--liquidcodec',action='store_true');p.add_argument('--speech',action='store_true');a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--cmake',default='cmake');p.add_argument('--ninja',type=Path);p.add_argument('--platform',choices=['android-arm64','linux-aarch64','linux-x86_64'],required=True);p.add_argument('--source',type=Path,default=ROOT/'_work/audio.cpp');p.add_argument('--out',type=Path);p.add_argument('--ndk',type=Path);p.add_argument('--android-isa',default='armv8.2-a+dotprod+i8mm+fp16',choices=['armv8-a','armv8.2-a+dotprod+i8mm+fp16']);p.add_argument('--sysroot',type=Path);p.add_argument('--cc',default='aarch64-linux-gnu-gcc');p.add_argument('--cxx',default='aarch64-linux-gnu-g++');p.add_argument('--jobs',type=int,default=4);p.add_argument('--dry-run',action='store_true');p.add_argument('--configure-only',action='store_true');p.add_argument('--android-jni',action='store_true');p.add_argument('--cpu-auto',action='store_true');p.add_argument('--liquidcodec',action='store_true');p.add_argument('--speech',action='store_true');a=p.parse_args()
     if not 1<=a.jobs<=16:p.error('jobs must be1..16')
     out,cmds=commands(a);release_file=a.source.resolve()/'ORTTS_RELEASE_COMPAT_RECEIPT.json';release=json.loads(release_file.read_text()) if release_file.exists() else None;print(json.dumps({'platform':a.platform,'argv':cmds,'release_compat':release},indent=2))
     if not a.dry_run:

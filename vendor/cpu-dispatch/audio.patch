@@ -1,0 +1,335 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -364,6 +364,12 @@
+     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+ endif()
+ 
++if (ORTTS_ANDROID_CPU_AUTO)
++    if (NOT ANDROID OR NOT ANDROID_ABI STREQUAL "arm64-v8a")
++        message(FATAL_ERROR "Android CPU auto requires arm64-v8a")
++    endif()
++    set(ENGINE_ENABLE_CPU_ALL_VARIANTS ON)
++endif()
+ if (ENGINE_ENABLE_CPU_ALL_VARIANTS)
+     message(STATUS "CPU all variants mode: enabling shared libraries + backends as dynamic libs")
+     set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
+@@ -403,6 +409,10 @@
+ endif()
+ message(STATUS "Using ggml source: ${AUDIOCPP_GGML_SOURCE_DIR}")
+ add_subdirectory("${AUDIOCPP_GGML_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/ggml")
++if (ORTTS_ANDROID_CPU_AUTO)
++    # Only ggml and its CPU modules are shared; the engine stays a single copy.
++    set(BUILD_SHARED_LIBS OFF)
++endif()
+ add_subdirectory(external/sentencepiece EXCLUDE_FROM_ALL)
+ 
+ add_compile_options(
+--- a/include/engine/framework/core/execution_context.h
++++ b/include/engine/framework/core/execution_context.h
+@@ -25,6 +25,9 @@
+     BackendConfig config_;
+     ggml_backend_t backend_ = nullptr;
+     ggml_threadpool * cpu_threadpool_ = nullptr;
++#ifdef ORTTS_ANDROID_CPU_AUTO
++    void (*cpu_threadpool_free_)(ggml_threadpool *) = nullptr;
++#endif
+ };
+ 
+ }  // namespace engine::core
+--- a/src/framework/core/backend.cpp
++++ b/src/framework/core/backend.cpp
+@@ -8,13 +8,20 @@
+ #include <ostream>
+ #include <stdexcept>
+ #include <string>
++#ifdef ORTTS_ANDROID_CPU_AUTO
++#include "android_cpu_dispatch.h"
++#endif
+ 
+ namespace engine::core {
+ 
+ void ensure_backends_loaded() {
++#ifdef ORTTS_ANDROID_CPU_AUTO
++    ensure_android_cpu_module();
++#else
+     if (ggml_backend_reg_count() == 0) {
+         ggml_backend_load_all();
+     }
++#endif
+ }
+ 
+ namespace {
+--- a/src/framework/core/execution_context.cpp
++++ b/src/framework/core/execution_context.cpp
+@@ -15,12 +15,28 @@
+         const char * persistent = std::getenv("ORTTS_CPU_PERSISTENT_POOL");
+         if (persistent && std::string(persistent) == "1" && core::backend_type(backend_) == BackendType::Cpu) {
+             auto params = ggml_threadpool_params_default(config_.threads);
++#ifdef ORTTS_ANDROID_CPU_AUTO
++            auto reg = ggml_backend_dev_backend_reg(ggml_backend_get_device(backend_));
++            auto make = reinterpret_cast<decltype(&ggml_threadpool_new)>(ggml_backend_reg_get_proc_address(reg, "ggml_threadpool_new"));
++            cpu_threadpool_free_ = reinterpret_cast<decltype(&ggml_threadpool_free)>(ggml_backend_reg_get_proc_address(reg, "ggml_threadpool_free"));
++            auto attach = reinterpret_cast<decltype(&ggml_backend_cpu_set_threadpool)>(ggml_backend_reg_get_proc_address(reg, "ggml_backend_cpu_set_threadpool"));
++            if (!make || !cpu_threadpool_free_ || !attach) {
++                ggml_backend_free(backend_); backend_ = nullptr;
++                throw std::runtime_error("Selected CPU threadpool symbols unavailable");
++            }
++            cpu_threadpool_ = make(&params);
++#else
+             cpu_threadpool_ = ggml_threadpool_new(&params);
++#endif
+             if (!cpu_threadpool_) {
+                 ggml_backend_free(backend_); backend_ = nullptr;
+                 throw std::runtime_error("CPU persistent threadpool allocation failed");
+             }
++#ifdef ORTTS_ANDROID_CPU_AUTO
++            attach(backend_, cpu_threadpool_);
++#else
+             ggml_backend_cpu_set_threadpool(backend_, cpu_threadpool_);
++#endif
+         }
+     }
+ }
+@@ -30,7 +46,14 @@
+         ggml_backend_free(backend_);
+         backend_ = nullptr;
+     }
+-    if (cpu_threadpool_) { ggml_threadpool_free(cpu_threadpool_); cpu_threadpool_ = nullptr; }
++    if (cpu_threadpool_) {
++#ifdef ORTTS_ANDROID_CPU_AUTO
++        cpu_threadpool_free_(cpu_threadpool_);
++#else
++        ggml_threadpool_free(cpu_threadpool_);
++#endif
++        cpu_threadpool_ = nullptr;
++    }
+ }
+ 
+ ExecutionContext::ExecutionContext(ExecutionContext && other) noexcept
+@@ -38,6 +61,9 @@
+       backend_(other.backend_), cpu_threadpool_(other.cpu_threadpool_) {
+     other.backend_ = nullptr;
+     other.cpu_threadpool_ = nullptr;
++#ifdef ORTTS_ANDROID_CPU_AUTO
++    cpu_threadpool_free_ = other.cpu_threadpool_free_;
++#endif
+ }
+ 
+ ExecutionContext & ExecutionContext::operator=(ExecutionContext && other) noexcept {
+@@ -47,10 +73,19 @@
+     if (backend_ != nullptr) {
+         ggml_backend_free(backend_);
+     }
+-    if (cpu_threadpool_) ggml_threadpool_free(cpu_threadpool_);
++    if (cpu_threadpool_) {
++#ifdef ORTTS_ANDROID_CPU_AUTO
++        cpu_threadpool_free_(cpu_threadpool_);
++#else
++        ggml_threadpool_free(cpu_threadpool_);
++#endif
++    }
+     config_ = other.config_;
+     backend_ = other.backend_;
+     cpu_threadpool_ = other.cpu_threadpool_;
++#ifdef ORTTS_ANDROID_CPU_AUTO
++    cpu_threadpool_free_ = other.cpu_threadpool_free_;
++#endif
+     other.backend_ = nullptr;
+     other.cpu_threadpool_ = nullptr;
+     return *this;
+--- /dev/null
++++ b/src/framework/core/android_cpu_dispatch.h
+@@ -0,0 +1,67 @@
++#pragma once
++#include "engine/framework/debug/trace.h"
++#include "android_cpu_features.h"
++#include <android/log.h>
++#include <dlfcn.h>
++#include <sys/auxv.h>
++#include <cstdlib>
++#include <mutex>
++#include <stdexcept>
++#include <string>
++#include <vector>
++
++namespace engine::core {
++inline void ensure_android_cpu_module() {
++    static std::once_flag once;
++    static std::string selected, reason;
++    std::call_once(once, [] {
++        Dl_info info{};
++        if (!dladdr(reinterpret_cast<void *>(&ensure_android_cpu_module), &info) || !info.dli_fname)
++            throw std::runtime_error("CPU dispatch cannot resolve its library directory");
++        std::string library(info.dli_fname);
++        auto slash = library.rfind('/');
++        if (slash == std::string::npos || library.front() != '/')
++            throw std::runtime_error("CPU dispatch requires an absolute library path");
++        const auto directory = library.substr(0, slash + 1);
++        const auto hwcap = getauxval(AT_HWCAP), hwcap2 = getauxval(AT_HWCAP2);
++        std::vector<std::string> names{"android_armv8.6_1", "android_armv8.2_2", "android_armv8.0_1"};
++        auto variant = [](const std::string & name) { return name == "android_armv8.6_1" ? 2 : name == "android_armv8.2_2" ? 1 : 0; };
++#if ORTTS_CPU_DISPATCH_QA
++        if (const char * value = std::getenv("ORTTS_QA_CPU_MODULE")) {
++            std::string forced(value);
++            bool known = forced == names[0] || forced == names[1] || forced == names[2];
++            if (!known || !android_cpu_supported(variant(forced), hwcap, hwcap2)) {
++                reason = "override_rejected:" + forced + ";baseline_fallback;";
++                forced = "android_armv8.0_1";
++            } else reason = "qa_override;";
++            names = {forced};
++        }
++#endif
++        for (const auto & name : names) {
++            if (!android_cpu_supported(variant(name), hwcap, hwcap2)) {
++                reason += name + ":hwcap_filtered_before_dlopen;";
++                continue;
++            }
++            // Official load owns its handle and validates score/API before registration.
++            const auto path = directory + "libggml-cpu-" + name + ".so";
++            auto reg = ggml_backend_load(path.c_str());
++            if (!reg) { reason += name + ":load_failed;"; continue; }
++            bool valid = true;
++            for (const char * symbol : {"ggml_threadpool_new", "ggml_threadpool_free", "ggml_backend_cpu_set_threadpool", "ggml_graph_compute_with_ctx"})
++                if (!ggml_backend_reg_get_proc_address(reg, symbol)) valid = false;
++            if (!valid) {
++                ggml_backend_unload(reg);
++                reason += name + ":required_API_missing;";
++                continue;
++            }
++            selected = name;
++            break;
++        }
++        if (selected.empty()) throw std::runtime_error("No supported CPU module: " + reason);
++        if (reason.empty()) reason = "auto_priority_supported_official_score";
++        __android_log_print(ANDROID_LOG_INFO, "OrTTSCPU", "selected=%s registry=CPU reason=%s directory=%s", selected.c_str(), reason.c_str(), directory.c_str());
++    });
++    debug::trace_log_scalar("ortts.cpu_dispatch.selected", std::string_view(selected));
++    debug::trace_log_scalar("ortts.cpu_dispatch.reason", std::string_view(reason));
++}
++} // namespace engine::core
+--- /dev/null
++++ b/src/framework/core/android_cpu_features.h
+@@ -0,0 +1,17 @@
++#pragma once
++#include <cstdint>
++
++namespace engine::core {
++// Linux AArch64 HWCAP ABI: ASIMD, FPHP, ASIMDHP, ASIMDDP; HWCAP2 I8MM.
++inline bool android_cpu_supported(int variant, uint64_t hwcap, uint64_t hwcap2) {
++    constexpr uint64_t asimd = 1ULL << 1;
++    constexpr uint64_t fp16 = (1ULL << 9) | (1ULL << 10);
++    constexpr uint64_t dotprod = 1ULL << 20;
++    constexpr uint64_t i8mm = 1ULL << 13;
++    if (!(hwcap & asimd)) return false;
++    if (variant == 0) return true;
++    const auto required = asimd | fp16 | dotprod;
++    if ((hwcap & required) != required) return false;
++    return variant == 1 || (variant == 2 && (hwcap2 & i8mm));
++}
++} // namespace engine::core
+--- /dev/null
++++ b/src/models/qwen3_tts/ortts_joint/cpu_graph_compute.h
+@@ -0,0 +1,19 @@
++#pragma once
++#include "ggml-cpu.h"
++#ifdef ORTTS_ANDROID_CPU_AUTO
++#include "engine/framework/core/backend.h"
++#include <stdexcept>
++#endif
++inline ggml_status ortts_graph_compute(ggml_context * c, ggml_cgraph * g, int threads) {
++#ifdef ORTTS_ANDROID_CPU_AUTO
++    engine::core::ensure_backends_loaded();
++    auto dev = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);
++    if (!dev) throw std::runtime_error("CPU registry missing");
++    auto reg = ggml_backend_dev_backend_reg(dev);
++    auto compute = reinterpret_cast<decltype(&ggml_graph_compute_with_ctx)>(ggml_backend_reg_get_proc_address(reg, "ggml_graph_compute_with_ctx"));
++    if (!compute) throw std::runtime_error("Selected CPU graph compute API missing");
++    return compute(c, g, threads);
++#else
++    return ggml_graph_compute_with_ctx(c, g, threads);
++#endif
++}
+--- a/src/models/qwen3_tts/ortts_joint/private_adapter.cpp
++++ b/src/models/qwen3_tts/ortts_joint/private_adapter.cpp
+@@ -6,6 +6,7 @@
+ #include "engine/community_models/lfm2_audio/detokenizer.h"
+ #include "engine/framework/io/json.h"
+ #include "ggml-cpu.h"
++#include "cpu_graph_compute.h"
+ #include <map>
+ #include <fstream>
+ #include <chrono>
+@@ -43,7 +44,7 @@
+   if(std::getenv("ORTTS_LC_VARIANT")){liquid=std::make_unique<LCClient>(threads);return;}
+   dt=engine::assets::open_tensor_source(detok);vc=engine::assets::open_tensor_source(voc);q::GgufMetadata meta(detok);auto cfg=q::read_detokenizer_config(meta,*dt,*vc,8);if(cfg.lfm.hidden_size!=512||cfg.lfm.num_layers()!=8||cfg.upsample*cfg.hop_length!=1920)throw std::runtime_error("LFM contract");runtime=std::make_unique<q::Lfm2DetokenizerRuntime>(dt,vc,cfg,execution,128,std::getenv("ORTTS_B0_DISABLE_REPACK")==nullptr);
+ }
+- std::vector<float>compute(ggml_context*c,ggml_tensor*y)const{auto*g=ggml_new_graph_custom(c,2048,false);ggml_build_forward_expand(g,y);if(ggml_graph_compute_with_ctx(c,g,threads)!=GGML_STATUS_SUCCESS)throw std::runtime_error("bridge compute");auto*p=(float*)y->data;return {p,p+ggml_nelements(y)};}
++ std::vector<float>compute(ggml_context*c,ggml_tensor*y)const{auto*g=ggml_new_graph_custom(c,2048,false);ggml_build_forward_expand(g,y);if(ortts_graph_compute(c,g,threads)!=GGML_STATUS_SUCCESS)throw std::runtime_error("bridge compute");auto*p=(float*)y->data;return {p,p+ggml_nelements(y)};}
+  Result liquid_process(const std::vector<int32_t>&codes,int64_t frames,bool eos){
+   auto begin=Clock::now();if(codes.size()!=size_t(frames*16))throw std::runtime_error("LC code shape");for(auto c:codes)if(c<0||c>=2048)throw std::runtime_error("LC codes include EOS or invalid ID");Result r;
+   if(frames){Ctx graph(64ull<<20);std::array<ggml_tensor*,16>c;for(int k=0;k<16;k++){c[k]=ggml_new_tensor_1d(graph.c,GGML_TYPE_I32,frames);for(int64_t t=0;t<frames;t++)((int32_t*)c[k]->data)[t]=codes[t*16+k];}r.z=compute(graph.c,b::dequant(graph.c,c,dw));}r.dequant_ms=ms(begin);
+--- a/src/models/qwen3_tts/ortts_joint/translator.h
++++ b/src/models/qwen3_tts/ortts_joint/translator.h
+@@ -1,6 +1,7 @@
+ #pragma once
+ #include "ggml.h"
+ #include "ggml-cpu.h"
++#include "cpu_graph_compute.h"
+ #include "nlohmann/json.hpp"
+ #include <fstream>
+ #include <map>
+@@ -15,7 +16,7 @@
+ inline void writef(const std::string&p,const V&v){std::ofstream f(p,std::ios::binary);f.write((char*)v.data(),v.size()*4);if(!f)throw std::runtime_error("write F32");}
+ inline ggml_tensor* affine(ggml_context*c,ggml_tensor*w,ggml_tensor*x,ggml_tensor*b){auto*y=ggml_mul_mat(c,w,x);ggml_mul_mat_set_prec(y,GGML_PREC_F32);return b?ggml_add(c,y,ggml_reshape_2d(c,b,y->ne[0],1)):y;}
+ inline ggml_tensor* tensor(ggml_context*c,int dim,int t,const V&v){if(v.size()!=size_t(dim*t))throw std::runtime_error("tensor size");auto*x=ggml_new_tensor_2d(c,GGML_TYPE_F32,dim,t);memcpy(x->data,v.data(),v.size()*4);return x;}
+-inline void compute(ggml_context*c,ggml_cgraph*g,int threads){if(ggml_graph_compute_with_ctx(c,g,threads)!=GGML_STATUS_SUCCESS)throw std::runtime_error("GGML compute");}
++inline void compute(ggml_context*c,ggml_cgraph*g,int threads){if(ortts_graph_compute(c,g,threads)!=GGML_STATUS_SUCCESS)throw std::runtime_error("GGML compute");}
+ struct Translator {
+  Ctx weights{32ull<<20};std::map<std::string,ggml_tensor*>w;V histu;std::vector<V>hist;int64_t seen=0;bool finished=false,expanded;int threads;
+  Translator(const std::string&root,bool exp,int nt):expanded(exp),threads(nt){
+--- a/src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp
++++ b/src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp
+@@ -5,6 +5,9 @@
+ #include "clip-impl.h"
+ #include "mtmd-audio.h"
+ #include "ggml-backend.h"
++#ifdef ORTTS_ANDROID_CPU_AUTO
++#include "engine/framework/core/backend.h"
++#endif
+ #include <chrono>
+ #include <sys/resource.h>
+ #include <iostream>
+@@ -13,7 +16,12 @@
+ struct Codec {
+  std::string root;Translator translator;clip_ctx*clip=nullptr;clip_gen_state*state=nullptr;mtmd_audio_streaming_istft ola{1280,320};Ctx projw{2ull<<20};ggml_tensor *pw,*pb,*fw,*fb;int threads;bool finished=false;int64_t frames_seen=0,q_seen=0,samples_seen=0;
+  Codec(const std::string&r,const std::string&variant,int nt):root(r),translator(r+"/"+variant,(variant=="expanded120k"||variant=="expanded"),nt),threads(nt){
+-  if(variant!="base100k"&&variant!="expanded120k"&&variant!="base"&&variant!="expanded")throw std::runtime_error("variant");ggml_backend_load_all();
++  if(variant!="base100k"&&variant!="expanded120k"&&variant!="base"&&variant!="expanded")throw std::runtime_error("variant");
++#ifdef ORTTS_ANDROID_CPU_AUTO
++  engine::core::ensure_backends_loaded();
++#else
++  ggml_backend_load_all();
++#endif
+   clip_context_params p{};p.use_gpu=false;p.flash_attn_type=CLIP_FLASH_ATTN_TYPE_DISABLED;p.image_min_tokens=-1;p.image_max_tokens=-1;p.warmup=true;
+   std::string core_file="liquidcodec-F32.gguf",precision="F32";std::ifstream config(root+"/runtime.json");
+   if(config){nlohmann::json cfg;config>>cfg;if(cfg.at("schema")!="ortts-liquidcodec-native-v1"||cfg.at("lookahead_frames")!=1||cfg.at("source_RVQ_groups")!=16||cfg.at("frame_samples")!=1920)throw std::runtime_error("LC runtime schema/geometry");core_file=cfg.at("core_file").get<std::string>();precision=cfg.at("precision").get<std::string>();if(core_file.find('/')!=std::string::npos||core_file.find("..")!=std::string::npos||(precision!="F32"&&precision!="MIXED_Q4_0"&&precision!="MIXED_Q8_0"))throw std::runtime_error("LC core selector");if(ortts_sha256::file(root+"/"+core_file)!=cfg.at("core_sha256").get<std::string>())throw std::runtime_error("LC core SHA binding");}
+--- a/src/capi/audiocpp.cpp
++++ b/src/capi/audiocpp.cpp
+@@ -81,6 +81,9 @@
+ std::once_flag g_backend_load_once;
+ 
+ void load_library_backends() {
++#ifdef ORTTS_ANDROID_CPU_AUTO
++    engine::core::ensure_backends_loaded();
++#else
+     std::call_once(g_backend_load_once, [] {
+         std::filesystem::path library_path;
+ #ifdef _WIN32
+@@ -112,6 +115,7 @@
+         const auto directory = std::filesystem::canonical(library_path).parent_path().u8string();
+         ggml_backend_load_all_from_path(directory.c_str());
+     });
++#endif
+ }
+ #endif
+ 
