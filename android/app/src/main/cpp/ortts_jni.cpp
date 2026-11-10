@@ -55,6 +55,12 @@ void speechClose(){
  std::lock_guard<std::mutex>guard(speechPointers);
  ortts_tts_free(speechTts);speechTts=nullptr;speechTtsKey.clear();ortts_asr_free(speechAsr);speechAsr=nullptr;ortts_asr_stream_free(speechStream);speechStream=nullptr;
 }
+struct SpeechRuntimeScope {
+ bool had_tmp=false;std::string old_tmp;
+ SpeechRuntimeScope(){const char* value=std::getenv("TMPDIR");had_tmp=value!=nullptr;if(value)old_tmp=value;}
+ ~SpeechRuntimeScope(){(void)audiocpp_ortts_trace_file(nullptr);if(had_tmp)(void)setenv("TMPDIR",old_tmp.c_str(),1);else (void)unsetenv("TMPDIR");}
+};
+std::string optionalMilliseconds(double value){if(value<0)return "null";std::ostringstream out;out<<value;return out.str();}
 struct SpeechSink{JNIEnv*env;jobject object;jmethodID method;std::vector<float>pcm;size_t chunks=0;};
 int speechPcm(void*user,const float*pcm,size_t n,int32_t rate,int32_t channels){
  auto&s=*static_cast<SpeechSink*>(user);if((channels!=1&&channels!=2)||n>INT32_MAX/size_t(channels))return 1;size_t count=n*channels;
@@ -97,7 +103,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_syn
  std::lock_guard<std::mutex>guard(mu);ortts_speech_audio*audio=nullptr;
  try{
   release();auto family=str(e,familyJ),library=str(e,libraryJ),data=str(e,dataJ),identity=str(e,identityJ),path=str(e,pathJ),voice=str(e,voiceJ),text=str(e,textJ),out=str(e,outJ);
-  bool moss=family=="moss_tts_nano";auto cache=str(e,cacheJ);if(cache.empty()||!std::filesystem::path(cache).is_absolute())throw std::runtime_error("Private cache required");std::filesystem::create_directories(cache);setenv("TMPDIR",cache.c_str(),1);check(audiocpp_ortts_trace_file(nullptr));{std::ofstream fresh(out+".trace.log",std::ios::trunc);if(!fresh)throw std::runtime_error("Private trace not writable");}check(audiocpp_ortts_trace_file((out+".trace.log").c_str()));
+  SpeechRuntimeScope runtime_scope;bool moss=family=="moss_tts_nano";auto cache=str(e,cacheJ);if(cache.empty()||!std::filesystem::path(cache).is_absolute())throw std::runtime_error("Private cache required");std::filesystem::create_directories(cache);setenv("TMPDIR",cache.c_str(),1);check(audiocpp_ortts_trace_file(nullptr));{std::ofstream fresh(out+".trace.log",std::ios::trunc);if(!fresh)throw std::runtime_error("Private trace not writable");}check(audiocpp_ortts_trace_file((out+".trace.log").c_str()));
   speech_pcm::Audio reference;auto referenceText=str(e,referenceTextJ);if(moss){reference=speech_pcm::load(str(e,referenceJ));if(referenceText.empty())throw std::runtime_error("Missing reference transcript");}
   if(threads<1||threads>8)throw std::runtime_error("Invalid speech threads");auto affinity=speechAffinity();
   ortts_speech_option weight{"moss_tts_nano.weight_type","f32"};
@@ -112,7 +118,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_syn
   if(receiver.pcm.size()!=n*channels||!std::equal(receiver.pcm.begin(),receiver.pcm.end(),pcm))throw std::runtime_error("Callback/final PCM mismatch");
   speech_pcm::save(out,pcm,n,rate,channels);ortts_metrics metrics{};speechCheck(ortts_speech_audio_metrics(audio,&metrics));
   check(audiocpp_ortts_trace_file(nullptr));std::string stop="UNKNOWN";if(moss){auto log=speech_pcm::read(out+".trace.log");bool any=false,cap=false;std::istringstream lines(log);std::string line;while(std::getline(lines,line))if(line.find("moss_tts_nano.chunk.stop_reason")!=std::string::npos){any=true;if(line.find(" eoc")==std::string::npos&&line.find("=eoc")==std::string::npos)cap=true;}stop=cap?"max_new_frames":any?"eoc":"UNKNOWN";}
-  rusage usage{};getrusage(RUSAGE_SELF,&usage);std::ostringstream report;report<<"{\"family\":\""<<family<<"\",\"engine_reused\":"<<(reused?"true":"false")<<",\"load_session_ms\":"<<setup_ms<<",\"audio_s\":"<<double(n)/rate<<",\"frames\":"<<n<<",\"channels\":"<<channels<<",\"samples\":"<<n*channels<<",\"api_ms\":"<<metrics.api_ms<<",\"sample_rate\":"<<rate<<",\"RTF\":"<<metrics.api_ms/(1000.0*n/rate)<<",\"first_pcm_ms\":"<<metrics.first_pcm_ms<<",\"callback_chunks\":"<<receiver.chunks<<",\"callback_final_exact\":true,\"streaming\":"<<(streaming?"true":"false")<<",\"threads\":"<<threads<<",\"affinity\":\""<<affinity<<"\",\"peak_RSS_KiB\":"<<usage.ru_maxrss<<",\"stop_reason\":\""<<stop<<"\"}";
+  rusage usage{};getrusage(RUSAGE_SELF,&usage);std::ostringstream report;report<<"{\"family\":\""<<family<<"\",\"engine_reused\":"<<(reused?"true":"false")<<",\"load_session_ms\":"<<setup_ms<<",\"audio_s\":"<<double(n)/rate<<",\"frames\":"<<n<<",\"channels\":"<<channels<<",\"samples\":"<<n*channels<<",\"api_ms\":"<<metrics.api_ms<<",\"sample_rate\":"<<rate<<",\"RTF\":"<<metrics.api_ms/(1000.0*n/rate)<<",\"first_pcm_ms\":"<<optionalMilliseconds(metrics.first_pcm_ms)<<",\"callback_chunks\":"<<receiver.chunks<<",\"callback_final_exact\":true,\"streaming\":"<<(streaming?"true":"false")<<",\"threads\":"<<threads<<",\"affinity\":\""<<affinity<<"\",\"peak_RSS_KiB\":"<<usage.ru_maxrss<<",\"stop_reason\":\""<<stop<<"\"}";
   ortts_speech_audio_free(audio);audio=nullptr;return unicode(e,report.str());
  }catch(const std::exception&x){ortts_speech_audio_free(audio);speechClose();speechError(e,x);return nullptr;}
 #else

@@ -27,8 +27,25 @@ def prepareLicenseAssets = tasks.register('prepareLicenseAssets', Copy) {
  into layout.buildDirectory.dir('generated/licenseAssets')
 }
 tasks.named('preBuild').configure { dependsOn prepareLicenseAssets }
-def prepareSpeechAssets = tasks.register('prepareSpeechAssets', Copy) {
- from(rootProject.file('../runtime/models/catalog.example.json')) { rename { 'SpeechModels.json' } }
- into layout.buildDirectory.dir('generated/speechAssets')
+def prepareSpeechAssets = tasks.register('prepareSpeechAssets') {
+ def baseCatalog = rootProject.file('../runtime/models/catalog.example.json')
+ def mossCatalog = rootProject.file('../runtime/models/moss-nano.json')
+ def outputDir = layout.buildDirectory.dir('generated/speechAssets')
+ inputs.files(baseCatalog, mossCatalog)
+ outputs.dir(outputDir)
+ doLast {
+  def parser = new groovy.json.JsonSlurper()
+  def catalog = parser.parse(baseCatalog, 'UTF-8')
+  def extra = parser.parse(mossCatalog, 'UTF-8')
+  if(catalog.schema != extra.schema) throw new GradleException('Model catalog schema mismatch')
+  def ids = catalog.models.collect { it.id } as Set
+  extra.models.each { model ->
+   if(!ids.add(model.id)) throw new GradleException('Duplicate model id: ' + model.id)
+   catalog.models.add(model)
+  }
+  def directory = outputDir.get().asFile
+  directory.mkdirs()
+  new File(directory, 'SpeechModels.json').setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(catalog)), 'UTF-8')
+ }
 }
 tasks.named('preBuild').configure { dependsOn prepareSpeechAssets }

@@ -1,0 +1,70 @@
+{
+  "schema": "ortts-speech-catalog-v1",
+  "description": "Portable MOSS model definition; reference audio and stereo playback are required.",
+  "models": [
+    {
+      "id": "moss-100m-bf16",
+      "family": "moss_tts_nano",
+      "display_name": "MOSS-TTS-Nano · 100M",
+      "task": "tts",
+      "model_path": "MOSS-TTS-Nano-100M-GGUF/moss-tts-nano-100m-bf16.gguf",
+      "validated_languages": [
+        "zh",
+        "en"
+      ],
+      "voice_sample": [
+        "female",
+        "male"
+      ],
+      "demo_enabled": true,
+      "external_espeak": false,
+      "status": "Native backend integrated; frontend validation is tracked separately",
+      "precision": "BF16 source GGUF; global/local F32 runtime; bundled codec/tokenizer",
+      "references": [
+        {
+          "voice": "female",
+          "asset": "moss-reference/female.wav",
+          "bytes": 387884,
+          "sha256": "90faaa453c013453352a251e40fec7df8f2a8c67f7b120bcbaa0171a0c043510",
+          "reference_text": "今天的天气晴朗，阳光照进房间。我们整理好桌上的书，准备开始今天的工作。",
+          "source": "Published OrTTS synthetic neutral female reference; not a speaker vector"
+        },
+        {
+          "voice": "male",
+          "asset": "moss-reference/male.wav",
+          "bytes": 572204,
+          "sha256": "082ee424497f7a4d098d1fc5d52bea554e136fae3a84f0a9a94cc89c425bbed1",
+          "reference_text": "清晨的阳光照进房间，我把窗户打开，听见远处有人在说话。今天没有急着出门的安排，我们可以先喝杯温水，再慢慢商量接下来的事情。",
+          "source": "Published OrTTS synthetic male reference; not a speaker vector"
+        }
+      ],
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "ae77d06579f5ed1be99dd7614d99929e76a46d9e",
+          "path": "MOSS-TTS-Nano-100M-GGUF/moss-tts-nano-100m-bf16.gguf",
+          "bytes": 332423040,
+          "sha256": "249a7eb9a8ae2e919946971e8270960f6657c0fbc06c5c7c4929b94af83ade0b",
+          "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/ae77d06579f5ed1be99dd7614d99929e76a46d9e/MOSS-TTS-Nano-100M-GGUF/moss-tts-nano-100m-bf16.gguf",
+          "download_urls": [
+            "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/ae77d06579f5ed1be99dd7614d99929e76a46d9e/MOSS-TTS-Nano-100M-GGUF/moss-tts-nano-100m-bf16.gguf",
+            "https://hf-mirror.com/audio-cpp/audio.cpp-gguf/resolve/ae77d06579f5ed1be99dd7614d99929e76a46d9e/MOSS-TTS-Nano-100M-GGUF/moss-tts-nano-100m-bf16.gguf"
+          ]
+        }
+      ],
+      "license_review": {
+        "checked_at": "2026-11-10",
+        "weights_license": "Apache-2.0",
+        "source": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M",
+        "license_asset": "licenses/MOSS-TTS-Nano-Apache-2.0.txt",
+        "status": "Retain model, tokenizer and runtime notices"
+      },
+      "requirements": {
+        "reference_audio": true,
+        "reference_transcript": true,
+        "output_channels": 2,
+        "language_selection": "auto"
+      }
+    }
+  ]
+}

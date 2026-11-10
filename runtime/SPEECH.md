@@ -159,3 +159,9 @@ python3.12 tools/test_speech.py --build build/speech-macos --source _work/runtim
 还需保留原ABI回归、模型包验证、Swift头文件导入与Android ELF依赖/符号检查。具体本轮结果见`docs/development/ortavern-speech-handoff-2026-11-07.md`和`benchmarks/speech-integration-20261107.json`。音频听感/音色相似度仍由人确认。
 
 发行状态复核：参见[完整开源发行审计与扩展计划](../docs/development/speech-license-and-expansion-2026-11-07.md)。特别是测试的ZipVoice Emilia Distill权重，上游已明确非商业限制，不能沿用转换仓库的Apache标记；完整开源也不等于模型无使用限制。catalog的license_review是审计记录，不是自动授权。
+
+## MOSS-TTS-Nano
+
+共享 CPU 后端支持 `moss_tts_nano`，使用同一 C ABI；不限定 Android。模型描述在 `models/moss-nano.json`，约332MB的GGUF包含模型与音频tokenizer。调用者提供匹配转写的参考PCM，使用自动语言识别；输出48kHz双声道交错F32，frames按每声道计。不要将Qwen speaker向量作为参考。
+
+Android Demo已接入female/male预设及原生流式播放。现有Apple Demo目录暂不自动增加此模型；补齐参考音色输入和双声道播放后，可直接复用共享后端与模型描述。未声称本轮经过iOS/macOS构建或设备验收。
