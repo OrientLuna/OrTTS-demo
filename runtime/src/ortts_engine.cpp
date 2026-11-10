@@ -3,6 +3,7 @@
 #include "audiocpp.h"
 #include "inference_defaults.h"
 #include "model_pack.h"
+#include "ptq_lazy_policy.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -74,6 +75,7 @@ struct OptionsOwner {
 struct ortts_engine {
  std::string root, variant, speaker, manifest, predictor_sha;
  ortts::pack::Decoder decoder;
+ ortts::ptq::PTQPolicy ptq;
  int threads=4;
  bool streaming=true;
  audiocpp_registry* registry=nullptr;
@@ -81,6 +83,9 @@ struct ortts_engine {
  audiocpp_session* session=nullptr;
  std::atomic<bool> running{false}, cancelled{false};
  void environment(Environment& e) const {
+  e.set("ORTTS_LAZY_IMPORT_SCRATCH",ptq.lazy?"1":nullptr);
+  const auto expected=std::to_string(ptq.type);
+  e.set("ORTTS_QA_EXPECT_TALKER_TYPE",ptq.present?expected.c_str():nullptr);
   ortts::pack::environment(decoder,[&](const char*k,const char*v){e.set(k,v);});
   for(auto key:{"ORTTS_GROUPED_PREDICTOR_GGUF","ORTTS_GROUPED_PREDICTOR_PACKED",
       "ORTTS_P3_PREDICTOR_SOURCE","ORTTS_P3_NATIVE_SHA256","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK",
@@ -164,6 +169,7 @@ ortts_status ortts_engine_create(const ortts_config* cfg,ortts_engine** out) {
   ortts::pack::require_dependencies(e->root,e->decoder);
   ortts::pack::validate_speaker(e->speaker,ortts::pack::speaker_dimension(e->root));
   e->predictor_sha=ortts::pack::native_predictor_hash(e->root,e->variant);
+  e->ptq=ortts::ptq::policy(e->root,e->variant);
   e->environment(env);
   check(audiocpp_registry_create(nullptr,&e->registry));
   audiocpp_model_config model{"qwen3_tts",nullptr,nullptr,nullptr};

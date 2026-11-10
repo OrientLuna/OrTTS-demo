@@ -4,7 +4,9 @@
 namespace ortts::ptq {
 struct PTQPolicy {bool present=false,lazy=false;int type=8;};
 inline PTQPolicy policy(const std::string&root,const std::string&variant){
- auto m=pack::manifest(root);PTQPolicy p;
+ PTQPolicy p;
+ if(!pack::fs::exists(pack::fs::path(root)/"model.json")&&!pack::fs::exists(pack::fs::path(root)/"download-manifest.json")&&!pack::fs::exists(pack::fs::path(root)/"DOWNLOAD_MANIFEST.json"))return p;
+ auto m=pack::manifest(root);
  if(auto*q=m.find("research_policy")){
   if(q->require("schema").as_string()!="ortts-ptq-lazy-qa-v1"||variant!="P3"||q->require("training_steps").as_i64()!=0||q->require("expected_talker_matrices").as_i64()!=196)throw std::invalid_argument("此低内存模型包仅支持0.6B P3，请选择P3或切换标准模型包");
   if(pack::speaker_dimension(root)!=1024 || !pack::resolve(root).liquid())throw std::invalid_argument("PTQ profile requires 0.6B P3 LiquidCodec");
