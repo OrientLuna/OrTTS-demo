@@ -29,12 +29,7 @@ final class SpeechModels {
   if(!file.getCanonicalPath().startsWith(parent)||path.contains("../"))throw new IOException("模型路径越界");return file;
  }
  private boolean valid(File file,JSONObject asset)throws Exception {
-  if(!file.isFile()||file.length()!=asset.getLong("bytes"))return false;
-  MessageDigest hash=MessageDigest.getInstance("SHA-256");try(InputStream in=new FileInputStream(file)){
-   byte[] b=new byte[262144];int n;while((n=in.read(b))!=-1){if(cancelled.get())throw new IOException("已停止");hash.update(b,0,n);}
-  }
-  StringBuilder value=new StringBuilder();for(byte b:hash.digest())value.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
-  return value.toString().equals(asset.getString("sha256"));
+   return PinnedAsset.valid(file,asset.getLong("bytes"),asset.getString("sha256"),cancelled);
  }
  void cancel(){cancelled.set(true);HttpURLConnection c=connection;if(c!=null)c.disconnect();}
  void prepare(){cancelled.set(false);}
@@ -46,7 +41,15 @@ final class SpeechModels {
  File requireReady(JSONObject model)throws Exception {
   JSONArray assets=model.getJSONArray("assets");for(int i=0;i<assets.length();i++){
    JSONObject a=assets.getJSONObject(i);if(!valid(child(a.getString("path")),a))throw new IOException("请先下载 / 检查所选模型");
-  }return child(model.getString("model_path"));
+   }return child(model.getString("model_path"));
+  }
+ JSONObject reference(JSONObject model,String voice)throws Exception {
+  JSONArray refs=model.optJSONArray("references");if(refs==null)return null;
+  for(int i=0;i<refs.length();i++){JSONObject r=refs.getJSONObject(i);if(!voice.equals(r.getString("voice")))continue;
+   String name=r.getString("asset");if(!name.matches("moss-reference/[a-z-]+\\.wav"))throw new IOException("参考路径无效");
+   File target=new File(context.getFilesDir(),name);if(!valid(target,r)){target.getParentFile().mkdirs();File part=File.createTempFile("reference-",".part",target.getParentFile());try{try(InputStream in=context.getAssets().open(name);OutputStream out=new FileOutputStream(part)){byte[] b=new byte[8192];int n;long size=0;while((n=in.read(b))!=-1){size+=n;if(size>r.getLong("bytes"))throw new IOException("参考音频长度异常");out.write(b,0,n);}}if(!valid(part,r))throw new IOException("参考音频SHA不匹配");Files.move(part.toPath(),target.toPath(),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}finally{part.delete();}}
+   return new JSONObject(r.toString()).put("local_path",target.getPath());
+  }throw new IOException("缺少所选音色真实参考");
  }
  void download(JSONObject model)throws Exception {
   JSONArray assets=model.getJSONArray("assets");long total=0,done=0;

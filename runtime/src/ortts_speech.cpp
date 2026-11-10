@@ -50,7 +50,7 @@ struct Env {
 };
 struct Running{Handle&h;explicit Running(Handle&v):h(v){h.cancelled=false;h.running=true;}~Running(){h.running=false;}};
 bool is_asr(const std::string&f){return f=="sense_asr"||f=="moonshine_asr";}
-bool is_tts(const std::string&f){return f=="kokoro_tts"||f=="piper_tts"||f=="kitten_tts"||f=="pocket_tts"||f=="zipvoice";}
+bool is_tts(const std::string&f){return f=="kokoro_tts"||f=="piper_tts"||f=="kitten_tts"||f=="pocket_tts"||f=="zipvoice"||f=="moss_tts_nano";}
 std::string language_base(std::string s){for(char&c:s)if(c>='A'&&c<='Z')c+=32;if(s=="chinese")return "zh";if(s=="english")return "en";return s.substr(0,s.find_first_of("-_"));}
 bool contains_han(const char*text){
  std::string s(text);require(s.size()<=65536,"Text exceeds 64KiB; split into requests");bool han=false;
@@ -74,7 +74,7 @@ void init(Handle&h,const ortts_speech_config*c,bool asr){
  require(c&&c->struct_size==sizeof(*c)&&present(c->family)&&present(c->model_path)&&c->threads>=1&&c->threads<=8&&(c->streaming==0||c->streaming==1),"Invalid speech configuration");
  h.family=c->family;require(asr?is_asr(h.family):is_tts(h.family),"Family not enabled for this API; inspect speech catalog");require(!asr||!c->streaming,"ASR has buffered-final input, not native streaming");
  require(std::filesystem::exists(c->model_path),"Model package path does not exist");
- pairs(c->session_options,c->session_option_count);h.streaming=c->streaming;h.task=asr?"asr":h.family=="zipvoice"?"clon":"tts";
+  pairs(c->session_options,c->session_option_count);h.streaming=c->streaming;h.task=asr?"asr":(h.family=="zipvoice"||h.family=="moss_tts_nano")?"clon":"tts";
  h.library=c->espeak_library?c->espeak_library:"";h.data=c->espeak_data?c->espeak_data:"";
  if(!h.library.empty())require(std::filesystem::path(h.library).is_absolute()&&std::filesystem::is_regular_file(h.library),"eSpeak library must be an existing absolute file");
  if(!h.data.empty())require(std::filesystem::path(h.data).is_absolute()&&std::filesystem::is_directory(h.data),"eSpeak data must be an existing absolute directory");
@@ -126,7 +126,7 @@ extern "C" {
 uint32_t ortts_speech_abi_version(void){return ORTTS_WITH_SPEECH?ORTTS_SPEECH_ABI_VERSION:0;}
 const char*ortts_speech_catalog_json(void){
 #if ORTTS_WITH_SPEECH
- return R"({"schema":1,"executor":"audio.cpp/ggml-cpu","shared_ggml":true,"tts":["kokoro_tts","piper_tts","kitten_tts","pocket_tts","zipvoice"],"asr":["sense_asr","moonshine_asr"],"tts_stream_kind":{"kokoro_tts":"text-chunks","pocket_tts":"codec-chunks","zipvoice":"text-chunks","piper_tts":"offline-only","kitten_tts":"offline-only"},"asr_input":"16000Hz-mono-f32","asr_stream":"bounded-buffer-final","partial":false,"automatic_endpoint":false,"incremental_asr":{"abi":1,"api":"ortts_asr_stream_*","families":["moonshine_asr"],"languages":["en"],"partial":"revisable","encoder":"bounded-overlap-f16","decoder":"hypothesis-redecode","endpoint":["explicit","energy-silence","segment-limit"],"max_segment_ms":30000,"cancellation":"ticks-encode-boundaries-decoder-tokens","per_layer_kv_cache":false},"cancellation":"callback-boundary-or-discard-after-compute","scheduler":"process-serialized-busy","excluded":["f5_tts","whisper","onnx"]})";
+  return R"({"schema":1,"executor":"audio.cpp/ggml-cpu","shared_ggml":true,"tts":["kokoro_tts","piper_tts","kitten_tts","pocket_tts","zipvoice","moss_tts_nano"],"asr":["sense_asr","moonshine_asr"],"tts_stream_kind":{"kokoro_tts":"text-chunks","pocket_tts":"codec-chunks","zipvoice":"text-chunks","moss_tts_nano":"codec-chunks-stereo","piper_tts":"offline-only","kitten_tts":"offline-only"},"asr_input":"16000Hz-mono-f32","asr_stream":"bounded-buffer-final","partial":false,"automatic_endpoint":false,"incremental_asr":{"abi":1,"api":"ortts_asr_stream_*","families":["moonshine_asr"],"languages":["en"],"partial":"revisable","encoder":"bounded-overlap-f16","decoder":"hypothesis-redecode","endpoint":["explicit","energy-silence","segment-limit"],"max_segment_ms":30000,"cancellation":"ticks-encode-boundaries-decoder-tokens","per_layer_kv_cache":false},"cancellation":"callback-boundary-or-discard-after-compute","scheduler":"process-serialized-busy","excluded":["f5_tts","whisper","onnx"]})";
 #else
  return R"({"schema":1,"tts":[],"asr":[],"disabled":true})";
 #endif
@@ -135,10 +135,12 @@ ortts_status ortts_tts_create(const ortts_speech_config*c,ortts_tts**out){if(out
 ortts_status ortts_tts_synthesize(ortts_tts*e,const ortts_tts_request*r,ortts_speech_pcm_callback cb,void*user,ortts_speech_audio**out){
  if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{
  require(e&&r&&out&&r->struct_size==sizeof(*r)&&present(r->text)&&(r->seed_set==0||r->seed_set==1),"Invalid TTS request");require(!cb||e->h.streaming,"Callbacks require a streaming TTS handle");pairs(r->options,r->option_count);
- if(contains_han(r->text)){bool chinese=false;for(const auto&v:e->h.languages)if(language_base(v)=="zh")chinese=true;require(chinese,"Han text is unsupported by this language package");}
+  // MOSS Nano loader advertises only Auto; its pinned family spec explicitly
+  // includes Chinese. Do not mistake Auto for an English-only package.
+  if(contains_han(r->text)){bool chinese=e->h.family=="moss_tts_nano";for(const auto&v:e->h.languages)if(language_base(v)=="zh")chinese=true;require(chinese,"Han text is unsupported by this language package");}
  Env env(e->h);Running running(e->h);auto start=Clock::now();Request q;check(audiocpp_request_set_text(q.p,r->text,nullptr));language(e->h,q.p,r->language);if(present(r->voice_id)){require(e->h.family!="piper_tts"&&e->h.family!="zipvoice","This adapter has no named presets for this family");check(audiocpp_request_set_voice_id(q.p,r->voice_id));}if(r->seed_set)check(audiocpp_request_set_option(q.p,"seed",std::to_string(r->seed).c_str()));
  for(size_t i=0;i<r->option_count;++i){std::string k=r->options[i].key;require(k!="language"&&k!="voice_id"&&k!="seed","Use typed language/voice/seed fields");check(audiocpp_request_set_option(q.p,k.c_str(),r->options[i].value));}
- if(e->h.family=="zipvoice")require(r->reference_pcm&&r->reference_frames&&present(r->reference_text),"ZipVoice requires reference PCM and matching transcript");
+  if(e->h.family=="zipvoice"||e->h.family=="moss_tts_nano")require(r->reference_pcm&&r->reference_frames&&present(r->reference_text),"Clone family requires reference PCM and matching transcript");
  require(!present(r->reference_text)||r->reference_pcm,"Reference transcript without PCM");
  if(r->reference_pcm||r->reference_frames){require(audiocpp_model_supports_speaker_reference(e->h.model),"Model does not support reference audio");pcm(r->reference_pcm,r->reference_frames,r->reference_sample_rate,r->reference_channels);require(present(r->reference_text),"Reference transcript required");check(audiocpp_request_set_voice_audio(q.p,r->reference_pcm,r->reference_frames,r->reference_sample_rate,r->reference_channels));check(audiocpp_request_set_option(q.p,"reference_text",r->reference_text));}
  Capture cap{e->h,cb,user,start};Result result;

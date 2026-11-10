@@ -17,6 +17,7 @@
 #include <codecvt>
 #include <locale>
 #include <sys/resource.h>
+#include "speech_pcm.h"
 namespace {
 using Clock=std::chrono::steady_clock;std::mutex mu;
 audiocpp_registry*reg=nullptr;audiocpp_model*model=nullptr;audiocpp_session*session=nullptr;std::string active;
@@ -54,16 +55,17 @@ void speechClose(){
  std::lock_guard<std::mutex>guard(speechPointers);
  ortts_tts_free(speechTts);speechTts=nullptr;speechTtsKey.clear();ortts_asr_free(speechAsr);speechAsr=nullptr;ortts_asr_stream_free(speechStream);speechStream=nullptr;
 }
-struct SpeechSink{JNIEnv*env;jobject object;jmethodID method;};
+struct SpeechSink{JNIEnv*env;jobject object;jmethodID method;std::vector<float>pcm;size_t chunks=0;};
 int speechPcm(void*user,const float*pcm,size_t n,int32_t rate,int32_t channels){
- auto&s=*static_cast<SpeechSink*>(user);if(channels!=1||n>INT32_MAX)return 1;
- jfloatArray a=s.env->NewFloatArray(n);if(!a)return 1;s.env->SetFloatArrayRegion(a,0,n,pcm);s.env->CallVoidMethod(s.object,s.method,a,rate);s.env->DeleteLocalRef(a);return s.env->ExceptionCheck()?1:0;
+ auto&s=*static_cast<SpeechSink*>(user);if((channels!=1&&channels!=2)||n>INT32_MAX/size_t(channels))return 1;size_t count=n*channels;
+ s.pcm.insert(s.pcm.end(),pcm,pcm+count);++s.chunks;
+ jfloatArray a=s.env->NewFloatArray(count);if(!a)return 1;s.env->SetFloatArrayRegion(a,0,count,pcm);s.env->CallVoidMethod(s.object,s.method,a,rate,channels);s.env->DeleteLocalRef(a);return s.env->ExceptionCheck()?1:0;
 }
 int speechText(void*user,const ortts_asr_stream_event*v){
  auto&s=*static_cast<SpeechSink*>(user);jstring t=unicode(s.env,v->text);if(!t)return 1;s.env->CallVoidMethod(s.object,s.method,t,v->endpoint,jlong(v->segment_id));s.env->DeleteLocalRef(t);return s.env->ExceptionCheck()?1:0;
 }
 SpeechSink textSink(JNIEnv*e,jobject sink){auto c=e->GetObjectClass(sink);auto method=e->GetMethodID(c,"onText","(Ljava/lang/String;IJ)V");e->DeleteLocalRef(c);if(!method)throw std::runtime_error("ASR sink unavailable");return {e,sink,method};}
-void nativeWav(const std::string&path,const float*p,size_t n,int rate){std::ofstream f(path,std::ios::binary);f.write("RIFF",4);u32(f,36+n*4);f.write("WAVEfmt ",8);u32(f,16);u16(f,3);u16(f,1);u32(f,rate);u32(f,rate*4);u16(f,4);u16(f,32);f.write("data",4);u32(f,n*4);f.write(reinterpret_cast<const char*>(p),n*4);if(!f)throw std::runtime_error("WAV save failed");}
+std::string speechAffinity(){std::ifstream f("/proc/thread-self/status");std::string line;while(std::getline(f,line))if(line.rfind("Cpus_allowed_list:",0)==0)return line.substr(line.find_first_not_of("\t ",18));return "UNKNOWN";}
 }
 #endif
 extern "C" JNIEXPORT jboolean JNICALL Java_com_orient_ortts_demo_SpeechBridge_available(JNIEnv*,jclass){
@@ -83,21 +85,34 @@ extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_close(
  std::lock_guard<std::mutex>guard(mu);try{speechClose();}catch(const std::exception&x){speechError(e,x);}
 #endif
 }
-extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_synthesize(JNIEnv*e,jclass,jstring familyJ,jstring libraryJ,jstring dataJ,jstring identityJ,jstring pathJ,jstring voiceJ,jstring textJ,jboolean streaming,jobject sink,jstring outJ){
+extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_environment(JNIEnv*e,jclass){
+#if ORTTS_WITH_SPEECH
+ return e->NewStringUTF(speechAffinity().c_str());
+#else
+ return e->NewStringUTF("Speech disabled");
+#endif
+}
+extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_synthesize(JNIEnv*e,jclass,jstring familyJ,jstring libraryJ,jstring dataJ,jstring identityJ,jstring pathJ,jstring voiceJ,jstring textJ,jboolean streaming,jobject sink,jstring outJ,jstring referenceJ,jstring referenceTextJ,jstring cacheJ,jint threads){
 #if ORTTS_WITH_SPEECH
  std::lock_guard<std::mutex>guard(mu);ortts_speech_audio*audio=nullptr;
  try{
   release();auto family=str(e,familyJ),library=str(e,libraryJ),data=str(e,dataJ),identity=str(e,identityJ),path=str(e,pathJ),voice=str(e,voiceJ),text=str(e,textJ),out=str(e,outJ);
-  ortts_speech_config c{};c.struct_size=sizeof(c);c.family=family.c_str();c.espeak_library=library.empty()?nullptr:library.c_str();c.espeak_data=data.empty()?nullptr:data.c_str();c.model_path=path.c_str();c.threads=4;c.streaming=streaming;
-  std::string key=family+"|"+path+"|"+library+"|"+data+"|"+identity+"|"+std::to_string(streaming);bool reused=speechTts&&speechTtsKey==key;
+  bool moss=family=="moss_tts_nano";auto cache=str(e,cacheJ);if(cache.empty()||!std::filesystem::path(cache).is_absolute())throw std::runtime_error("Private cache required");std::filesystem::create_directories(cache);setenv("TMPDIR",cache.c_str(),1);check(audiocpp_ortts_trace_file(nullptr));{std::ofstream fresh(out+".trace.log",std::ios::trunc);if(!fresh)throw std::runtime_error("Private trace not writable");}check(audiocpp_ortts_trace_file((out+".trace.log").c_str()));
+  speech_pcm::Audio reference;auto referenceText=str(e,referenceTextJ);if(moss){reference=speech_pcm::load(str(e,referenceJ));if(referenceText.empty())throw std::runtime_error("Missing reference transcript");}
+  if(threads<1||threads>8)throw std::runtime_error("Invalid speech threads");auto affinity=speechAffinity();
+  ortts_speech_option weight{"moss_tts_nano.weight_type","f32"};
+  ortts_speech_config c{};c.struct_size=sizeof(c);c.family=family.c_str();c.espeak_library=library.empty()?nullptr:library.c_str();c.espeak_data=data.empty()?nullptr:data.c_str();c.model_path=path.c_str();c.threads=threads;c.streaming=streaming;if(moss){c.session_options=&weight;c.session_option_count=1;}
+  auto setup=Clock::now();std::string key=family+"|"+path+"|"+library+"|"+data+"|"+identity+"|"+std::to_string(streaming)+"|"+std::to_string(threads);bool reused=speechTts&&speechTtsKey==key;
   if(!reused){speechClose();ortts_tts*created=nullptr;speechCheck(ortts_tts_create(&c,&created));std::lock_guard<std::mutex>p(speechPointers);speechTts=created;speechTtsKey=key;}ortts_tts*engine=speechTts;
-  auto cl=e->GetObjectClass(sink);auto method=e->GetMethodID(cl,"onPcm","([FI)V");e->DeleteLocalRef(cl);if(!method)throw std::runtime_error("PCM sink unavailable");SpeechSink receiver{e,sink,method};
-  ortts_tts_request request{};request.struct_size=sizeof(request);request.text=text.c_str();request.language=voice.size()&&voice[0]=='z'?"zh":"en";request.voice_id=family=="piper_tts"?nullptr:voice.c_str();request.seed_set=1;request.seed=42;
+  double setup_ms=ms(setup);auto cl=e->GetObjectClass(sink);auto method=e->GetMethodID(cl,"onPcm","([FII)V");e->DeleteLocalRef(cl);if(!method)throw std::runtime_error("PCM sink unavailable");SpeechSink receiver{e,sink,method};
+  ortts_tts_request request{};request.struct_size=sizeof(request);request.text=text.c_str();request.language=moss?"auto":voice.size()&&voice[0]=='z'?"zh":"en";request.voice_id=(moss||family=="piper_tts")?nullptr:voice.c_str();request.seed_set=1;request.seed=moss?1234:42;ortts_speech_option maximum{"max_tokens","1024"};if(moss){request.reference_pcm=reference.samples.data();request.reference_frames=reference.frames();request.reference_sample_rate=reference.rate;request.reference_channels=reference.channels;request.reference_text=referenceText.c_str();request.options=&maximum;request.option_count=1;}
   speechCheck(ortts_tts_synthesize(engine,&request,streaming?speechPcm:nullptr,&receiver,&audio));
-  const float*pcm=ortts_speech_audio_samples(audio);size_t n=ortts_speech_audio_frames(audio);int rate=ortts_speech_audio_sample_rate(audio);
-  if(!streaming&&speechPcm(&receiver,pcm,n,rate,1))throw std::runtime_error("Playback callback failed");
-  nativeWav(out,pcm,n,rate);ortts_metrics metrics{};speechCheck(ortts_speech_audio_metrics(audio,&metrics));
-  std::ostringstream report;report<<"{\"engine_reused\":"<<(reused?"true":"false")<<",\"audio_s\":"<<double(n)/rate<<",\"api_ms\":"<<metrics.api_ms<<",\"sample_rate\":"<<rate<<",\"RTF\":"<<metrics.api_ms/(1000.0*n/rate)<<"}";
+  const float*pcm=ortts_speech_audio_samples(audio);size_t n=ortts_speech_audio_frames(audio);int rate=ortts_speech_audio_sample_rate(audio),channels=ortts_speech_audio_channels(audio);
+  if(!streaming&&speechPcm(&receiver,pcm,n,rate,channels))throw std::runtime_error("Playback callback failed");
+  if(receiver.pcm.size()!=n*channels||!std::equal(receiver.pcm.begin(),receiver.pcm.end(),pcm))throw std::runtime_error("Callback/final PCM mismatch");
+  speech_pcm::save(out,pcm,n,rate,channels);ortts_metrics metrics{};speechCheck(ortts_speech_audio_metrics(audio,&metrics));
+  check(audiocpp_ortts_trace_file(nullptr));std::string stop="UNKNOWN";if(moss){auto log=speech_pcm::read(out+".trace.log");bool any=false,cap=false;std::istringstream lines(log);std::string line;while(std::getline(lines,line))if(line.find("moss_tts_nano.chunk.stop_reason")!=std::string::npos){any=true;if(line.find(" eoc")==std::string::npos&&line.find("=eoc")==std::string::npos)cap=true;}stop=cap?"max_new_frames":any?"eoc":"UNKNOWN";}
+  rusage usage{};getrusage(RUSAGE_SELF,&usage);std::ostringstream report;report<<"{\"family\":\""<<family<<"\",\"engine_reused\":"<<(reused?"true":"false")<<",\"load_session_ms\":"<<setup_ms<<",\"audio_s\":"<<double(n)/rate<<",\"frames\":"<<n<<",\"channels\":"<<channels<<",\"samples\":"<<n*channels<<",\"api_ms\":"<<metrics.api_ms<<",\"sample_rate\":"<<rate<<",\"RTF\":"<<metrics.api_ms/(1000.0*n/rate)<<",\"first_pcm_ms\":"<<metrics.first_pcm_ms<<",\"callback_chunks\":"<<receiver.chunks<<",\"callback_final_exact\":true,\"streaming\":"<<(streaming?"true":"false")<<",\"threads\":"<<threads<<",\"affinity\":\""<<affinity<<"\",\"peak_RSS_KiB\":"<<usage.ru_maxrss<<",\"stop_reason\":\""<<stop<<"\"}";
   ortts_speech_audio_free(audio);audio=nullptr;return unicode(e,report.str());
  }catch(const std::exception&x){ortts_speech_audio_free(audio);speechClose();speechError(e,x);return nullptr;}
 #else

@@ -29,6 +29,21 @@ The distributed APK includes native third-party binaries. Corresponding notices 
 
 ## Optional speech assets (reviewed 2026-11-07)
 
+### MOSS Nano APK integration (parent review 2026-11-10)
+
+MOSS-TTS-Nano-100M and MOSS-Audio-Tokenizer-Nano retain Apache-2.0, including
+Copyright 2026 OpenMOSS Team, Fudan University, Shanghai Innovation Institute,
+and MOSI attribution in [the upstream license](licenses/MOSS-TTS-Nano-Apache-2.0.txt).
+The fixed GGUF is from `audio-cpp/audio.cpp-gguf` revision
+`ae77d06579f5ed1be99dd7614d99929e76a46d9e`; its mixed-repository top-level
+`other` label does not replace the original component licenses. Model/card
+identity receipts are bundled alongside the full license. The small female/male
+reference WAVs are existing published OrTTS synthetic presets, with original
+WAV identity and exact transcript recorded in the catalog; they are not Qwen
+speaker-vector inputs. Weights are not bundled in the APK or committed.
+No change to existing eSpeak GPL obligations or a claim of zero legal risk is
+made by this addition. Existing audio.cpp/ggml/SentencePiece notices are retained.
+
 The model catalog is a compatibility/verification example, not a cleared distribution bundle. See [license and expansion review](docs/development/speech-license-and-expansion-2026-11-07.md). Model weights, preset embeddings, source recordings and phonemizer dictionaries retain their own terms.
 
 - Kokoro and Kitten model cards identify Apache-2.0; Moonshine streaming tiny identifies MIT. Keep the relevant model notices as well as these runtime notices.

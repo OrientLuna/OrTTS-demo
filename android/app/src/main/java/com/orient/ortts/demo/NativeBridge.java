@@ -8,7 +8,10 @@ final class NativeBridge {
    System.loadLibrary("ortts_jni");loaded=true;
   }catch(LinkageError e){throw new java.io.IOException("无法加载语音引擎："+e.getMessage(),e);}
  }
- interface PcmSink { void onPcm(float[] pcm,int rate); }
+  interface PcmSink {
+    void onPcm(float[] pcm,int rate);
+    default void onPcm(float[] pcm,int rate,int channels){if(channels!=1)throw new IllegalArgumentException("Sink requires mono");onPcm(pcm,rate);}
+  }
  static String run(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha)throws java.io.IOException{ensureLoaded();return runNative(root,variant,voice,text,threads,seed,streaming,sink,out,bridgeSha);}
  static synchronized void release(){if(loaded)releaseNative();}
  static boolean supportsLiquidCodec()throws java.io.IOException{ensureLoaded();return supportsLiquidCodecNative();}

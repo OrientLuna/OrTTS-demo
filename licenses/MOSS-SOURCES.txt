@@ -1,0 +1,14 @@
+MOSS-TTS-Nano-100M and MOSS-Audio-Tokenizer-Nano
+Copyright 2026 OpenMOSS Team, Fudan University, SII and MOSI
+License: Apache License 2.0
+https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano-100M
+https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano
+https://github.com/OpenMOSS/MOSS-TTS-Nano
+
+Native GGUF conversion distributed by audio-cpp/audio.cpp-gguf:
+https://huggingface.co/audio-cpp/audio.cpp-gguf
+Original model and tokenizer licenses remain applicable.
+
+Native runtime: audio.cpp, Apache-2.0 (Copyright 2026 ShugoAI LLC).
+Tensor backend: ggml, MIT. See the accompanying third-party notices.
+Reference voices retain their original provenance and permissions.
