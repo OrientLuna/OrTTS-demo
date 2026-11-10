@@ -1,0 +1,21 @@
+{
+  "patch": "vendor/patches/ptq-lazy-import.patch",
+  "patch_sha256": "10cc3320e033b6b4a5f476e123b6c482f95e8ac571ae1e4b9dd2fa216eabaea4",
+  "files": [
+    {
+      "path": "src/framework/modules/transformers/causal_decoder.cpp",
+      "base_sha256": "5aab44f1f322eb5ffa1681162373647b2adaeadc9a88df32ae9878d890a93acb",
+      "sha256": "a328a83ae753bd25c064bb1c9b94ae7bd750bd575140bdb487de26f5dfc41b2f"
+    },
+    {
+      "path": "src/framework/runtime/kv_cache.cpp",
+      "base_sha256": "08b70523afd7accce50f430a6e36dc322dab9565c991486aec52aadb5387a3b6",
+      "sha256": "713b08fcd1a012f796c97b2a68c7d22e03c1def41ec9706d5b4f9311c1efdebc"
+    },
+    {
+      "path": "src/models/qwen3_tts/talker.cpp",
+      "base_sha256": "e1712ee9142c05a950667daaed84cb4be9d849020cf8b12af553813b06c6077e",
+      "sha256": "ea6e80239d51b9aed3bc0abb4d1fd74e3475d5ded0dbbeb3c686d5f6486a7e6e"
+    }
+  ]
+}

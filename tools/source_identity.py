@@ -39,6 +39,12 @@ def identity(source,liquidcodec=False,speech=False):
   expected.update({x['path']:x['sha256'] for x in sl['files']})
   lock={**lock,'speech':sl}
  elif speech:raise ValueError('Prepare speech sources before using --speech')
+ ptq=source/'ORTTS_PTQ_LAZY_RECEIPT.json'
+ if ptq.exists():
+  pl=json.loads((ROOT/'vendor/ptq-lazy.lock.json').read_text())
+  if json.loads(ptq.read_text())!=pl or hashlib.sha256((ROOT/pl['patch']).read_bytes()).hexdigest()!=pl['patch_sha256']:raise ValueError('PTQ source receipt mismatch')
+  expected.update({x['path']:x['sha256'] for x in pl['files']})
+  lock={**lock,'ptq_lazy':pl}
  for rel,digest in expected.items():
   if hashlib.sha256((source/rel).read_bytes()).hexdigest()!=digest:raise ValueError('Prepared source modified: '+rel)
  return lock

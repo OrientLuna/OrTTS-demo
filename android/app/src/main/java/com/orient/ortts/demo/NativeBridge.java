@@ -12,10 +12,11 @@ final class NativeBridge {
     void onPcm(float[] pcm,int rate);
     default void onPcm(float[] pcm,int rate,int channels){if(channels!=1)throw new IllegalArgumentException("Sink requires mono");onPcm(pcm,rate);}
   }
- static String run(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha)throws java.io.IOException{ensureLoaded();return runNative(root,variant,voice,text,threads,seed,streaming,sink,out,bridgeSha);}
+ static String run(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha)throws java.io.IOException{ensureLoaded();return runNative(root,variant,voice,text,threads,seed,streaming,sink,out,bridgeSha,"","",false);}
  static synchronized void release(){if(loaded)releaseNative();}
  static boolean supportsLiquidCodec()throws java.io.IOException{ensureLoaded();return supportsLiquidCodecNative();}
  private static native boolean supportsLiquidCodecNative();
- private static native String runNative(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha);
+ static String runReference(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha,String ref,String refText,boolean icl)throws java.io.IOException{ensureLoaded();return runNative(root,variant,voice,text,threads,seed,streaming,sink,out,bridgeSha,ref,refText,icl);}
+ private static native String runNative(String root,String variant,String voice,String text,int threads,long seed,boolean streaming,PcmSink sink,String out,String bridgeSha,String ref,String refText,boolean icl);
  private static native void releaseNative();
 }

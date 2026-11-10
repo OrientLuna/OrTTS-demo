@@ -34,5 +34,7 @@ def main():
  if a.release_compat:
   from apply_release_compat import apply
   apply(audio)
+  from apply_ptq_lazy import apply as apply_ptq_lazy
+  apply_ptq_lazy(audio)
  print(json.dumps(receipt))
 if __name__=='__main__':main()

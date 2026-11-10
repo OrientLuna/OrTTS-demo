@@ -1,0 +1,56 @@
+--- a/src/framework/modules/transformers/causal_decoder.cpp
++++ b/src/framework/modules/transformers/causal_decoder.cpp
+@@ -1,3 +1,5 @@
++#include <cstdlib>
++#include "engine/framework/debug/profiler.h"
+ #include "engine/framework/modules/transformers/causal_decoder.h"
+ 
+ #include "engine/framework/core/backend.h"
+@@ -48,6 +50,8 @@
+ 
+ runtime::TransformerKVCacheOptions transformer_cache_options(ggml_type type) {
+     runtime::TransformerKVCacheOptions out;
++    out.lazy_import_scratch = ([](){ const char* value=std::getenv("ORTTS_LAZY_IMPORT_SCRATCH"); return value && std::string(value)=="1"; })();
++    if(std::getenv("ORTTS_QA_EXPECT_TALKER_TYPE"))engine::debug::trace_log_scalar("ortts.qa.lazy_import_scratch",int64_t(out.lazy_import_scratch));
+     out.allow_f16_storage = type == GGML_TYPE_F16;
+     out.allow_bf16_storage = type == GGML_TYPE_BF16;
+     return out;
+--- a/src/framework/runtime/kv_cache.cpp
++++ b/src/framework/runtime/kv_cache.cpp
+@@ -1,3 +1,5 @@
++#include "engine/framework/debug/profiler.h"
++#include <cstdlib>
+ #include "engine/framework/runtime/kv_cache.h"
+ 
+ #include "engine/framework/core/backend.h"
+@@ -110,6 +112,9 @@
+     }
+     const size_t cache_elems = options_.lazy_import_scratch
+         ? 0 : static_cast<size_t>(cache_steps_ * step_elems_);
++    if(std::getenv("ORTTS_QA_EXPECT_TALKER_TYPE")) {
++        engine::debug::trace_log_scalar("ortts.qa.kv.import_scratch_bytes",int64_t(cache_elems*keys.size()*2*sizeof(float)));
++    }
+     layers_.reserve(keys.size());
+     for (size_t layer = 0; layer < keys.size(); ++layer) {
+         validate_cache_tensor(keys[layer], options_);
+--- a/src/models/qwen3_tts/talker.cpp
++++ b/src/models/qwen3_tts/talker.cpp
+@@ -1049,6 +1049,18 @@
+             weights.store->load_tensor(predictor_source, "ortts.grouped.adapter.up.bias", engine::assets::TensorStorageType::F32, {1024})};
+     }
+     weights.store->upload();
++    if(const char* expected=std::getenv("ORTTS_QA_EXPECT_TALKER_TYPE")) {
++        const int type=std::stoi(expected);int count=0;size_t bytes=0;
++        if(type!=2 && type!=8)throw std::runtime_error("invalid resident type gate");
++        for(const auto&l:weights.layers)for(const auto*v:{&l.q_proj,&l.k_proj,&l.v_proj,&l.o_proj,&l.gate_proj,&l.up_proj,&l.down_proj}) {
++            if(!v->tensor||int(v->tensor->type)!=type||!v->tensor->data||!v->tensor->buffer)throw std::runtime_error("PTQ resident196 dtype/buffer/data gate failed");
++            ++count;bytes+=ggml_nbytes(v->tensor);
++        }
++        if(count!=196)throw std::runtime_error("PTQ resident196 count gate failed");
++        debug::trace_log_scalar("ortts.qa.talker.resident_count",int64_t(count));
++        debug::trace_log_scalar("ortts.qa.talker.resident_type",int64_t(type));
++        debug::trace_log_scalar("ortts.qa.talker.resident_bytes",int64_t(bytes));
++    }
+     return weights;
+ }
+ 
