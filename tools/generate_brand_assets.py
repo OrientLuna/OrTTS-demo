@@ -17,7 +17,7 @@ def main():
     rgba = Image.open(io.BytesIO(cairosvg.svg2png(bytestring=app_svg.encode(),output_width=1024,output_height=1024))).convert('RGB')
     rgba.save(brand/'ortts-icon.png')
     rgba.resize((256,256),Image.Resampling.LANCZOS).save(brand/'ortts-preview.png')
-    desktop_svg=svg.replace('<title>', f'<rect x="48" y="48" width="928" height="928" rx="196" fill="{BG}"/><title>',1)
+    desktop_svg=svg.replace('<title>', f'<rect x="24" y="24" width="976" height="976" rx="216" fill="{BG}"/><title>',1)
     desktop=Image.open(io.BytesIO(cairosvg.svg2png(bytestring=desktop_svg.encode(),output_width=1024,output_height=1024))).convert('RGBA')
     desktop.save(brand/'ortts-desktop.png')
     desktop.save(brand/'ortts.ico',sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])
@@ -31,7 +31,7 @@ def main():
     (assets/'Contents.json').write_text(json.dumps({'info':{'version':1,'author':'xcode'}},indent=2)+'\n')
     # Reuse SVG paths in an Android vector; shrink into the adaptive icon safe zone.
     tree=ET.fromstring(svg)
-    lines=['<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">',' <group android:translateX="15.12" android:translateY="15.12" android:scaleX="0.07594" android:scaleY="0.07594">']
+    lines=['<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">',' <group android:translateX="12.3" android:translateY="12.3" android:scaleX="0.08145" android:scaleY="0.08145">']
     def paths(node,attrs):
         attrs={**attrs,**node.attrib}
         if node.tag.endswith('path'):

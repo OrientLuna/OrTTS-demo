@@ -1,12 +1,12 @@
 # OrTTS 三色语音积木
 
-由用户提供的参考插画中橙红、青绿、金黄积木衍生。使用平面几何拼接，保留星芒与声波符号；没有复制人物或照片材质。`ortts-mark.svg` 是可编辑的标志源，`ortts-icon.svg` 增加暖白背景，平台图标从同一源生成。
+由用户提供的参考插画中橙红、青绿、金黄积木衍生。使用圆润、无缝搭接的平面几何，减少外围留白，保留星芒与声波符号；没有复制人物或照片材质。`ortts-mark.svg` 是可编辑的标志源，`ortts-icon.svg` 增加暖白背景，平台图标从同一源生成。
 
 - `ortts-icon.png`：1024px、不透明应用图标和展示预览。
 - `ortts-desktop.png`：桌面圆角背景版本，四角透明。
 - `ortts.ico`：Windows 多尺寸图标（16–256px）。
 - `ortts.icns`：macOS 图标资源。
-- `ortts-mark.svg`：无画布底色的矢量标志；拼接间隙使用暖白描边，适合浅色背景。
+- `ortts-mark.svg`：无画布底色的矢量标志；三块颜色直接衔接，不使用浅色描边或内部空隙。
 
 Android 使用缩入安全区的自适应矢量前景、暖白背景和传统 mipmap 回退。iOS 的 CMake Demo 与 Xcode 生成入口共享 `apple/Assets.xcassets`；CMake 构建通过 actool 编译并合并图标声明。实际签名安装包包含 Assets.car 与 CFBundleIcons，不能只改图标文件而遗漏声明。
 
