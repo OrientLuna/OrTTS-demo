@@ -33,7 +33,7 @@ Kokoro、Kitten、Piper 共用随应用分发的 eSpeak NG 1.52.0 库和字典�
 
 ## 引擎缓存与性能
 
-两端多模型合成页保留单个 TTS 引擎，界面区分首次构图与复用引擎；音色切换复用，模型/任务切换、取消/错误、后台及 30 秒空闲后释放。iOS 同时复用播放器图，采样率变化时重新连接，避免连续播放反复创建 AVAudioEngine。首次完整校验模型，未改变的文件不逐句重复扫描全部权重。详见[缓存修复与 iPhone 热 RTF](development/tts-warm-cache-2026-11-08.md)和 [Mac Kokoro 后端对照](../experiments/kokoro-ab/README.md)。
+两端多模型合成页保留单个 TTS 引擎，界面区分首次构图与复用引擎；音色切换复用，模型/任务切换、取消/错误、后台及 30 秒空闲后释放。iOS 同时复用播放器图，采样率变化时重新连接，避免连续播放反复创建 AVAudioEngine。首次完整校验模型，未改变的文件不逐句重复扫描全部权重。详见[缓存修复与 iPhone 热 RTF](development/tts-warm-cache-2026-11-08.md)。
 
 ## 验证范围
 

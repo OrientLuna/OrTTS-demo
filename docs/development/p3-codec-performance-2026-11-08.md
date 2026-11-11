@@ -17,7 +17,7 @@
 
 ## codec 是否增加了主要负担
 
-固定生成端的 Mac 隔离：旧talker、旧P3、旧女声和相同seed，只换codec。六个会话产生的codes哈希全部相同。三个热观察值中位数：旧LFM API RTF0.284、codec阶段207ms；LC API RTF0.280、codec阶段164ms。没有整体大幅退化，差异不足以宣称稳定加速倍数。开启trace，属于流水线诊断，不是纯kernel或功耗排名。[实验与复现](../../experiments/codec-ab/README.md)
+固定生成端的 Mac 隔离：旧talker、旧P3、旧女声和相同seed，只换codec。六个会话产生的codes哈希全部相同。三个热观察值中位数：旧LFM API RTF0.284、codec阶段207ms；LC API RTF0.280、codec阶段164ms。没有整体大幅退化，差异不足以宣称稳定加速倍数。开启trace，属于流水线诊断，不是纯kernel或功耗排名。[历史原始记录](../../benchmarks/codec-isolation-macos-20261108.json)
 
 真机 LC 男声正常播放总API约2.27s，LC全部阶段累计约235.5ms，其中codec约210.3ms，占总耗时约一成。即使假设旧codec成本为零，LC本身也解释不了整段耗时的大幅差异。这条诊断与固定codes的Mac证据一致，但不能把Mac的阶段倍数外推手机。
 

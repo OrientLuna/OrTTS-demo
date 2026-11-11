@@ -1,6 +1,6 @@
 # CPU性能参考
 
-最新多模型实测：[iPhone 中英文长短句热 RTF](development/tts-warm-cache-2026-11-08.md)、[Mac Kokoro ggml / Sherpa 对照](../experiments/kokoro-ab/README.md)。两者分别记录设备、量化和首次/复用条件，不与下列历史模型包混算。
+多模型历史记录见 [iPhone 中英文长短句热 RTF](development/tts-warm-cache-2026-11-08.md)。不同设备、量化和首次/复用条件的数据不与下列历史模型包混算。
 
 ## Android
 

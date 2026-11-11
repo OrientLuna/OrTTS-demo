@@ -2,6 +2,7 @@
 /build/
 /dist/
 /local/
+/experiments/
 __pycache__/
 *.pyc
 *.gguf
