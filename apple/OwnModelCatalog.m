@@ -36,3 +36,10 @@ NSArray *OrTTSRefreshOwnCatalog(NSArray*previous,NSError**error){@try{NSDate*sta
  if(!found.count){if(error)*error=[NSError errorWithDomain:@"OrTTSCatalog" code:2 userInfo:@{NSLocalizedDescriptionKey:@"暂未发现兼容发布清单，保留离线目录"}];return nil;}return OrTTSMergeOwnCatalogs(@[previous,found]);}@catch(NSException*e){if(error)*error=[NSError errorWithDomain:@"OrTTSCatalog" code:3 userInfo:@{NSLocalizedDescriptionKey:@"目录格式不兼容，保留离线列表"}];return nil;}}
 NSArray *OrTTSLoadOwnCatalog(NSURL*file){NSNumber*size=nil;[file getResourceValue:&size forKey:NSURLFileSizeKey error:nil];if(size.unsignedLongLongValue>2*1024*1024)return @[];NSData*b=[NSData dataWithContentsOfURL:file];NSDictionary*j=b?[NSJSONSerialization JSONObjectWithData:b options:0 error:nil]:nil;NSArray*models=[j isKindOfClass:NSDictionary.class]&&[j[@"models"]isKindOfClass:NSArray.class]?j[@"models"]:@[];return OrTTSMergeOwnCatalogs(@[models]);}
 BOOL OrTTSSaveOwnCatalog(NSURL*file,NSArray*models,NSError**error){NSData*b=[NSJSONSerialization dataWithJSONObject:@{@"schema":@"ortts-own-catalog-v1",@"updated_at":@([NSDate date].timeIntervalSince1970),@"models":models} options:0 error:error];return b&&[b writeToURL:file options:NSDataWritingAtomic error:error];}
+
+NSString *OrTTSOwnModelTitle(NSDictionary*entry){
+ if([entry[@"p3_only"]boolValue])return @"精简版";
+ if([entry[@"decoder"]isEqual:@"qwen_lfm"])return @"旧版兼容";
+ if([entry[@"id"]hasSuffix:@"-1.7B"])return @"大模型版";
+ return @"标准版";
+}

@@ -22,7 +22,10 @@ def main():
         def run(*args):
             subprocess.run([str(x) for x in args], cwd=ROOT, check=True)
         run('clang', '-fobjc-arc', '-I', ROOT/'apple', ROOT/'tests/apple_own_model_catalog.m', ROOT/'apple/OwnModelCatalog.m', '-framework', 'Foundation', '-o', out/'apple-test')
-        run('javac', '-cp', jar, '-d', out, java/'OwnModelCatalog.java', java/'DownloadSelection.java', ROOT/'tests/OwnModelCatalogTest.java')
+        run('javac', '-cp', jar, '-d', out, java/'OwnModelCatalog.java', java/'DownloadSelection.java', java/'VerifiedAssetReuse.java', ROOT/'tests/OwnModelCatalogTest.java', ROOT/'tests/VerifiedAssetReuseTest.java')
+        run('clang', '-fobjc-arc', '-I', ROOT/'apple', ROOT/'tests/apple_shared_model_files.m', ROOT/'apple/SharedModelFiles.m', '-framework', 'Foundation', '-o', out/'reuse-test')
+        run(out/'reuse-test')
+        run('java', '-cp', f'{out}:{jar}', 'com.orient.ortts.demo.VerifiedAssetReuseTest')
         fixtures = ROOT/'tests/fixtures/own-model-catalog'
         run(out/'apple-test', fixtures, *([out/'apple.json'] if a.live else []))
         run('java', '-cp', f'{out}:{jar}', 'com.orient.ortts.demo.OwnModelCatalogTest', fixtures, *([out/'java.json'] if a.live else []))

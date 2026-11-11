@@ -7,3 +7,5 @@ NSArray<NSDictionary *> *OrTTSMergeOwnCatalogs(NSArray<NSArray *> *catalogs);
 NSArray<NSDictionary *> *OrTTSRefreshOwnCatalog(NSArray<NSDictionary *> *previous, NSError **error);
 NSArray<NSDictionary *> *OrTTSLoadOwnCatalog(NSURL *file);
 BOOL OrTTSSaveOwnCatalog(NSURL *file, NSArray<NSDictionary *> *models, NSError **error);
+
+NSString *OrTTSOwnModelTitle(NSDictionary *entry);

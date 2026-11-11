@@ -21,7 +21,7 @@ def main():
  (out/'Info.plist').write_bytes(plistlib.dumps(info));(out/'SpeechModels.json').write_bytes((ROOT/'runtime/models/catalog.example.json').read_bytes())
  q=lambda s:json.dumps(str(s))
  text='name: OrTTS\noptions:\n  deploymentTarget:\n    iOS: "16.3"\ntargets:\n  OrTTS:\n    type: application\n    platform: iOS\n    sources:\n'
- for name in ['main.m','Demo.m','SpeechDemo.m','StreamPlayback.m','WorkQueue.m','DownloadChannels.m','OwnModelPackage.m','OwnModelCatalog.m']:text+='      - path: '+q(ROOT/'apple'/name)+'\n'
+ for name in ['main.m','Demo.m','SpeechDemo.m','StreamPlayback.m','WorkQueue.m','DownloadChannels.m','OwnModelPackage.m','OwnModelCatalog.m','SharedModelFiles.m']:text+='      - path: '+q(ROOT/'apple'/name)+'\n'
  text+='      - path: Assets.xcassets\n      - path: SpeechModels.json\n        buildPhase: resources\n'
  for name in ['espeak-ng-data','licenses']:text+='      - path: '+q(g2p/name)+'\n        type: folder\n        buildPhase: resources\n'
  text+='    dependencies:\n'

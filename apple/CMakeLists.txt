@@ -8,7 +8,7 @@ target_compile_definitions(ortts-apple PRIVATE ORTTS_APP_CPU_PROFILE="${ORTTS_AP
 target_include_directories(ortts-apple PRIVATE ../runtime/include)
 target_link_libraries(ortts-apple PRIVATE "-framework Foundation" "-framework AVFoundation")
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-  target_sources(ortts-apple PRIVATE Demo.m SpeechDemo.m StreamPlayback.m WorkQueue.m DownloadChannels.m OwnModelPackage.m OwnModelCatalog.m)
+  target_sources(ortts-apple PRIVATE Demo.m SpeechDemo.m StreamPlayback.m WorkQueue.m DownloadChannels.m OwnModelPackage.m OwnModelCatalog.m SharedModelFiles.m)
   configure_file(../runtime/models/catalog.example.json "${CMAKE_CURRENT_BINARY_DIR}/SpeechModels.json" COPYONLY)
   target_sources(ortts-apple PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/SpeechModels.json")
   set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/SpeechModels.json" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
