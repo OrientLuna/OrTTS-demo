@@ -4,7 +4,9 @@ macOS 提供命令行原型，iOS 提供 UIKit Demo。CPU 编译档位、兼容�
 
 ## iOS 使用
 
-新增可选“PTQ Q4 · P3”：固定 `v0.3.1-ptq-q4/variants/ptq-q4/DOWNLOAD_MANIFEST.json`，约1.59GB，存放于独立 `models-ptq-q4/`。只支持0.6B P3，P5选项禁用；四个固定音色保持普通流程。默认仍是标准Q8，旧LFM仍可选。PTQ清单按所选包单独校验SHA，不能用仓库根目录的标准Q8清单代替。iPhone内存、听感和性能尚待真机验证。
+iOS 模型菜单现支持[ModelScope 自研模型自动发现](../docs/OWN_MODEL_CATALOG.md)、手动刷新及离线缓存，保留内置版本与当前选择。只获取目录，权重按需下载；新发现模型仍需实机验证。
+
+内置可选“PTQ Q4 · P3”：固定 `v0.3.1-ptq-q4/variants/ptq-q4/DOWNLOAD_MANIFEST.json`，约1.59GB，存放于独立 `models-ptq-q4/`。只支持0.6B P3，P5选项禁用；四个固定音色保持普通流程。默认仍是标准Q8，旧LFM仍可选。PTQ清单按所选包单独校验SHA，不能用仓库根目录的标准Q8清单代替。iPhone内存、听感和性能尚待真机验证。
 
 底部“中文合成”“多模型合成”“语音识别”分别进入自研 TTS、Kokoro / Kitten / Piper / PocketTTS 和 SenseVoice / Moonshine。识别页面点击模型名称切换模型，选择后下载校验；支持文件夹导入、音频文件/录音输入、识别上次合成、停止和重播。详见 [多模型 Demo](../docs/MOBILE_SPEECH_DEMO.md)。底部原有自研模型页面继续提供以下功能。
 

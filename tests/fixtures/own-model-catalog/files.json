@@ -1,0 +1,19 @@
+{
+  "Code": 200,
+  "Data": {
+    "Files": [
+      {
+        "Path": "DOWNLOAD_MANIFEST.json",
+        "Revision": "4402837246998bac1b34fb0210a0a9df1ae0b4ff",
+        "Sha256": "2b23c30f658e88ce8b3215e4ea24dacf8898ffca159a7908f61a8942e9e93720",
+        "Size": 26496
+      },
+      {
+        "Path": "variants/ptq-q4/DOWNLOAD_MANIFEST.json",
+        "Revision": "cf091e81b09de854be06815eb609caa5339c4750",
+        "Sha256": "26cf9f79991fa38eb766541ee34a964c4521cb5130fd61034dad3302bebd0017",
+        "Size": 16723
+      }
+    ]
+  }
+}

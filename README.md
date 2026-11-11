@@ -28,11 +28,11 @@ iOS 需要自行构建和开发签名，尚无公开 IPA / TestFlight；macOS �
 | 0.6B · 混合Q8 | 1.66 GB | 1.81 GB |
 | 1.7B · 混合Q8 | 3.07 GB | 3.28 GB |
 
-共享文件只保存一份，切换P3时补齐预测器。默认使用0.6B P3；也可选择P5原生预测器和`female`、`female_2`、`male`、`male_2`四个音色。模型清单固定为ModelScope的`v0.3.1-preview`版本，下载地址仍可手工修改。
+共享文件只保存一份，切换P3时补齐预测器。默认使用0.6B P3；也可选择P5原生预测器和`female`、`female_2`、`male`、`male_2`四个音色。新版 Android / iOS Demo 启动时自动发现 ModelScope 官方自研模型及发布变体，提供手动刷新与离线目录缓存；权重仍需用户选择后下载。内置固定版本保留作回退。发布约定与校验边界见[自研模型在线目录](docs/OWN_MODEL_CATALOG.md)。
 
 首次下载请保持应用在前台。首次合成需要加载模型，较慢设备会在播放前增加缓冲。正常卸载会清理应用内模型、缓存及生成音频；手动保存到外部的文件不受影响。
 
-上面的 0.3.1-preview APK 需要 Android 9 或更高版本，以及支持 DotProd、I8MM 和 FP16 的 ARM64 CPU。新版多模型 Demo 使用 arm64-baseline，安装包不含模型权重。手机参考数据见[性能说明](docs/BENCHMARKS.md)。
+上面的 0.3.1-preview APK 需要 Android 9 或更高版本，以及支持 DotProd、I8MM 和 FP16 的 ARM64 CPU。新版可通过 `--cpu-auto` 构建 baseline、DotProd/FP16、I8MM 三档自动分派包，安装包不含模型权重。手机参考数据见[性能说明](docs/BENCHMARKS.md)。
 
 模型仓库：[0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B) · [1.7B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-1.7B)
 

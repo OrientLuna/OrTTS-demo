@@ -1,0 +1,245 @@
+{
+  "schema": "ortts-download-manifest-v1",
+  "model_id": "OrientLuna/OrTTS-Qwen3-LFM-0.6B",
+  "revision": "v0.2.0-preview",
+  "base_url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.2.0-preview/",
+  "runtime": "OrTTS-demo Android ARM64 CPU",
+  "voices": [
+    "female",
+    "male"
+  ],
+  "default_voice": "female",
+  "variants": {
+    "P5": {
+      "predictor_layers": 5,
+      "residual_calls": 15,
+      "requires_p3_predictor": false
+    },
+    "P3": {
+      "predictor_layers": 3,
+      "residual_calls": 15,
+      "requires_p3_predictor": true
+    }
+  },
+  "selection_rules": {
+    "common": [
+      "native/**",
+      "voices/*.f32",
+      "voices/voices.json"
+    ],
+    "P3": [
+      "P3/predictor/**",
+      "assets-p3.native.json"
+    ],
+    "P5": [
+      "assets-p5.native.json"
+    ]
+  },
+  "files": [
+    {
+      "path": "P3/predictor/config.json",
+      "bytes": 2176,
+      "sha256": "f50a994ae5c2c6464dc1c6b1552a87de99b3ef1db52a35e0331906336ad29ff7"
+    },
+    {
+      "path": "P3/predictor/predictor.safetensors",
+      "bytes": 220223680,
+      "sha256": "4ceda3676f118048724d92a01238d9d3cdbe453e08e4619469bea536568f0de2"
+    },
+    {
+      "path": "P3/predictor/talker_config.json",
+      "bytes": 3610,
+      "sha256": "208d1cde89594634aec814b4509d46fea5ada80a8d444ac743739084e72f9729"
+    },
+    {
+      "path": "assets-p3.native.json",
+      "bytes": 2011,
+      "sha256": "cc95d3b8affa7e920deec55d336b80312caa84c2b2d13af976fc9a5384735746"
+    },
+    {
+      "path": "assets-p5.native.json",
+      "bytes": 1465,
+      "sha256": "2347e5fe60a80e2a31b4a8d8f3d791515810aaac5d131f7b3b54976084de8595"
+    },
+    {
+      "path": "native/bridge/MANIFEST.json",
+      "bytes": 54450,
+      "sha256": "a4202fc2d5ba0352cd847b02e83fd7382b0a2ba54e3e3aefdc4c82c7aa068228"
+    },
+    {
+      "path": "native/bridge/acoustic.projection.weight.f32",
+      "bytes": 524288,
+      "sha256": "73a5fe097a8e66fffb9acefd6ec21ec4ee367fa9c405698937d817cf72177453"
+    },
+    {
+      "path": "native/bridge/codebook.0.f32",
+      "bytes": 2097152,
+      "sha256": "93baa86da5a795e9af705879be56353a3cb6fc8c0318dfd105d5b6998bc10ca3"
+    },
+    {
+      "path": "native/bridge/codebook.1.f32",
+      "bytes": 2097152,
+      "sha256": "87f17cb4a49a8e848517eecc8bad31c86718c0debf00ed14db85fdebbd6902ec"
+    },
+    {
+      "path": "native/bridge/codebook.10.f32",
+      "bytes": 2097152,
+      "sha256": "84dc9c06c959973eb391689483cdd2048ab3cacc627c684cb14da994efa2379e"
+    },
+    {
+      "path": "native/bridge/codebook.11.f32",
+      "bytes": 2097152,
+      "sha256": "42edd09811c2d4997c998b0fd2d2b8c185c9c380efabd9e64a19e252b26fb5ee"
+    },
+    {
+      "path": "native/bridge/codebook.12.f32",
+      "bytes": 2097152,
+      "sha256": "02df793d6c6cf74a85a18585af0412326186acf7f65a5d39802ec4ae17a20f6d"
+    },
+    {
+      "path": "native/bridge/codebook.13.f32",
+      "bytes": 2097152,
+      "sha256": "9975eb77ca58dbbef72796de4e055e6f6f1e88b47c0f721907bc8cacd94e6ddb"
+    },
+    {
+      "path": "native/bridge/codebook.14.f32",
+      "bytes": 2097152,
+      "sha256": "7e3deb18a8eed142eb66bf95fffdb34b8e6da429b29d58d0384081d185222ec4"
+    },
+    {
+      "path": "native/bridge/codebook.15.f32",
+      "bytes": 2097152,
+      "sha256": "918a0c2b1899e700b62f6cf8c93f5d6c15a5828f1923567273bb05f2586344fb"
+    },
+    {
+      "path": "native/bridge/codebook.2.f32",
+      "bytes": 2097152,
+      "sha256": "d5ee75573575b3128fad2f6467c9ebcf33ec63f1134878d559ab850f0916923f"
+    },
+    {
+      "path": "native/bridge/codebook.3.f32",
+      "bytes": 2097152,
+      "sha256": "fe60193e5dfadc2a30df51b4d3868086268142c3cca41522947d7a09463b16ce"
+    },
+    {
+      "path": "native/bridge/codebook.4.f32",
+      "bytes": 2097152,
+      "sha256": "c8569c89a0f16990968fc2685d050b5ccbf411c8ef28a7e0fd70039f56fba9ea"
+    },
+    {
+      "path": "native/bridge/codebook.5.f32",
+      "bytes": 2097152,
+      "sha256": "36adae62f8def1f7866e7d05ef4a0de8a2f835380c72ab20fe08d11298f6a9a5"
+    },
+    {
+      "path": "native/bridge/codebook.6.f32",
+      "bytes": 2097152,
+      "sha256": "7dbd363dad2e0a5609a8b993fb80f9fce706741496bc21f81c747ad9843e99c6"
+    },
+    {
+      "path": "native/bridge/codebook.7.f32",
+      "bytes": 2097152,
+      "sha256": "fd1a81840de4047a5a103132d426dc25464d71668dbafc47fe6ee5fb2819343c"
+    },
+    {
+      "path": "native/bridge/codebook.8.f32",
+      "bytes": 2097152,
+      "sha256": "f09a6f6d56932ff59c52f14f935792f6ff76ef2c9b9716a2a2c81a57a148d813"
+    },
+    {
+      "path": "native/bridge/codebook.9.f32",
+      "bytes": 2097152,
+      "sha256": "6a78ab7400f00d8c1bc3dce72142138dd9242aecd3cdfbd75828e43fd5dae21a"
+    },
+    {
+      "path": "native/bridge/context.bias.f32",
+      "bytes": 1024,
+      "sha256": "03549d3e91830cbe1598a28277c67b4ab9487e563432ba5ede454d7ce3819382"
+    },
+    {
+      "path": "native/bridge/context.weight.f32",
+      "bytes": 1572864,
+      "sha256": "77f663bd657ba0cdb292d96aa9a90e5549244a8318bba8e8d06e4074c653a95c"
+    },
+    {
+      "path": "native/bridge/hmean.f32",
+      "bytes": 2048,
+      "sha256": "84e2bb11e59190957e085a8e4e1b1b3c758462e10dc2f29f0475ca10268d43db"
+    },
+    {
+      "path": "native/bridge/hstd.f32",
+      "bytes": 2048,
+      "sha256": "4770ef5c32863faa67f8b2b8a421292bec26e362e63dea4dac13fdcd4e59da54"
+    },
+    {
+      "path": "native/bridge/ridge.bias.f32",
+      "bytes": 2048,
+      "sha256": "71170c5a4a012ed166790e1577e748cd23d73af9b9cea90771229ce22ebf31dd"
+    },
+    {
+      "path": "native/bridge/ridge.weight.f32",
+      "bytes": 1048576,
+      "sha256": "c67b1bbc719ac28af8e87e858c8bada08a77e70400a9c5ced76f94f2240be39c"
+    },
+    {
+      "path": "native/bridge/semantic.projection.weight.f32",
+      "bytes": 524288,
+      "sha256": "32a1189380f408b601fa7e61767dcb6d409684d0e22efabc2cc59f4b0faf50e1"
+    },
+    {
+      "path": "native/bridge/up.bias.f32",
+      "bytes": 2048,
+      "sha256": "71170c5a4a012ed166790e1577e748cd23d73af9b9cea90771229ce22ebf31dd"
+    },
+    {
+      "path": "native/bridge/up.weight.f32",
+      "bytes": 524288,
+      "sha256": "c39b966fed99b34f16d85c46360b212462bbb4d93dd879b72391402194735576"
+    },
+    {
+      "path": "native/bridge/zmean.f32",
+      "bytes": 2048,
+      "sha256": "d01ee55b88f5da0f1f73a0e84f9b942fd146b51c411a6237d25221d60a23a872"
+    },
+    {
+      "path": "native/bridge/zstd.f32",
+      "bytes": 2048,
+      "sha256": "d1dc28d76bb107db3b5c4d2ee80a03a609531a20cb88548502177cccf89e8f4b"
+    },
+    {
+      "path": "native/model.gguf",
+      "bytes": 1728156640,
+      "sha256": "f6c24a57047dbb3ee8445232fc934958e32b5f156fa4d1dd3551b9455dfa776c"
+    },
+    {
+      "path": "native/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf",
+      "bytes": 50546112,
+      "sha256": "01ec6afe4578bb1e02a4d43d87e7e5827d6b3d94d2d36912ee931b9c3050f1c1"
+    },
+    {
+      "path": "native/tokenizer-b260k-MIXED_Q4_0.gguf",
+      "bytes": 50546112,
+      "sha256": "5d3a38adcad19877c5154d9b8c9b5f66b49ac000a1806043da6e55f4bf89aa79"
+    },
+    {
+      "path": "native/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf",
+      "bytes": 108986560,
+      "sha256": "423cfcb054f41b69a5706226c243abc96d2531c3aff1121f7a2ed17149b79c95"
+    },
+    {
+      "path": "voices/female.f32",
+      "bytes": 4096,
+      "sha256": "844fe50aec6fdc09d4015e0a21f1cb10065ca234a87154a53e892d1dadcc7415"
+    },
+    {
+      "path": "voices/male.f32",
+      "bytes": 4096,
+      "sha256": "d63ebf18d2de0e62c1c1dc67b850ce13a5323c36be60fb6ac32a04882bc5bd7e"
+    },
+    {
+      "path": "voices/voices.json",
+      "bytes": 1063,
+      "sha256": "0a87115915ab91e4dec4290f3ebcf381631442ed608d790362d8296f25b46bba"
+    }
+  ]
+}

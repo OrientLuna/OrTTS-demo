@@ -21,7 +21,7 @@
 | `x86_64-baseline` | 禁用可选 AVX、AVX2、FMA 等扩展，使用工具链基线 |
 | `x86_64-avx2` | 启用 SSE4.2、AVX、AVX2、BMI2、FMA、F16C |
 
-不确定设备能力时使用 baseline。各档位是独立二进制，不自动跨库分派或回退；错误选择可能触发非法指令。iOS Demo 的 I8MM 版本在合成前检查 `hw.optional.arm.FEAT_I8MM`，不支持会拒绝合成，仍不等于通用兼容包。`tools/cpu_profile.py` 对 Apple 保守推荐 baseline。
+不确定设备能力时使用 baseline。Apple 各档位是独立二进制，不自动跨库分派或回退；错误选择可能触发非法指令。iOS Demo 的 I8MM 版本在合成前检查 `hw.optional.arm.FEAT_I8MM`，不支持会拒绝合成，仍不等于通用兼容包。`tools/cpu_profile.py` 对 Apple 保守推荐 baseline。
 
 ## Apple 示例
 
@@ -44,7 +44,7 @@ cmake --build build/apple-iphone-i8mm
 
 ## Android 与 Linux
 
-Android APK 的既有构建入口为 `tools/build_android.py`，原生命令行为 `tools/build.py`。后者的 `--android-isa` 默认 `armv8.2-a+dotprod+i8mm+fp16`，可显式选 `armv8-a`；该入口与上述插件 profile 参数不同，不要混用。现有发布 APK 要求 DotProd/I8MM/FP16，已验证范围见主 README。
+Android APK 的既有构建入口为 `tools/build_android.py`，原生命令行为 `tools/build.py`。后者的 `--android-isa` 默认 `armv8.2-a+dotprod+i8mm+fp16`，可显式选 `armv8-a`；该入口与上述插件 profile 参数不同，不要混用。旧发布 APK 要求 DotProd/I8MM/FP16。新入口支持 `--cpu-auto`：由 `tools/prepare_cpu_dispatch.py` 准备源树，随包携带 baseline、DotProd/FP16、I8MM CPU 模块，启动按实际 CPU 能力选择；JNI、ggml 和 C++ 运行库各保留一份。此自动分派仅适用于 Android，不改变 Apple 框架的编译档位。已验证范围见主 README。
 
 Linux ARM64 交叉编译需现有 toolchain，Android 需 NDK。Linux 指令集兼容不代表 glibc/libstdc++ 兼容，应在计划支持的旧系统工具链上构建。Intel、Linux 目标的历史支持不构成本轮 Apple 任务的重新验收。
 

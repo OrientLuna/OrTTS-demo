@@ -1,5 +1,6 @@
 #import "DownloadChannels.h"
 #import "OwnModelPackage.h"
+#import "OwnModelCatalog.h"
 #import "Demo.h"
 #import "StreamPlayback.h"
 #import "WorkQueue.h"
@@ -30,7 +31,11 @@ static BOOL Valid(NSURL *url, NSDictionary *entry) {
     NSLock *_lock;
     ortts_engine *_engine;
 }
-@property UISegmentedControl *variant, *voice, *package;
+@property UISegmentedControl *variant, *voice;
+@property UIButton *packageButton,*refreshCatalogButton;
+@property NSArray<NSDictionary*> *ownCatalog,*pendingCatalog;
+@property NSDictionary *ownModel;
+@property BOOL catalogRefreshing;
 @property UITextView *text;
 @property UILabel *status;
 @property UIProgressView *progress;
@@ -41,7 +46,6 @@ static BOOL Valid(NSURL *url, NSDictionary *entry) {
 - (int)receivePCM:(const float *)pcm count:(size_t)count rate:(int32_t)rate;
 @property NSURLSessionDownloadTask *task;
 @property BOOL busy, cancelled, legacyPack, ptqPack;
-@property NSInteger packageKind;
 @property BOOL smokeCancelScheduled;
 @property NSUInteger smokeSamples;
 @end
@@ -69,8 +73,9 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
 - (void)message:(NSString *)message { dispatch_async(dispatch_get_main_queue(), ^{ self.status.text = message; }); }
 - (void)setWorking:(BOOL)working {
     self.busy=working;
-    for (UIControl *c in @[self.package,self.variant,self.voice,self.download,self.channelButton,self.synthesize,self.importButton,self.replay]) c.enabled=!working;
+    for (UIControl *c in @[self.packageButton,self.refreshCatalogButton,self.variant,self.voice,self.download,self.channelButton,self.synthesize,self.importButton,self.replay]) c.enabled=!working;
     self.stop.enabled=working || self.player.isPlaying || self.stream.active;
+    if(!working&&self.pendingCatalog){NSArray*pending=self.pendingCatalog;self.pendingCatalog=nil;[self applyOwnCatalog:pending];}
 }
 - (UIButton *)button:(NSString *)title action:(SEL)action {
     UIButton *b=[UIButton buttonWithType:UIButtonTypeSystem]; [b setTitle:title forState:UIControlStateNormal];
@@ -84,7 +89,9 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     [NSLayoutConstraint activateConstraints:@[[scroll.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor], [scroll.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor], [scroll.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor], [scroll.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor], [stack.topAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.topAnchor constant:24], [stack.bottomAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.bottomAnchor constant:-24], [stack.leadingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.leadingAnchor constant:20], [stack.trailingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.trailingAnchor constant:-20], [stack.widthAnchor constraintEqualToAnchor:scroll.frameLayoutGuide.widthAnchor constant:-40]]];
     UILabel *title=[UILabel new]; title.text=@"OrTTS"; title.font=[UIFont preferredFontForTextStyle:UIFontTextStyleLargeTitle]; [stack addArrangedSubview:title];
     UILabel *subtitle=[UILabel new]; subtitle.text=[NSString stringWithFormat:@"本地语音合成 · CPU · %s",ORTTS_APP_CPU_PROFILE]; subtitle.textColor=UIColor.secondaryLabelColor; [stack addArrangedSubview:subtitle];
-    self.package=[[UISegmentedControl alloc] initWithItems:@[@"标准 Q8",@"旧 LFM",@"PTQ Q4 · P3"]];self.package.selectedSegmentIndex=0;[self.package addTarget:self action:@selector(packageChanged) forControlEvents:UIControlEventValueChanged];[stack addArrangedSubview:self.package];
+    self.ownCatalog=OrTTSMergeOwnCatalogs(@[OrTTSBuiltInOwnModels(),OrTTSLoadOwnCatalog([self catalogURL])]);self.ownModel=self.ownCatalog.firstObject;
+    self.packageButton=[UIButton buttonWithType:UIButtonTypeSystem];self.packageButton.showsMenuAsPrimaryAction=YES;[stack addArrangedSubview:self.packageButton];
+    self.refreshCatalogButton=[self button:@"刷新自研模型目录 · ModelScope" action:@selector(refreshOwnCatalog)];[stack addArrangedSubview:self.refreshCatalogButton];
     self.variant=[[UISegmentedControl alloc] initWithItems:@[@"P3 · 速度优先",@"P5 · 标准"]]; self.variant.selectedSegmentIndex=0; [stack addArrangedSubview:self.variant];
     self.voice=[[UISegmentedControl alloc] initWithItems:@[@"女声",@"男声"]]; self.voice.selectedSegmentIndex=0; [stack addArrangedSubview:self.voice];
     self.channelButton=OrTTSDownloadChannelButton(self);[stack addArrangedSubview:self.channelButton];
@@ -101,15 +108,16 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     self.replay=[self button:@"重播上次音频" action:@selector(play)]; [stack addArrangedSubview:self.replay];
     self.status=[UILabel new]; self.status.numberOfLines=0; self.status.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote]; self.status.text=@"首次使用请下载模型（约 2 GB），保持应用在前台。下载完成后可离线合成。"; [stack addArrangedSubview:self.status]; [self setWorking:NO];
     NSArray *arguments=NSProcessInfo.processInfo.arguments;
-    if([arguments containsObject:@"--benchmark-legacy"])self.package.selectedSegmentIndex=1;if([arguments containsObject:@"--benchmark-ptq"])self.package.selectedSegmentIndex=2;[self packageChanged];
+    if([arguments containsObject:@"--benchmark-legacy"])self.ownModel=OrTTSOwnPackageInfo(1);if([arguments containsObject:@"--benchmark-ptq"])self.ownModel=OrTTSOwnPackageInfo(2);[self updatePackageMenu];[self packageChanged];
     NSUInteger textIndex=[arguments indexOfObject:@"--benchmark-text"];
     if (textIndex!=NSNotFound && textIndex+1<arguments.count) self.text.text=arguments[textIndex+1];
     if ([arguments containsObject:@"--benchmark-p5"]) self.variant.selectedSegmentIndex=1;
-    if ([arguments containsObject:@"--benchmark-male"]) self.voice.selectedSegmentIndex=self.legacyPack?1:2;
+    if ([arguments containsObject:@"--benchmark-male"]){NSUInteger index=[self.ownModel[@"voices"]indexOfObject:@"male"];if(index!=NSNotFound)self.voice.selectedSegmentIndex=index;}
     // Explicit simulator integration-test launch argument; normal launches are idle.
     if ([NSProcessInfo.processInfo.arguments containsObject:@"--download-smoke"]) dispatch_async(dispatch_get_main_queue(), ^{ [self downloadModel]; });
     if([arguments containsObject:@"--benchmark-repeat"]){self.cancelled=NO;[self setWorking:YES];UIApplication.sharedApplication.idleTimerDisabled=YES;NSUInteger delayAt=[arguments indexOfObject:@"--benchmark-cooldown"];NSInteger delay=delayAt!=NSNotFound&&delayAt+1<arguments.count?MIN(180,MAX(0,[arguments[delayAt+1] integerValue])):0;self.status.text=delay?@"等待设备冷却，然后开始对照测试…":self.status.text;dispatch_after(dispatch_time(DISPATCH_TIME_NOW,delay*NSEC_PER_SEC),dispatch_get_main_queue(),^{[self benchmarkOwn];});}
     else if ([NSProcessInfo.processInfo.arguments containsObject:@"--synthesis-smoke"] || [NSProcessInfo.processInfo.arguments containsObject:@"--cancel-stream-smoke"]) dispatch_async(dispatch_get_main_queue(), ^{ [self run]; });
+    else if(![arguments containsObject:@"--download-smoke"]){NSDate*modified=nil;[[self catalogURL]getResourceValue:&modified forKey:NSURLContentModificationDateKey error:nil];if(!modified||-[modified timeIntervalSinceNow]>6*3600)dispatch_async(dispatch_get_main_queue(),^{[self refreshOwnCatalog];});}
 }
 - (void)dismissKeyboard { [self.view endEditing:YES]; }
 - (void)viewWillDisappear:(BOOL)animated { [super viewWillDisappear:animated]; [self cancel]; }
@@ -120,15 +128,19 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     }
     return YES;
 }
-- (NSURL*)modelRoot {return [Documents() URLByAppendingPathComponent:OrTTSOwnPackageInfo(self.packageKind)[@"directory"]];}
-- (NSString*)selectedVoice {NSArray*voices=self.legacyPack?@[@"female",@"male"]:@[@"female",@"female_2",@"male",@"male_2"];return voices[MAX(0,MIN(self.voice.selectedSegmentIndex,(NSInteger)voices.count-1))];}
-- (void)packageChanged {self.packageKind=self.package.selectedSegmentIndex;self.legacyPack=self.packageKind==OrTTSOwnPackageLegacy;self.ptqPack=self.packageKind==OrTTSOwnPackagePTQ;[self.variant setEnabled:!self.ptqPack forSegmentAtIndex:1];if(self.ptqPack)self.variant.selectedSegmentIndex=0;[self.stream stop];[self.player stop];[self.voice removeAllSegments];NSArray*names=self.legacyPack?@[@"女声",@"男声"]:@[@"女声1",@"女声2",@"男声1",@"男声2"];for(NSUInteger i=0;i<names.count;i++)[self.voice insertSegmentWithTitle:names[i] atIndex:i animated:NO];self.voice.selectedSegmentIndex=0;self.status.text=self.ptqPack?@"PTQ Q4 · 0.6B P3 · LiquidCodec Q8 · 约1.59GB，独立目录；内存效果待真机验证":!self.legacyPack?@"LiquidCodec · v0.3.1 · 独立模型目录，首次下载 P3 约1.81GB":@"旧 LFM · v0.2.0 · 兼容已有模型，性能与新版分别记录";}
+- (NSURL*)catalogURL {return [Documents() URLByAppendingPathComponent:@"own-model-catalog.json"];}
+- (void)updatePackageMenu {NSMutableArray*actions=[NSMutableArray new];for(NSDictionary*m in self.ownCatalog){UIAction*a=[UIAction actionWithTitle:m[@"name"] image:nil identifier:nil handler:^(UIAction*action){if(self.busy)return;self.ownModel=m;[self packageChanged];}];[actions addObject:a];}self.packageButton.menu=[UIMenu menuWithChildren:actions];[self.packageButton setTitle:[self.ownModel[@"name"]stringByAppendingString:@" ▾"] forState:UIControlStateNormal];}
+- (void)applyOwnCatalog:(NSArray*)models {if(self.busy){self.pendingCatalog=models;return;}self.ownCatalog=OrTTSMergeOwnCatalogs(@[self.ownCatalog,models]);[self updatePackageMenu];}
+- (void)refreshOwnCatalog {if(self.catalogRefreshing)return;self.catalogRefreshing=YES;[self message:@"正在发现ModelScope自研模型，仅获取目录…"];NSArray*previous=self.ownCatalog;dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY,0),^{@autoreleasepool{NSError*error=nil;NSArray*models=OrTTSRefreshOwnCatalog(previous,&error);if(models&&!OrTTSSaveOwnCatalog([self catalogURL],models,&error))models=nil;dispatch_async(dispatch_get_main_queue(),^{self.catalogRefreshing=NO;if(models){[self applyOwnCatalog:models];if(!self.busy)self.status.text=[NSString stringWithFormat:@"自研目录已更新 · %lu项；选择模型后再下载权重",(unsigned long)models.count];}else if(!self.busy)self.status.text=[@"目录暂不可用，保留离线列表：" stringByAppendingString:error.localizedDescription?:@"未发现兼容模型"];});}});}
+- (NSURL*)modelRoot {return [Documents() URLByAppendingPathComponent:OrTTSOwnModelDirectory(self.ownModel)];}
+- (NSString*)selectedVoice {NSArray*voices=self.ownModel[@"voices"];NSInteger index=MAX(0,MIN(self.voice.selectedSegmentIndex,(NSInteger)voices.count-1));return voices.count?voices[index]:@"female";}
+- (void)packageChanged {self.legacyPack=[self.ownModel[@"decoder"]isEqual:@"qwen_lfm"];self.ptqPack=[self.ownModel[@"p3_only"]boolValue];[self.variant setEnabled:OrTTSOwnModelSupportsVariant(self.ownModel,@"P3") forSegmentAtIndex:0];[self.variant setEnabled:OrTTSOwnModelSupportsVariant(self.ownModel,@"P5") forSegmentAtIndex:1];if(!OrTTSOwnModelSupportsVariant(self.ownModel,[self selectedVariant]))self.variant.selectedSegmentIndex=[self.ownModel[@"supported_variants"]containsObject:@"P3"]?0:1;[self.stream stop];[self.player stop];[self.voice removeAllSegments];NSArray*voices=self.ownModel[@"voices"];for(NSUInteger i=0;i<voices.count;i++)[self.voice insertSegmentWithTitle:voices[i] atIndex:i animated:NO];self.voice.selectedSegmentIndex=0;[self updatePackageMenu];self.status.text=[NSString stringWithFormat:@"%@ · %@%@",self.ownModel[@"revision"],self.ptqPack?@"仅P3":@"按所选配置下载",[self.ownModel[@"source"]isEqual:@"modelscope"]?@" · 在线发现，运行待验证":@""];}
 - (NSString*)bridgeIdentity:(NSDictionary*)manifest {id runtime=manifest[@"runtime"];NSString*path=[runtime isKindOfClass:NSDictionary.class]?runtime[@"decoder"][@"dequant_manifest"]:nil;if(!path)return BridgeSHA;for(NSDictionary*entry in manifest[@"files"])if([entry[@"path"] isEqual:path])return entry[@"sha256"];return nil;}
 - (NSString *)selectedVariant { return self.variant.selectedSegmentIndex==0 ? @"P3":@"P5"; }
 - (NSArray *)entries:(NSDictionary *)manifest variant:(NSString *)variant {
     NSMutableArray *result=[NSMutableArray new];
     if (![manifest[@"schema"] isEqual:@"ortts-download-manifest-v1"] || ![manifest[@"files"] isKindOfClass:NSArray.class]) return nil;
-    if(![manifest[@"revision"] isEqual:OrTTSOwnPackageInfo(self.packageKind)[@"revision"]]||!OrTTSOwnPackageSupportsVariant(self.packageKind,variant))return nil;
+    if(![manifest[@"revision"] isEqual:self.ownModel[@"revision"]]||!OrTTSOwnModelSupportsVariant(self.ownModel,variant))return nil;
     for (NSDictionary *e in manifest[@"files"]) {
         NSString *path=e[@"path"];
         if (![path isKindOfClass:NSString.class] || [path hasPrefix:@"/"] || [path.pathComponents containsObject:@".."] || ![e[@"sha256"] isKindOfClass:NSString.class] || ![e[@"bytes"] isKindOfClass:NSNumber.class]) return nil;
@@ -140,8 +152,8 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
 - (void)downloadModel {
     NSString *variant=[self selectedVariant]; self.cancelled=NO; [self setWorking:YES]; [self message:@"正在获取模型清单…"];
     dispatch_async(OrTTSDemoQueue(), ^{
-        NSError *error=nil;NSData *data=nil;NSArray<NSURL*>*manifestURLs=OrTTSDownloadCandidates(OrTTSOwnPackageInfo(self.packageKind)[@"manifest_url"],nil,&error);
-        for(NSURL*url in manifestURLs){if(self.cancelled)break;NSData*candidate=[NSData dataWithContentsOfURL:url options:0 error:&error];if(OrTTSVerifiedOwnManifest(candidate,self.packageKind)){data=candidate;error=nil;break;}error=[NSError errorWithDomain:@"OrTTSDownload" code:4 userInfo:@{NSLocalizedDescriptionKey:@"无法获取可信模型清单"}];}
+        NSError *error=nil;NSData *data=nil;NSArray<NSURL*>*manifestURLs=OrTTSDownloadCandidates(self.ownModel[@"manifest_url"],nil,&error);
+        for(NSURL*url in manifestURLs){if(self.cancelled)break;NSData*candidate=[NSData dataWithContentsOfURL:url options:0 error:&error];if(OrTTSVerifiedOwnModelManifest(candidate,self.ownModel)){data=candidate;error=nil;break;}error=[NSError errorWithDomain:@"OrTTSDownload" code:4 userInfo:@{NSLocalizedDescriptionKey:@"无法获取可信模型清单"}];}
         NSDictionary *manifest=data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:&error]:nil;
         NSArray *entries=[self entries:manifest variant:variant];
         if (!entries) { [self finish:error.localizedDescription ?: @"模型清单无效"]; return; }
@@ -184,7 +196,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
         NSURL *root=[self modelRoot]; NSError *error=nil;
         [NSFileManager.defaultManager createDirectoryAtURL:root withIntermediateDirectories:YES attributes:nil error:&error];
         NSData*manifestData=nil;for(NSString*name in @[@"download-manifest.json",@"model.json",@"DOWNLOAD_MANIFEST.json"]){manifestData=[NSData dataWithContentsOfURL:[source URLByAppendingPathComponent:name]];if(manifestData)break;}
-        NSDictionary*manifest=OrTTSVerifiedOwnManifest(manifestData,self.packageKind);NSArray*entries=[self entries:manifest variant:variant];
+        NSDictionary*manifest=OrTTSVerifiedOwnModelManifest(manifestData,self.ownModel);NSArray*entries=[self entries:manifest variant:variant];
         if(!entries)error=[NSError errorWithDomain:@"OrTTS" code:1 userInfo:@{NSLocalizedDescriptionKey:@"清单未通过固定版本校验，或与所选模型包不匹配（PTQ仅支持P3）。"}];
         for(NSDictionary*entry in entries){if(error||self.cancelled)break;NSURL*from=[source URLByAppendingPathComponent:entry[@"path"]],*to=[root URLByAppendingPathComponent:entry[@"path"]];if(!Valid(from,entry)){error=[NSError errorWithDomain:@"OrTTS" code:1 userInfo:@{NSLocalizedDescriptionKey:@"导入文件 SHA 校验失败"}];break;}if(Valid(to,entry))continue;if([NSFileManager.defaultManager fileExistsAtPath:to.path]){error=[NSError errorWithDomain:@"OrTTS" code:1 userInfo:@{NSLocalizedDescriptionKey:@"目标文件冲突，请先移走所选模型目录。"}];break;}[NSFileManager.defaultManager createDirectoryAtURL:to.URLByDeletingLastPathComponent withIntermediateDirectories:YES attributes:nil error:&error];if(!error)[NSFileManager.defaultManager copyItemAtURL:from toURL:to error:&error];}
         if(!error&&!self.cancelled)[manifestData writeToURL:[root URLByAppendingPathComponent:@"download-manifest.json"] atomically:YES];
@@ -218,7 +230,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     dispatch_async(OrTTSDemoQueue(), ^{OrTTSPerformWithStack(^{
         NSURL *root=[self modelRoot];
         NSData *data=[NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:@"download-manifest.json"]];
-        NSDictionary *manifest=OrTTSVerifiedOwnManifest(data,self.packageKind);
+        NSDictionary *manifest=OrTTSVerifiedOwnModelManifest(data,self.ownModel);
         NSArray *entries=[self entries:manifest variant:variant];
         if (!entries) { [self finish:@"请先下载 / 检查所选模型"]; return; }
         for (NSDictionary *entry in entries) { if (self.cancelled || !Valid([root URLByAppendingPathComponent:entry[@"path"]],entry)) { [self finish:self.cancelled ? @"已停止":@"模型校验失败，请重新检查下载"]; return; } }
@@ -259,7 +271,7 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     NSArray*args=NSProcessInfo.processInfo.arguments;NSUInteger at=[args indexOfObject:@"--benchmark-repeat"];NSUInteger count=at!=NSNotFound&&at+1<args.count?MIN((NSUInteger)4,MAX((NSUInteger)1,[args[at+1] integerValue])):4;NSUInteger idAt=[args indexOfObject:@"--benchmark-run-id"];NSString*runID=idAt!=NSNotFound&&idAt+1<args.count?args[idAt+1]:@"own-benchmark";
     NSString*text=[self.text.text copy],*variant=[self selectedVariant],*voiceID=[self selectedVoice];[self setWorking:YES];
     dispatch_async(OrTTSDemoQueue(),^{OrTTSPerformWithStack(^{
-        NSURL*root=[self modelRoot];NSData*data=[NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:@"download-manifest.json"]];NSDictionary*manifest=OrTTSVerifiedOwnManifest(data,self.packageKind);NSArray*entries=[self entries:manifest variant:variant];int status=entries?ORTTS_OK:ORTTS_INVALID;NSString*failure=entries?nil:@"Model manifest missing or untrusted";
+        NSURL*root=[self modelRoot];NSData*data=[NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:@"download-manifest.json"]];NSDictionary*manifest=OrTTSVerifiedOwnModelManifest(data,self.ownModel);NSArray*entries=[self entries:manifest variant:variant];int status=entries?ORTTS_OK:ORTTS_INVALID;NSString*failure=entries?nil:@"Model manifest missing or untrusted";
         for(NSDictionary*entry in entries)if(self.cancelled)break;else if(!Valid([root URLByAppendingPathComponent:entry[@"path"]],entry)){status=ORTTS_INVALID;failure=@"Model asset SHA validation failed";break;}
         NSString*speaker=[[root URLByAppendingPathComponent:[NSString stringWithFormat:@"voices/%@.f32",voiceID]] path];ortts_config c={sizeof(c),root.path.UTF8String,variant.UTF8String,speaker.UTF8String,[self bridgeIdentity:manifest].UTF8String,4,1};ortts_engine*engine=NULL;NSMutableArray*runs=[NSMutableArray new];
         if(self.cancelled){status=ORTTS_CANCELLED;failure=@"Cancelled";}if(!status){status=ortts_engine_create(&c,&engine);if(status)failure=[NSString stringWithUTF8String:ortts_last_error()];}

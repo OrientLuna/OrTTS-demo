@@ -1,0 +1,552 @@
+{
+  "schema": "ortts-download-manifest-v1",
+  "model_id": "OrientLuna/OrTTS-Qwen3-LFM-0.6B",
+  "revision": "v0.3.1-preview",
+  "base_url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/",
+  "files": [
+    {
+      "path": "P3/predictor/config.json",
+      "bytes": 2212,
+      "sha256": "28afeb555e6699227c8e221b5077abc1f0f6f2256f7505a5b8f4ea76e0dffdd9",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/P3/predictor/config.json"
+    },
+    {
+      "path": "P3/predictor/predictor.gguf",
+      "bytes": 146511584,
+      "sha256": "4f2ff763efaa484e5e6db9d08921ffbbb6efa111e1da5df459d580163f6748ec",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/P3/predictor/predictor.gguf"
+    },
+    {
+      "path": "P3/predictor/talker_config.json",
+      "bytes": 3658,
+      "sha256": "8a500fa618186bb931e5b5fac57eb1a29ee2de80d67296f03548b9ad2c129289",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/P3/predictor/talker_config.json"
+    },
+    {
+      "path": "native/config.json",
+      "bytes": 4494,
+      "sha256": "2e714c787c8edb98b05432685cddb634add2de4d4e645f653d68251ef72ba011",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/config.json"
+    },
+    {
+      "path": "native/dequant/MANIFEST.json",
+      "bytes": 4783,
+      "sha256": "78954b071cabd84e126a9a5e27ad5903cd10e574ae0509da5d7254e5023e2fd4",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/MANIFEST.json"
+    },
+    {
+      "path": "native/dequant/acoustic.projection.weight.f32",
+      "bytes": 524288,
+      "sha256": "73a5fe097a8e66fffb9acefd6ec21ec4ee367fa9c405698937d817cf72177453",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/acoustic.projection.weight.f32"
+    },
+    {
+      "path": "native/dequant/codebook.0.f32",
+      "bytes": 2097152,
+      "sha256": "93baa86da5a795e9af705879be56353a3cb6fc8c0318dfd105d5b6998bc10ca3",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.0.f32"
+    },
+    {
+      "path": "native/dequant/codebook.1.f32",
+      "bytes": 2097152,
+      "sha256": "87f17cb4a49a8e848517eecc8bad31c86718c0debf00ed14db85fdebbd6902ec",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.1.f32"
+    },
+    {
+      "path": "native/dequant/codebook.10.f32",
+      "bytes": 2097152,
+      "sha256": "84dc9c06c959973eb391689483cdd2048ab3cacc627c684cb14da994efa2379e",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.10.f32"
+    },
+    {
+      "path": "native/dequant/codebook.11.f32",
+      "bytes": 2097152,
+      "sha256": "42edd09811c2d4997c998b0fd2d2b8c185c9c380efabd9e64a19e252b26fb5ee",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.11.f32"
+    },
+    {
+      "path": "native/dequant/codebook.12.f32",
+      "bytes": 2097152,
+      "sha256": "02df793d6c6cf74a85a18585af0412326186acf7f65a5d39802ec4ae17a20f6d",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.12.f32"
+    },
+    {
+      "path": "native/dequant/codebook.13.f32",
+      "bytes": 2097152,
+      "sha256": "9975eb77ca58dbbef72796de4e055e6f6f1e88b47c0f721907bc8cacd94e6ddb",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.13.f32"
+    },
+    {
+      "path": "native/dequant/codebook.14.f32",
+      "bytes": 2097152,
+      "sha256": "7e3deb18a8eed142eb66bf95fffdb34b8e6da429b29d58d0384081d185222ec4",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.14.f32"
+    },
+    {
+      "path": "native/dequant/codebook.15.f32",
+      "bytes": 2097152,
+      "sha256": "918a0c2b1899e700b62f6cf8c93f5d6c15a5828f1923567273bb05f2586344fb",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.15.f32"
+    },
+    {
+      "path": "native/dequant/codebook.2.f32",
+      "bytes": 2097152,
+      "sha256": "d5ee75573575b3128fad2f6467c9ebcf33ec63f1134878d559ab850f0916923f",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.2.f32"
+    },
+    {
+      "path": "native/dequant/codebook.3.f32",
+      "bytes": 2097152,
+      "sha256": "fe60193e5dfadc2a30df51b4d3868086268142c3cca41522947d7a09463b16ce",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.3.f32"
+    },
+    {
+      "path": "native/dequant/codebook.4.f32",
+      "bytes": 2097152,
+      "sha256": "c8569c89a0f16990968fc2685d050b5ccbf411c8ef28a7e0fd70039f56fba9ea",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.4.f32"
+    },
+    {
+      "path": "native/dequant/codebook.5.f32",
+      "bytes": 2097152,
+      "sha256": "36adae62f8def1f7866e7d05ef4a0de8a2f835380c72ab20fe08d11298f6a9a5",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.5.f32"
+    },
+    {
+      "path": "native/dequant/codebook.6.f32",
+      "bytes": 2097152,
+      "sha256": "7dbd363dad2e0a5609a8b993fb80f9fce706741496bc21f81c747ad9843e99c6",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.6.f32"
+    },
+    {
+      "path": "native/dequant/codebook.7.f32",
+      "bytes": 2097152,
+      "sha256": "fd1a81840de4047a5a103132d426dc25464d71668dbafc47fe6ee5fb2819343c",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.7.f32"
+    },
+    {
+      "path": "native/dequant/codebook.8.f32",
+      "bytes": 2097152,
+      "sha256": "f09a6f6d56932ff59c52f14f935792f6ff76ef2c9b9716a2a2c81a57a148d813",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.8.f32"
+    },
+    {
+      "path": "native/dequant/codebook.9.f32",
+      "bytes": 2097152,
+      "sha256": "6a78ab7400f00d8c1bc3dce72142138dd9242aecd3cdfbd75828e43fd5dae21a",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/codebook.9.f32"
+    },
+    {
+      "path": "native/dequant/semantic.projection.weight.f32",
+      "bytes": 524288,
+      "sha256": "32a1189380f408b601fa7e61767dcb6d409684d0e22efabc2cc59f4b0faf50e1",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/dequant/semantic.projection.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.0.dw.bias.f32",
+      "bytes": 1024,
+      "sha256": "155df16ad5565949fdbbcdc1e11fdab66aa1fc3b1bc8a8228889328404c139b6",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.0.dw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.0.dw.weight.f32",
+      "bytes": 3072,
+      "sha256": "74e18cbca831dc42d2b04d987b2cda6ac88259e7823e8a43afe4ef551477976c",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.0.dw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.0.pw.bias.f32",
+      "bytes": 1024,
+      "sha256": "468658a2080199fa98178da5e93df372808e4a9253661330e2e88db14746dc2d",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.0.pw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.0.pw.weight.f32",
+      "bytes": 262144,
+      "sha256": "88c17062bd11fb1f4fe181b40fafb01de2ade73e1e6e89da781468d394f94ee7",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.0.pw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.1.dw.bias.f32",
+      "bytes": 1024,
+      "sha256": "809d3c74e5a9031819c0075a29fa376729fc7aa6ad8575c4708931e4fbdc8cc9",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.1.dw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.1.dw.weight.f32",
+      "bytes": 3072,
+      "sha256": "390f7af52068d4b81094dccc3af8c1eb24e19b8cbc43d2ec0581cae9c01a4b04",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.1.dw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.1.pw.bias.f32",
+      "bytes": 1024,
+      "sha256": "ddf51c884c30c9d285a382e102a3b2e0f714531da221ec7d95b7125482fe86d8",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.1.pw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.1.pw.weight.f32",
+      "bytes": 262144,
+      "sha256": "4a0338994b3877bdb8f32e09edac7e5c0def98473bb9179a1590ba24bdebc6dd",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.1.pw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.2.dw.bias.f32",
+      "bytes": 1024,
+      "sha256": "e797375338bd88a48418da35e444f41d6f0938e713865ce120fc43b3fae79bc7",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.2.dw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.2.dw.weight.f32",
+      "bytes": 3072,
+      "sha256": "2deff473d0a204f1527248fa6b50fdf7a690bd7dc4096d34387253b8e6e002b1",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.2.dw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.2.pw.bias.f32",
+      "bytes": 1024,
+      "sha256": "5ef020b83777bd90d4e86a1bef117698b1b9e9e53bb1f37bfdc109597287ef4e",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.2.pw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.2.pw.weight.f32",
+      "bytes": 262144,
+      "sha256": "3debbcfe05492849502b0a9d73d5ce0115d27b36d7c7456e0c5971e691e9a588",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.2.pw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.3.dw.bias.f32",
+      "bytes": 1024,
+      "sha256": "c2fffc018d7b9828de112040b7a77501a0bc89e74afdb47421676f59cca7fa5a",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.3.dw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.3.dw.weight.f32",
+      "bytes": 3072,
+      "sha256": "9939a95f3d91872fa4146845c8484224ccde833e7f366de6e69a6970a8a08693",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.3.dw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.3.pw.bias.f32",
+      "bytes": 1024,
+      "sha256": "69010501a2c88edb89dbcf7b27f2bea94c56492dd266197af58af218cd749581",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.3.pw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.3.pw.weight.f32",
+      "bytes": 262144,
+      "sha256": "aec473e6779465d55e9b482a57f6b8243763d1c8cbae764d19c55748b5f75780",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.3.pw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.4.dw.bias.f32",
+      "bytes": 1024,
+      "sha256": "c39e2d296dfb6ca6b2dcb9366c694fac50c0f41c81c0453c4f1ac81badf634a0",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.4.dw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.4.dw.weight.f32",
+      "bytes": 3072,
+      "sha256": "c5f75ad98c272d9b56ab96063ebd0ece6f407f818ebe38e5776c4b0cc930980c",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.4.dw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.4.pw.bias.f32",
+      "bytes": 1024,
+      "sha256": "ceb5e600ec4a4a831eb73b5c2680ac6421c51a284edd5ee958fa742cba867183",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.4.pw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.4.pw.weight.f32",
+      "bytes": 262144,
+      "sha256": "ad3b3a29e734913986c6599a74c256727bd9cc14351dddd5a5d3d3f3b22c7d62",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.4.pw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.5.dw.bias.f32",
+      "bytes": 1024,
+      "sha256": "25eb284d8767b3d300b4e80153720fb12d607619e3e9eb1f2cb119c80fa13cd7",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.5.dw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.5.dw.weight.f32",
+      "bytes": 3072,
+      "sha256": "4fc9f4bf4968f1e7f6bb662213e97518f01edb1f9f1388079402076a4ae65a25",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.5.dw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.5.pw.bias.f32",
+      "bytes": 1024,
+      "sha256": "f1e4422795f6d06c763cf356c5db469e75911cb3dfd69265fbb750c3ca958962",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.5.pw.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/blocks.5.pw.weight.f32",
+      "bytes": 262144,
+      "sha256": "461545894e222369d2e61cb02db29900d00d7ad1828dffb59fca8abf354ef1ca",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/blocks.5.pw.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/context.bias.f32",
+      "bytes": 1024,
+      "sha256": "d1e1675b212a2ded9d3435ddd75fe70cdabd7c3a1ab989f1f4e3989b3fea8788",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/context.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/context.weight.f32",
+      "bytes": 1572864,
+      "sha256": "cd8e88ab9327a3cdf86fcded05fc2c5ef6598d0fec094a196ddf0b8630391a29",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/context.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/down.bias.f32",
+      "bytes": 1024,
+      "sha256": "641d3cb0fde4ea614be70b464e2dc43e312b7268b6af0287e88e2ac9d815f3c1",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/down.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/down.weight.f32",
+      "bytes": 526336,
+      "sha256": "ab04f029d97530766920aec0eadeb7b4b7fd383bd72c02c2d509f29c03308083",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/down.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/expand.bias.f32",
+      "bytes": 2048,
+      "sha256": "c3fffc84ff26de7fb8ebf6b749078eefaf6e3dde6f177eca1be52f9f97120831",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/expand.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/expand.weight.f32",
+      "bytes": 524288,
+      "sha256": "4cf2e1d16c0d6d4d0b969ceccffa0885c1e8f37ab3f5706388a596cf2e838d29",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/expand.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/half_range.f32",
+      "bytes": 192,
+      "sha256": "5be0628b1470a866b1138387a003eb449003737d415b4ed78f5d2c3b0c871fa1",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/half_range.f32"
+    },
+    {
+      "path": "native/lc/base100k/head.bias.f32",
+      "bytes": 192,
+      "sha256": "a5d9e7fb68cb8f91e2fc75c3b5843a83194b2ae8d24d0fff026aad6f29f254d5",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/head.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/head.weight.f32",
+      "bytes": 98304,
+      "sha256": "611afd04fdc390b2dd28c66661c0ea730462a43509bf767ca546a40e30ea07d9",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/head.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/mid.f32",
+      "bytes": 192,
+      "sha256": "247ebd80c8114dde2f6624b365f5b8d18dba6def170685a968e88b4a98f1cfcf",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/mid.f32"
+    },
+    {
+      "path": "native/lc/base100k/ridge.bias.f32",
+      "bytes": 2048,
+      "sha256": "c3fffc84ff26de7fb8ebf6b749078eefaf6e3dde6f177eca1be52f9f97120831",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/ridge.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/ridge.weight.f32",
+      "bytes": 1048576,
+      "sha256": "df7b72ee7c12f99ca443f3bd156550757fa07be23408a53f870bafddcdfbfb62",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/ridge.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/scale.f32",
+      "bytes": 192,
+      "sha256": "6a39f404b8bab1366b5f931c04a0f4bfacc83e0d57ce0b9d0fb8ce6fbd766698",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/scale.f32"
+    },
+    {
+      "path": "native/lc/base100k/tensors.json",
+      "bytes": 6848,
+      "sha256": "f83233270fe149ae88c53b14d32a585ae73bb15e5f9561af9dad1e46f339108f",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/tensors.json"
+    },
+    {
+      "path": "native/lc/base100k/up.bias.f32",
+      "bytes": 2048,
+      "sha256": "c3fffc84ff26de7fb8ebf6b749078eefaf6e3dde6f177eca1be52f9f97120831",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/up.bias.f32"
+    },
+    {
+      "path": "native/lc/base100k/up.weight.f32",
+      "bytes": 524288,
+      "sha256": "4764389dc71e2290c72969800bbd256afbb7523e6d7662641994bc9c4cdee620",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/up.weight.f32"
+    },
+    {
+      "path": "native/lc/base100k/zmean.f32",
+      "bytes": 2048,
+      "sha256": "0e8583565650f3e6cc5fe8d554b33d5d34741aa7ea0a7a68db0a5a75882947f6",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/zmean.f32"
+    },
+    {
+      "path": "native/lc/base100k/zstd.f32",
+      "bytes": 2048,
+      "sha256": "979c5bce3bb63ae4ac312a993d96d91bfbe6e167a7aa7963186f4b3b93d6b746",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/base100k/zstd.f32"
+    },
+    {
+      "path": "native/lc/decoder.istft.window.f32",
+      "bytes": 5120,
+      "sha256": "2eec6e903417baa1c6befe141e0c0bb52e8480530f3ab0d0940a413de2904188",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/decoder.istft.window.f32"
+    },
+    {
+      "path": "native/lc/from_quantizer.bias.f32",
+      "bytes": 2048,
+      "sha256": "63344e035d1f61fe0c19759a2428101e6236e1464bf45f0ef0508718484fbd21",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/from_quantizer.bias.f32"
+    },
+    {
+      "path": "native/lc/from_quantizer.weight.f32",
+      "bytes": 524288,
+      "sha256": "5932c811ee9583e6a5248116a3424c3ce8802243bb713ad010bb6e229342f62f",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/from_quantizer.weight.f32"
+    },
+    {
+      "path": "native/lc/liquidcodec-MIXED_Q8_0.gguf",
+      "bytes": 181125024,
+      "sha256": "18c6c7e4c5ca768e2b3801e76c60d677024925d2bf5213939917e07c6ffd6d1f",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/liquidcodec-MIXED_Q8_0.gguf"
+    },
+    {
+      "path": "native/lc/project_out.bias.f32",
+      "bytes": 1024,
+      "sha256": "8a41efb22df7dc718b5a61b4a1c03d71b098827de3d635c0381cfaf792729d0e",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/project_out.bias.f32"
+    },
+    {
+      "path": "native/lc/project_out.weight.f32",
+      "bytes": 49152,
+      "sha256": "fdfdf8caec724f5c49cf17cc66a777b0c4d30f6d0a0c3465c193536b9f0d1e35",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/project_out.weight.f32"
+    },
+    {
+      "path": "native/lc/runtime.json",
+      "bytes": 283,
+      "sha256": "46bb88e7f6748232164b09c53bd3a96259cc756a9bad08160bf75b8926ab1e0d",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/lc/runtime.json"
+    },
+    {
+      "path": "native/model.gguf",
+      "bytes": 1436440864,
+      "sha256": "62fcffe74d9ce9901e8ab3f603d454692fdb543b37e67e3577b1e8c53a604a62",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/native/model.gguf"
+    },
+    {
+      "path": "voices/female.f32",
+      "bytes": 4096,
+      "sha256": "94111e84fdce88077c919946210591a9b9d7d2935e8a65db9cae6c755025e44b",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/female.f32"
+    },
+    {
+      "path": "voices/male.f32",
+      "bytes": 4096,
+      "sha256": "d63ebf18d2de0e62c1c1dc67b850ce13a5323c36be60fb6ac32a04882bc5bd7e",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/male.f32"
+    },
+    {
+      "path": "voices/female.wav",
+      "bytes": 387884,
+      "sha256": "90faaa453c013453352a251e40fec7df8f2a8c67f7b120bcbaa0171a0c043510",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/female.wav"
+    },
+    {
+      "path": "voices/female_2.f32",
+      "bytes": 4096,
+      "sha256": "f68beacab813f1e9811cedfa77d40ee78644aaf00a3bb4294606422b9026cb33",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/female_2.f32"
+    },
+    {
+      "path": "voices/female_2.wav",
+      "bytes": 360044,
+      "sha256": "50b81b3c91b2f21b6dc35dc17dc6f7eaaefd31aaefe3c0a332ce03ff42e56742",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/female_2.wav"
+    },
+    {
+      "path": "voices/male.wav",
+      "bytes": 572204,
+      "sha256": "082ee424497f7a4d098d1fc5d52bea554e136fae3a84f0a9a94cc89c425bbed1",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/male.wav"
+    },
+    {
+      "path": "voices/male_2.f32",
+      "bytes": 4096,
+      "sha256": "7f83311ca4a76f20007d17722e0f1a7dea8cc1267e0028b7bcd492cb3f22c07e",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/male_2.f32"
+    },
+    {
+      "path": "voices/male_2.wav",
+      "bytes": 384044,
+      "sha256": "61cde9f201f8d502e0e823fec54750232a323150659c640b8a59779bdc2d5b14",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/male_2.wav"
+    },
+    {
+      "path": "voices/source/female.wav",
+      "bytes": 775724,
+      "sha256": "f4637216e7aab5137e17dee1e589803d8bd3bfc50c331dba3ba203cbd5c4022e",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/source/female.wav"
+    },
+    {
+      "path": "voices/source/female_2.wav",
+      "bytes": 361164,
+      "sha256": "1238e9d5cfadf44c4bea53f69a875dacb90460d76eeb9250fd401c262b48d83a",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/source/female_2.wav"
+    },
+    {
+      "path": "voices/source/male.wav",
+      "bytes": 572204,
+      "sha256": "67713e91d3cb4018bcd3fbc461b85f6adc56ad813484b3606763aa11c99190fb",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/source/male.wav"
+    },
+    {
+      "path": "voices/source/male_2.wav",
+      "bytes": 385164,
+      "sha256": "b40b83cb0f12379d1aa92e59e325a191a69852a0ff3c92658af2a2ba7c36180b",
+      "url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/voices/source/male_2.wav"
+    }
+  ],
+  "selection_rules": {
+    "common": [
+      "native/**",
+      "voices/**"
+    ],
+    "P3": [
+      "P3/**"
+    ],
+    "P5": []
+  },
+  "runtime": {
+    "schema": "ortts-runtime-v1",
+    "decoder": {
+      "kind": "liquidcodec",
+      "variant": "base",
+      "manifest": "native/lc/runtime.json",
+      "dequant_manifest": "native/dequant/MANIFEST.json"
+    }
+  },
+  "quality": "preview",
+  "speaker_dimension": 1024,
+  "KV": "F32",
+  "frozen_only": true,
+  "default_variant": "P3",
+  "display_name": "OrTTS 0.6B",
+  "model_size": "0.6B",
+  "voices": [
+    "female",
+    "female_2",
+    "male",
+    "male_2"
+  ],
+  "generation_precision": "mixed-Q8",
+  "acoustic_precision": "MIXED_Q8_0"
+}
