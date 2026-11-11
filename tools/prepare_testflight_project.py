@@ -9,14 +9,8 @@ def main():
  engine=a.engine_install.resolve();g2p=a.g2p_install.resolve();out=a.out.resolve();out.mkdir(parents=True,exist_ok=True)
  for f in [engine/'OrTTS.framework/OrTTS',g2p/'espeak-ng.framework/espeak-ng',g2p/'espeak-ng-data/phontab']:
   if not f.is_file():raise ValueError('Missing installed dependency: '+str(f))
- from PIL import Image,ImageDraw
- icons=out/'Assets.xcassets/AppIcon.appiconset';icons.mkdir(parents=True,exist_ok=True);im=Image.new('RGB',(1024,1024),'#101f40');draw=ImageDraw.Draw(im)
- for i,h in enumerate([180,320,480,620,480,320,180]):
-  x=210+i*88;draw.rounded_rectangle((x,512-h//2,x+52,512+h//2),radius=26,fill='#66dfd2')
- entries=[]
- for size,scale,idiom in [(20,2,'iphone'),(20,3,'iphone'),(29,2,'iphone'),(29,3,'iphone'),(40,2,'iphone'),(40,3,'iphone'),(60,2,'iphone'),(60,3,'iphone'),(1024,1,'ios-marketing')]:
-  name=f'icon-{size}-{scale}.png';im.resize((size*scale,size*scale)).save(icons/name);entries.append({'size':f'{size}x{size}','scale':f'{scale}x','idiom':idiom,'filename':name})
- (icons/'Contents.json').write_text(json.dumps({'images':entries,'info':{'version':1,'author':'xcode'}}))
+ import shutil
+ shutil.copytree(ROOT/'apple/Assets.xcassets',out/'Assets.xcassets',dirs_exist_ok=True)
  info=plistlib.loads((ROOT/'apple/Info.plist').read_bytes());info.update(CFBundleIdentifier='$(PRODUCT_BUNDLE_IDENTIFIER)',CFBundleExecutable='$(EXECUTABLE_NAME)',CFBundleVersion='$(CURRENT_PROJECT_VERSION)',CFBundleShortVersionString='$(MARKETING_VERSION)',ITSAppUsesNonExemptEncryption=False)
  (out/'Info.plist').write_bytes(plistlib.dumps(info));(out/'SpeechModels.json').write_bytes((ROOT/'runtime/models/catalog.example.json').read_bytes())
  q=lambda s:json.dumps(str(s))

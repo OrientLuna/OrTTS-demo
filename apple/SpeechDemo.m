@@ -99,7 +99,7 @@ static int DemoSpeechText(void *user,const ortts_asr_stream_event*event){@autore
     UIStackView*audio=[[UIStackView alloc]initWithArrangedSubviews:@[self.importButton,self.lastAudioButton]];audio.spacing=8;audio.distribution=UIStackViewDistributionFillEqually;self.audioActions=audio;audio.hidden=self.task.selectedSegmentIndex==0;
     UIStackView*playback=[[UIStackView alloc]initWithArrangedSubviews:@[self.stopButton,[self button:@"重播上次合成" action:@selector(replay)]]];playback.spacing=8;playback.distribution=UIStackViewDistributionFillEqually;
     for(UIView*v in @[title,self.task,selection,self.information,self.channelButton,models,self.input,self.primaryButton,audio,self.status,self.result,playback,[self button:@"模型许可与来源" action:@selector(openLicense)]])[stack addArrangedSubview:v];
-    self.status.text=@"选择任务和模型，下载一次后可离线使用。录音仅在本机处理。中文合成请使用“自研TTS”页。";
+    self.status.text=@"选择任务和模型，下载一次后可离线使用。录音仅在本机处理。自研多语种合成请使用“OrTTS语音合成”页。";
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(interrupted:) name:UIApplicationWillResignActiveNotification object:nil];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(interrupted:) name:AVAudioSessionInterruptionNotification object:nil];
     NSArray*args=NSProcessInfo.processInfo.arguments;_benchmarkNoPlayback=[args containsObject:@"--speech-no-playback"];

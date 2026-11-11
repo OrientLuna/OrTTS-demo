@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/brand/ortts-icon.png" width="128" alt="OrTTS 三色语音积木" /></p>
+
 # OrTTS-demo
 
 OrTTS 的端侧语音合成应用与可嵌入 CPU 运行时，支持 **0.6B／1.7B**、P3／P5、男女各两个音色，以及边生成边播放。

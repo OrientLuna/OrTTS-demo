@@ -37,8 +37,8 @@ public final class SpeechActivity extends Activity {
     final boolean ok=success;ui.post(()->{if(!destroyed){working(false);getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);writeQA(ok);if(ok&&foreground){long ticket=++cacheEpoch;ui.postDelayed(()->{if(ticket==cacheEpoch&&!busy)releaseCache();},30000);}if(leaveAfterStop)finish();}});}});
  }
  @Override public void onCreate(Bundle saved){super.onCreate(saved);ScrollView scroll=new ScrollView(this);box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(24,24,24,24);scroll.addView(box);setContentView(scroll);
-  TextView title=new TextView(this);title.setText("多模型合成与语音识别");title.setTextSize(26);box.addView(title);
-  task=spinner();values(task,Arrays.asList("多模型合成 · TTS","语音识别 · 中文 / 英语"));model=spinner();voice=spinner();
+  TextView title=new TextView(this);title.setText("第三方语音模型与语音识别");title.setTextSize(26);box.addView(title);
+  task=spinner();values(task,Arrays.asList("第三方语音模型 · TTS","语音识别 · 中文 / 英语"));model=spinner();voice=spinner();
   info=new TextView(this);info.setTextIsSelectable(true);box.addView(info);creditsButton=button("模型许可与音色来源",this::credits);download=button("下载 / 检查所选模型",()->{JSONObject m=selected();if(m!=null&&!busy)DownloadNetworkPolicy.confirm(this,allowed->submit(()->DownloadNetworkPolicy.run(allowed,()->store.download(m))));});
   importModel=button("导入所选模型 ZIP",()->{if(!busy)startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/zip").addCategory(Intent.CATEGORY_OPENABLE),403);});
   input=new EditText(this);input.setMinLines(3);input.setText("Hello, welcome to local speech synthesis.");input.setHint("按音色语言输入；Kokoro 中文音色支持中文");box.addView(input);
@@ -46,7 +46,7 @@ public final class SpeechActivity extends Activity {
   lastAudio=button("识别上次合成",()->{String path=getSharedPreferences("speech",MODE_PRIVATE).getString("last_tts_audio",new File(getFilesDir(),"speech-last.wav").getPath());onActivityResult(402,RESULT_OK,new Intent().setData(android.net.Uri.fromFile(new File(path))));});
   stop=button("取消当前任务",()->cancel(false));
   replayButton=button("重播上次合成",()->{if(busy)return;File file=new File(getFilesDir(),"speech-last.wav");try{if(replay!=null)replay.release();replay=new MediaPlayer();replay.setDataSource(file.getPath());replay.prepare();replay.start();}catch(Exception e){message("暂无可播放音频");}});
-  legacyButton=button("返回自研中文 TTS（0.6B / 1.7B）",()->{if(busy){leaveAfterStop=true;cancel(false);}else finish();});
+  legacyButton=button("返回OrTTS语音合成",()->{if(busy){leaveAfterStop=true;cancel(false);}else finish();});
   result=new TextView(this);result.setTextIsSelectable(true);result.setTextSize(18);box.addView(result);status=new TextView(this);status.setTextIsSelectable(true);box.addView(status);arrange(title);DownloadSources.addSelector(this,box);
   try{store=new SpeechModels(this,this::message);}catch(Exception e){message(e.getMessage());run.setEnabled(false);download.setEnabled(false);return;}
   task.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?>p){}public void onItemSelected(AdapterView<?>p,View v,int position,long id){updateModels();}});
@@ -60,7 +60,7 @@ public final class SpeechActivity extends Activity {
  @Override protected void onResume(){super.onResume();foreground=true;}
  private void updateModels(){if(busy)return;releaseCache();((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(input.getWindowToken(),0);input.clearFocus();JSONObject previous=selected();if(previous!=null)getPreferences(0).edit().putString("model_"+previous.optString("task"),previous.optString("id")).apply();choices.clear();ArrayList<String> names=new ArrayList<>();boolean asr=task.getSelectedItemPosition()==1;
   for(int i=0;i<store.models.length();i++){JSONObject m=store.models.optJSONObject(i);if(m.optBoolean("demo_enabled")&&asr==m.optString("task").equals("asr")){choices.add(m);names.add(m.optString("display_name"));}}
-  values(model,names);String remembered=getPreferences(0).getString("model_"+(asr?"asr":"tts"),"");for(int i=0;i<choices.size();i++)if(choices.get(i).optString("id").equals(remembered))model.setSelection(i);result.setText("");status.setText(asr?"选择识别模型，再录音或导入音频。":"输入英文并合成；中文请返回中文合成页。");input.setVisibility(asr?View.GONE:View.VISIBLE);voice.setVisibility(asr?View.GONE:View.VISIBLE);importAudio.setVisibility(asr?View.VISIBLE:View.GONE);lastAudio.setVisibility(asr?View.VISIBLE:View.GONE);result.setVisibility(asr?View.VISIBLE:View.GONE);working(false);updateInfo();
+  values(model,names);String remembered=getPreferences(0).getString("model_"+(asr?"asr":"tts"),"");for(int i=0;i<choices.size();i++)if(choices.get(i).optString("id").equals(remembered))model.setSelection(i);result.setText("");status.setText(asr?"选择识别模型，再录音或导入音频。":"按所选模型和音色支持的语言输入文本。OrTTS 多语种合成可返回 OrTTS语音合成页。");input.setVisibility(asr?View.GONE:View.VISIBLE);voice.setVisibility(asr?View.GONE:View.VISIBLE);importAudio.setVisibility(asr?View.VISIBLE:View.GONE);lastAudio.setVisibility(asr?View.VISIBLE:View.GONE);result.setVisibility(asr?View.VISIBLE:View.GONE);working(false);updateInfo();
  }
  private void updateInfo(){if(busy)return;releaseCache();JSONObject m=selected();if(m==null)return;JSONArray presets=m.optJSONArray("voice_sample");ArrayList<String> names=new ArrayList<>();if(presets!=null)for(int i=0;i<presets.length();i++)names.add(presets.optString(i));if(names.isEmpty())names.add("默认");values(voice,names);
   long bytes=0;JSONArray assets=m.optJSONArray("assets");for(int i=0;i<assets.length();i++)bytes+=assets.optJSONObject(i).optLong("bytes");
