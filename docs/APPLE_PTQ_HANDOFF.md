@@ -19,3 +19,13 @@ Use the existing model import, `ortts_engine_create`, streaming callback and aud
 Android OPPO CPU4 has23 successful streams with natural EOS, finite PCM, callback/final agreement, complete playback and zero observed underruns. Warm short/long RTF: Q8 .690/.732, PTQ+Lazy .687/.766; warm sampled peak PSS1570→1155MiB. Quality was accepted by the user for the earlier Honor batch. These are Android results, not iPhone performance claims.
 
 Linux validation covers shared-engine syntax, policy binding/negative cases and source-patch identity. The Apple owner must build/sign on macOS and check import, first synthesis, repeated streaming/EOF, release/reload and memory on a real iPhone. Public download defaults and model URLs are unchanged; this source update creates no GitHub Release.
+
+## Apple build follow-up (2026-11-11)
+
+Apple Demo now includes an optional PTQ Q4/P3 selector; the standard Q8 default and legacy entry remain. The PTQ package is isolated in `models-ptq-q4/` and rejects P5 at the UI/package boundary as well as in the shared runtime policy. Its fixed manifest is:
+
+- URL: https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-ptq-q4/variants/ptq-q4/DOWNLOAD_MANIFEST.json
+- SHA256: `26cf9f79991fa38eb766541ee34a964c4521cb5130fd61034dad3302bebd0017`
+- Declared assets: 92 files, 1,588,857,280 bytes. The repository-root manifest at this tag still describes standard Q8; it is not the PTQ manifest.
+
+Package-specific pin verification and wrong-package/tamper/P5 rejection are checked by `tests/apple_own_model_packages.m` with the three published manifests (no weights). Both CMake and the Xcode project generator include the package metadata and download-channel sources. Device/simulator frameworks and Demo builds are separate from model acceptance: import with full asset SHA checks, first/repeated streaming/EOS, release/reload, memory and listening remain pending on a physical iPhone. No model inference or performance ranking is claimed by these builds.

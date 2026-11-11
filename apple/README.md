@@ -4,6 +4,8 @@ macOS 提供命令行原型，iOS 提供 UIKit Demo。CPU 编译档位、兼容�
 
 ## iOS 使用
 
+新增可选“PTQ Q4 · P3”：固定 `v0.3.1-ptq-q4/variants/ptq-q4/DOWNLOAD_MANIFEST.json`，约1.59GB，存放于独立 `models-ptq-q4/`。只支持0.6B P3，P5选项禁用；四个固定音色保持普通流程。默认仍是标准Q8，旧LFM仍可选。PTQ清单按所选包单独校验SHA，不能用仓库根目录的标准Q8清单代替。iPhone内存、听感和性能尚待真机验证。
+
 底部“中文合成”“多模型合成”“语音识别”分别进入自研 TTS、Kokoro / Kitten / Piper / PocketTTS 和 SenseVoice / Moonshine。识别页面点击模型名称切换模型，选择后下载校验；支持文件夹导入、音频文件/录音输入、识别上次合成、停止和重播。详见 [多模型 Demo](../docs/MOBILE_SPEECH_DEMO.md)。底部原有自研模型页面继续提供以下功能。
 
 默认选择 LiquidCodec v0.3.1-preview，支持 P3/P5 与四个固定音色，P3 首次约1.81GB。可切到“LFM · 旧版兼容”使用 v0.2.0-preview 与原有男女声。两者分别放在 `models-liquid/`、`models/`，保留旧包，不静默替换解码器。下载及导入均检查各自固定清单 SHA256、文件大小和 SHA256；LiquidCodec 将已校验的 dequant 清单身份传给运行时，不沿用旧 bridge SHA。进度按文件计数，已校验文件跳过，未完成的大文件重新下载，请保持前台。
