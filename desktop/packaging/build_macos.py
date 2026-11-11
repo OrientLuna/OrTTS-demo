@@ -80,6 +80,7 @@ def main():
                     "--name", "OrTTS", "--osx-bundle-identifier", "com.orient.ortts.desktop",
                     "--target-architecture", "arm64", "--icon", str(ROOT / "assets/brand/ortts.icns"),
                     "--paths", str(ROOT), "--add-binary", f"{library}:native",
+                    "--add-data", f"{ROOT / 'assets/brand/ortts-icon.png'}:assets/brand",
                     "--add-data", f"{ROOT / 'LICENSE'}:licenses",
                     "--add-data", f"{ROOT / 'NOTICE.md'}:licenses",
                     "--add-data", f"{ROOT / 'licenses'}:licenses/components",

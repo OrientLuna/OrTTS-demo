@@ -31,9 +31,11 @@ Callback = C.CFUNCTYPE(C.c_int, C.c_void_p, C.POINTER(C.c_float), C.c_size_t, C.
 
 
 def default_library():
+    name = "libortts.dylib" if sys.platform == "darwin" else "libortts.so"
     if getattr(sys, "frozen", False):
-        return Path(sys._MEIPASS) / "native" / "libortts.dylib"
-    return Path(__file__).resolve().parents[1] / "build/pc-engine-macos/install/lib/libortts.dylib"
+        return Path(sys._MEIPASS) / "native" / name
+    platform = "macos" if sys.platform == "darwin" else "linux"
+    return Path(__file__).resolve().parents[1] / f"build/pc-engine-{platform}/install/lib" / name
 
 
 @dataclass
@@ -41,6 +43,8 @@ class Audio:
     f32: bytes
     sample_rate: int
     api_ms: float
+    first_pcm_ms: float = -1
+    chunks: int = 0
 
 
 class Engine:
@@ -81,25 +85,25 @@ class Engine:
                 raise Cancelled(message)
             raise RuntimeError(f"OrTTS ({status}): {message}")
 
-    def load(self, pack, variant="P3", voice="female", threads=4):
+    def load(self, pack, variant="P3", voice="female", threads=4, streaming=False):
         self._owner()
         if variant not in pack.variants or voice not in pack.voices or not 1 <= threads <= 8:
             raise ValueError("当前模型不支持所选变体、音色或线程数")
-        key = (pack.root, pack.manifest_sha256, variant, voice, threads)
+        key = (pack.root, pack.manifest_sha256, variant, voice, threads, streaming)
         if self.key == key:
             return
         self.close()
         # Config owns its bytes through the synchronous create call.
         cfg = Config(C.sizeof(Config), os.fsencode(pack.root), variant.encode(),
                      os.fsencode(pack.root / "voices" / f"{voice}.f32"),
-                     pack.bridge_sha256.encode(), threads, 0)
+                      pack.bridge_sha256.encode(), threads, int(streaming))
         handle = C.c_void_p()
         self._check(self.lib.ortts_engine_create(C.byref(cfg), C.byref(handle)))
         with self.lock:
             self.handle, self.key = handle, key
         self.loads += 1
 
-    def synthesize(self, text, cancel, max_tokens=513):
+    def synthesize(self, text, cancel, max_tokens=513, pcm_sink=None):
         self._owner()
         if not self.handle or not text.strip() or not 1 <= max_tokens <= 513:
             raise ValueError("请先加载模型并输入文字")
@@ -107,8 +111,26 @@ class Engine:
             raise Cancelled("已停止")
         req = Request(C.sizeof(Request), text.encode("utf-8"), 42, max_tokens)
         result = C.c_void_p()
+        callback_errors = []
+
+        def on_pcm(user, pcm, count, rate):
+            try:
+                if cancel.is_set():
+                    return 1
+                if rate != 24000 or not pcm or not 0 < count <= 24000 * 600:
+                    raise RuntimeError("运行时返回无效 PCM 块")
+                pcm_sink(C.string_at(pcm, count * C.sizeof(C.c_float)), rate)
+                return int(cancel.is_set())
+            except Exception as exc:
+                callback_errors.append(exc)
+                return 1
+
+        callback = Callback(on_pcm) if pcm_sink is not None else Callback()
         try:
-            self._check(self.lib.ortts_engine_synthesize(self.handle, C.byref(req), Callback(), None, C.byref(result)))
+            status = self.lib.ortts_engine_synthesize(self.handle, C.byref(req), callback, None, C.byref(result))
+            if callback_errors:
+                raise RuntimeError(f"PCM 回调失败：{callback_errors[0]}") from callback_errors[0]
+            self._check(status)
             if cancel.is_set():
                 raise Cancelled("已停止，丢弃本次结果")
             count = self.lib.ortts_audio_sample_count(result)
@@ -118,7 +140,8 @@ class Engine:
                 raise RuntimeError("运行时返回无效音频")
             metrics = Metrics()
             self._check(self.lib.ortts_audio_metrics(result, C.byref(metrics)))
-            return Audio(C.string_at(ptr, count * C.sizeof(C.c_float)), rate, metrics.api_ms)
+            return Audio(C.string_at(ptr, count * C.sizeof(C.c_float)), rate, metrics.api_ms,
+                         metrics.first_pcm_ms, metrics.chunks)
         finally:
             if result:
                 self.lib.ortts_audio_free(result)

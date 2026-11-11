@@ -1,7 +1,10 @@
-# OrTTS 最小 macOS 桌面 Demo
+# OrTTS 桌面 Demo（macOS / Linux）
 
-单页 Python 3.12 + Tkinter/ttk + ctypes 客户端，直接使用仓库的 `libortts.dylib`。
-不启用浏览器服务、不引入第二套推理后端，不下载或捆绑模型。
+Python + Tkinter/ttk + ctypes 客户端，直接使用同平台的原生 OrTTS 库。
+不启用浏览器服务、不引入第二套推理后端，不捆绑模型，默认不自动联网。
+Linux 启动与打包见 [Linux README](../linux/README.md)；下文构建命令针对 macOS。
+模型菜单、导入/下载界面、后台下载及校验均在 `desktop/` 共用，和播放后端无关。
+当前新增下载界面/续传已在 Linux 验证，macOS 新版打包与 Aqua/真实音频尚需在 Mac 复验。
 
 ## 使用
 
@@ -12,12 +15,22 @@ open dist/macos-arm64/OrTTS.app
 ```
 
 1. 选择与本地模型一致的版本，默认是 **Q4（精简）/ P3**。
-2. 点击“选择并校验”，选完整目录（包含 `DOWNLOAD_MANIFEST.json` 或
+2. 点击“导入本地模型…”，选完整目录（包含 `DOWNLOAD_MANIFEST.json` 或
    `download-manifest.json`、`native/`、`voices/`，P3 还需 `P3/`）。
 3. 清单固定 SHA256、每个文件大小和 SHA256 全部通过后，选择实际存在的音色。
 4. 输入文字、合成；默认自动播放，也可手动播放、停止、另存为 PCM16 WAV。
 
-模型需自行准备，选择包根目录而不是单个 GGUF。支持内置固定清单对应的
+也可选择 ModelScope / Hugging Face，点击“下载 / 继续…”；确认联网与费用未知后，
+选择存放位置。进度条显示真实字节百分比，详情显示平均网络速率、文件名与校验阶段。
+“取消下载”保留完整文件和断点；选择相同位置可继续。
+
+下载时验证固定清单 SHA256、身份、文件长度、SHA 与路径，不覆盖已有文件；
+HTTP Range 续传只接受匹配的 206/Content-Range，最后仍检查完整 SHA。服务器忽略
+Range 时保留旧断点并安全重下当前文件；坏 SHA 文件隔离保留，不提升为可用模型。
+401/403/404/网络错误显示可执行提示，不自动无限重试或绕过权限。
+同一下载目录通过进程锁限制单写者，退出后锁自动释放。模型目录中的锁文件无需删除。
+
+本地导入请选择包根目录而不是单个 GGUF。支持内置固定清单对应的
 0.6B Q4（`v0.3.1-ptq-q4`）、标准 Q8（`v0.3.1-preview`）和历史版（`v0.2.0-preview`）；
 Q4 只支持 P3，Q8 / 历史版可选 P3/P5。清单 SHA256 固定在 `models.py`，
 选择的版本必须与本地包一致。目录可以位于任意用户可读位置，只引用原位置，
@@ -32,7 +45,7 @@ Q4 只支持 P3，Q8 / 历史版可选 P3/P5。清单 SHA256 固定在 `models.p
 
 用户目录为 `~/Library/Application Support/OrTTS Desktop/`：
 
-- `settings.json`：记住上次选择的路径（下次仍需重新校验）。
+- `settings.json`：记住上次选择的版本、通道、下载位置和最近八个已校验目录（下次仍需重新校验）。
 - `outputs/`：合成 WAV；不会自动清理，以免误删用户语音。
 - `desktop-errors.log`：运行时或模型导入异常。
 
@@ -101,7 +114,7 @@ Tk 和原生库：
   再打包客户端；Mac 上的 PyInstaller 不是 Windows 交叉打包器。
   Windows ARM64 与 x64 是不同交付目标，不能混用依赖。
 
-目前播放器只落实 macOS `afplay` 和 Linux `aplay` 的简单路径，
+macOS 使用 `afplay` 合成后播放，Linux 独立入口使用 PCM 回调队列送入 `aplay` 流式播放。
 Windows 播放、DLL 构建/加载和打包仍待实现，不能据此声称已支持 Windows。
 
 默认 `arm64-baseline`：适配 Apple Silicon，不把 I8MM 当所有 M 系列都有。
@@ -110,7 +123,7 @@ Windows 播放、DLL 构建/加载和打包仍待实现，不能据此声称已�
 ## 测试
 
 ```sh
-local/desktop-venv/bin/python -m unittest discover -s tests -p 'test_desktop.py' -v
+local/desktop-venv/bin/python -m unittest discover -s tests -p 'test_*desktop.py' -v
 export ORTTS_MODEL_DIR="/path/to/complete/q4-model-pack"
 dist/macos-arm64/OrTTS.app/Contents/MacOS/OrTTS \
   --smoke "$ORTTS_MODEL_DIR" --package Q4 \
@@ -128,9 +141,9 @@ PCM 限幅/非有限值拒绝、缺库错误和 worker 安全结束。
 另覆盖构建元数据的干净 / 已暂存 / 未暂存 / 未跟踪 / 忽略产物状态。
 测试 Q8 / 历史版时，将目录与 `--package` 分别改为对应模型包和 `Q8` / `Legacy`。
 
-## 交付边界
+## macOS 既有交付记录与边界
 
-- 本轮交付 **macOS arm64**，本机实测；不是 Windows/Linux 成品。
+- 原 macOS arm64 版本的以下实测记录不代表新增共用界面/下载已经在 Mac 复验。Linux 新交付见 Linux README；未开发 Windows 版本。
 - 应用设置最低 macOS 13.3，但旧系统、其他机器和 Intel Mac **未验证**。
 - 仅 ad-hoc 本地签名，**未开发者签名、未公证**，不声称可免 Gatekeeper 提示分发。
 - Q4 已在本机实际下载 92 个文件并全部校验，打包版的中文/英文、播放、取消/恢复与重载实推通过；仅支持 P3。
