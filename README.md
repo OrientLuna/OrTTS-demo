@@ -2,59 +2,88 @@
 
 # OrTTS-demo
 
-OrTTS 的端侧语音合成应用与可嵌入 CPU 运行时，支持 **0.6B／1.7B**、P3／P5、男女各两个音色，以及边生成边播放。
+**OrTTS 的端侧语音合成 Demo 与可嵌入运行时，模型在设备本地运行。**
 
-## 可选多模型语音 SDK
+为了方便对比语音模型的效果，也提供了其他 TTS / ASR 后端集成，具体见[模型与后端支持](#模型与后端支持)。
 
-除现有自研模型 Demo 外，后端提供可选的 [多模型 TTS / ASR C ABI 与 Rust 接口](runtime/SPEECH.md)：MOSS-TTS-Nano、Kokoro、PocketTTS、Piper、Kitten、ZipVoice，以及 SenseVoice / Moonshine。Moonshine 另提供英语增量识别接口（partial/final、分段、取消）。这些流水线与原接口共用一份 ggml；不表示能执行任意 ONNX/GGUF。新版手机 Demo 已接入 MOSS-TTS-Nano、Kokoro、Kitten、Piper、PocketTTS、SenseVoice 和 Moonshine，支持固定版本下载、SHA256 校验及 TTS/ASR 切换；ZipVoice 当前仍为 SDK 能力。详见 [多模型 Demo](docs/MOBILE_SPEECH_DEMO.md)。
+## 下载与体验
 
-## 平台支持
+**[下载最新发布版本（Latest Release）](https://github.com/OrientLuna/OrTTS-demo/releases/latest)** · [全部版本与预览包](https://github.com/OrientLuna/OrTTS-demo/releases)
 
-| 平台 | 当前提供 | 使用入口 |
+在 Release 的 Assets 中选择对应平台的附件；系统要求、签名状态和本次发布功能以该版本说明为准。下文描述当前源码进展，不代表每个已发布安装包都包含全部功能。
+
+| 平台 | 当前进展 | 使用说明 |
 |---|---|---|
-| Android ARM64 | 可安装 APK、模型下载 / ZIP 导入、流式播放 | [快速开始](#android) |
-| iOS ARM64 | UIKit Demo 源码、模型下载 / 文件夹导入、流式播放、停止、重播；已在 iPhone 17 验证 | [iOS 使用](apple/README.md#ios-使用) |
-| macOS | 命令行 Demo、离线合成与保存音频；Apple Silicon 已实测 | [macOS 使用](apple/README.md#macos-使用) |
-| Linux x64 / ARM64 | CPU 命令行构建入口、C ABI、Rust 绑定 | [运行时集成](runtime/README.md) |
+| Android ARM64 | APK、模型下载 / ZIP 导入、语音合成与播放、多模型 TTS / ASR | [Android 快速开始](#android-快速开始) |
+| iOS ARM64 | UIKit Demo 源码，支持模型下载 / 文件夹导入；需自行构建和签名 | [iOS 使用](apple/README.md#ios-使用) |
+| macOS Apple Silicon | 最小桌面 GUI 与 `.app` / DMG 打包入口，已完成本机测试；另保留 CLI | [桌面版](desktop/README.md) · [CLI](apple/README.md#macos-使用) |
+| Linux x64 / ARM64 | CPU 命令行构建入口、C ABI 与 Rust 绑定；桌面安装包待开发 | [运行时集成](runtime/README.md) |
+| Windows | 原生运行库和桌面客户端待完善 | [开发计划](#开发计划) |
 
-iOS 需要自行构建和开发签名，尚无公开 IPA / TestFlight；macOS 当前为 CLI，无图形安装包。优化档位须匹配设备能力，baseline 是保守起点。当前使用 CPU，尚未接入 Metal、Core ML 或 QNN。
+iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc 签名，尚未发布 Developer ID 签名并公证的正式安装包。没有对应 Release 附件的平台，请按文档自行构建。
 
-## Android
+### Android 快速开始
 
-1. [下载 Android ARM64 APK](https://github.com/OrientLuna/OrTTS-demo/releases/download/v0.3.1-preview/OrTTS-0.3.1-preview-arm64-v8a.apk)并安装。
-2. 选择0.6B或1.7B、P3或P5，下载所需权重；也可导入本地模型ZIP。
-3. 输入文字、选择音色，点击“合成语音”。默认开启“边生成边播放”。
+1. 从 [Latest Release](https://github.com/OrientLuna/OrTTS-demo/releases/latest) 下载适合设备的 APK 并安装。
+2. 在应用内选择模型，下载或导入权重。
+3. 输入文字、选择音色，点击“合成语音”；自研模型支持边生成边播放。
 
-| 模型 | P5下载 | 包含P3后的总量 |
-|---|---:|---:|
-| 0.6B · 混合Q8 | 1.66 GB | 1.81 GB |
-| 1.7B · 混合Q8 | 3.07 GB | 3.28 GB |
+安装包不包含模型权重；首次下载请保持应用在前台，首次合成需要加载模型。CPU 兼容要求因构建而异，具体见 Release 说明与 [CPU 构建档位](docs/CPU_PROFILES.md)。
 
-同一版本共享文件只保存一份，切换P3时补齐预测器；跨版本相同文件会复用本地内容，磁盘占用仍按独立安装处理。新版移动端默认选择0.6B Q4量化（精简）＋轻量版P3，约1.59GB，权重按需下载；也可选择P5原生预测器和`female`、`female_2`、`male`、`male_2`四个音色。新版 Android / iOS Demo 启动时自动发现 ModelScope 官方自研模型及发布变体，提供手动刷新与离线目录缓存；权重仍需用户选择后下载。内置固定版本保留作回退。发布约定与校验边界见[自研模型在线目录](docs/OWN_MODEL_CATALOG.md)。
+### macOS 快速开始
 
-首次下载请保持应用在前台。首次合成需要加载模型，较慢设备会在播放前增加缓冲。正常卸载会清理应用内模型、缓存及生成音频；手动保存到外部的文件不受影响。
+自行构建后打开 `OrTTS.app`，或通过 DMG 拖入“应用程序”。选择与本地包一致的模型版本，导入完整模型目录并校验，再输入文字、合成、播放或保存 WAV。
 
-上面的 0.3.1-preview APK 需要 Android 9 或更高版本，以及支持 DotProd、I8MM 和 FP16 的 ARM64 CPU。新版可通过 `--cpu-auto` 构建 baseline、DotProd/FP16、I8MM 三档自动分派包，安装包不含模型权重。手机参考数据见[性能说明](docs/BENCHMARKS.md)。
+当前桌面版默认 **0.6B Q4 / P3**，不自动下载模型，暂不提供第三方 TTS / ASR 或流式播放。构建、安装和签名边界见[桌面版说明](desktop/README.md)。
 
-模型仓库：[0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B) · [1.7B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-1.7B)
+## 模型与后端支持
 
-## iOS 与 macOS
+### OrTTS 自研模型
 
-iOS Demo 可选择模型和音色，下载并校验模型后边生成边播放，支持停止、重播及本地模型文件夹导入。功能和安装边界见 [Apple Demo](apple/README.md)。
+| 模型包 | 推理版本 | 说明 |
+|---|---|---|
+| 0.6B · Q4（精简） | P3 | 当前默认组合，不支持 P5 |
+| 0.6B · Q8（均衡） | P3 / P5 | 标准模型包 |
+| 1.7B · Q8（增强） | P3 / P5 | 移动端可选；当前最小 macOS GUI 尚未接入 |
 
-macOS 使用 `ortts-apple MODEL_ROOT P3|P5 TRUSTED_BRIDGE_SHA TEXT` 离线合成，输出 `~/Documents/ortts-output.caf`；完整命令见 [构建说明](docs/BUILD.md#apple)。
+音色按模型包实际资源提供，包含女声1 / 女声2 / 男声1 / 男声2；历史包可能只有部分音色。模型与变体不能任意混用。
+
+模型仓库：[0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B) · [1.7B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-1.7B)。下载量、文件组成和校验规则见[模型资产](docs/MODEL_ASSETS.md)与[模型目录](docs/OWN_MODEL_CATALOG.md)，不将某个版本的下载量当作所有模型的统一要求。
+
+### 其他 TTS / ASR 后端
+
+| 用途 | 后端 | 当前应用接入 |
+|---|---|---|
+| 语音合成 | Kokoro、PocketTTS、Piper、Kitten | Android / iOS 多模型页 |
+| 语音合成 | MOSS-TTS-Nano | Android 多模型页；iOS 页面尚未接入 |
+| 语音合成 | ZipVoice | SDK 接口，暂未接入手机菜单 |
+| 语音识别 | SenseVoice | Android / iOS；中文、英文离线识别 |
+| 语音识别 | Moonshine | Android / iOS；英语增量识别 |
+
+“后端已接入”不等于所有平台、语言和音色均已验证，也不支持任意 ONNX / GGUF 文件。应用操作与限制见[多模型 Demo](docs/MOBILE_SPEECH_DEMO.md)，C ABI / Rust 接口见[语音 SDK](runtime/SPEECH.md)。
+
+## 开发计划
+
+- [x] Android / iOS 本地语音 Demo、模型下载与导入、多模型 TTS / ASR 接入。
+- [x] macOS 最小桌面 Demo、Q4/P3 本机验证及 app / DMG 打包。
+- [ ] macOS Developer ID 签名、公证与正式安装包发布。
+- [ ] Windows 原生运行库与桌面客户端，Linux 桌面客户端与 `.deb` 打包。
+- [ ] 桌面端模型下载、第三方 TTS / ASR 页面与流式播放。
+- [ ] Apple Core ML / Metal、高通 QNN 等设备加速路线。
+- [ ] 更多音色、发音与自然度改善，以及更完整的音质评测。
+- [ ] 统一条件下的性能回归与跨设备验证。
+
+以上是开发方向，不代表已经实现或承诺发布时间。当前运行时使用 CPU；性能数据必须结合具体模型、设备、供电、线程和计时边界理解，不将不同条件下的 RTF 当作统一排名。
 
 ## 文档导航
 
 - [多模型 Demo 下载与 TTS/ASR 切换](docs/MOBILE_SPEECH_DEMO.md)
 - [构建与开发环境](docs/BUILD.md)
+- [macOS 桌面 Demo 与 app / DMG 打包](desktop/README.md)
 - [模型准备](docs/MODEL_ASSETS.md)
 - [解码器兼容](docs/DECODERS.md)
-- [CPU参数](docs/CPU_PROFILES.md)与[手机性能](docs/BENCHMARKS.md)
+- [CPU 构建档位](docs/CPU_PROFILES.md)与[性能记录](docs/BENCHMARKS.md)
 - [C ABI／Rust集成](runtime/README.md)
-- [iPhone 多模型热 RTF 与缓存修复](docs/development/tts-warm-cache-2026-11-08.md)
-- [P3 新旧 codec 性能归因](docs/development/p3-codec-performance-2026-11-08.md)
-- [Kokoro Mac 后端实测对照](experiments/kokoro-ab/README.md)
 - [完整文档索引](docs/README.md)
 
 ## 致谢与许可
