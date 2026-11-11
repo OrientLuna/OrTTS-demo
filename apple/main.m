@@ -46,7 +46,7 @@ static NSString *Synthesize(NSString *root, NSString *variant, NSString *sha, NS
     self.window=[[UIWindow alloc] initWithWindowScene:(UIWindowScene *)scene];
     Demo *legacy=[Demo new];legacy.tabBarItem=[[UITabBarItem alloc]initWithTitle:@"中文合成" image:[UIImage systemImageNamed:@"waveform"] tag:0];
     SpeechDemo *speech=[SpeechDemo new];speech.tabBarItem=[[UITabBarItem alloc]initWithTitle:@"多模型合成" image:[UIImage systemImageNamed:@"mic"] tag:1];
-    UITabBarController *tabs=[UITabBarController new];SpeechDemo *asr=[SpeechDemo new];asr.initialTask=1;asr.tabBarItem=[[UITabBarItem alloc]initWithTitle:@"语音识别" image:[UIImage systemImageNamed:@"mic"] tag:2];tabs.viewControllers=@[legacy,speech,asr];tabs.selectedIndex=([NSProcessInfo.processInfo.arguments containsObject:@"--synthesis-smoke"]||[NSProcessInfo.processInfo.arguments containsObject:@"--download-smoke"]||[NSProcessInfo.processInfo.arguments containsObject:@"--cancel-stream-smoke"])?0:1;
+    UITabBarController *tabs=[UITabBarController new];SpeechDemo *asr=[SpeechDemo new];asr.initialTask=1;asr.tabBarItem=[[UITabBarItem alloc]initWithTitle:@"语音识别" image:[UIImage systemImageNamed:@"mic"] tag:2];tabs.viewControllers=@[legacy,speech,asr];tabs.selectedIndex=[NSProcessInfo.processInfo.arguments containsObject:@"--speech-smoke"]?1:0;
     self.window.rootViewController=tabs; [self.window makeKeyAndVisible];
     NSLog(@"OrTTS scene ready");
 }

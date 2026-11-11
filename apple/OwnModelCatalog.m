@@ -38,8 +38,8 @@ NSArray *OrTTSLoadOwnCatalog(NSURL*file){NSNumber*size=nil;[file getResourceValu
 BOOL OrTTSSaveOwnCatalog(NSURL*file,NSArray*models,NSError**error){NSData*b=[NSJSONSerialization dataWithJSONObject:@{@"schema":@"ortts-own-catalog-v1",@"updated_at":@([NSDate date].timeIntervalSince1970),@"models":models} options:0 error:error];return b&&[b writeToURL:file options:NSDataWritingAtomic error:error];}
 
 NSString *OrTTSOwnModelTitle(NSDictionary*entry){
- if([entry[@"p3_only"]boolValue])return @"精简版";
- if([entry[@"decoder"]isEqual:@"qwen_lfm"])return @"旧版兼容";
- if([entry[@"id"]hasSuffix:@"-1.7B"])return @"大模型版";
- return @"标准版";
+ if([entry[@"p3_only"]boolValue])return @"0.6B · Q4量化（精简）";
+ if([entry[@"decoder"]isEqual:@"qwen_lfm"])return @"0.6B · LFM解码（历史版）";
+ if([entry[@"id"]hasSuffix:@"-1.7B"])return @"1.7B · Q8量化（增强）";
+ return @"0.6B · Q8量化（均衡）";
 }

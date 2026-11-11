@@ -1,4 +1,5 @@
 #import "DownloadChannels.h"
+#import "ModelDownloadUI.h"
 #import "SpeechDemo.h"
 #import "StreamPlayback.h"
 #import "WorkQueue.h"
@@ -154,8 +155,10 @@ if([scenario isEqual:@"ttl"])dispatch_after(dispatch_time(DISPATCH_TIME_NOW,31*N
 - (BOOL)verify:(NSDictionary*)model error:(NSError**)error {
     for(NSDictionary*a in model[@"assets"])if(!SpeechValid(SpeechAsset(a[@"path"]),a,^BOOL{return self.cancelled;})){if(error)*error=SpeechError(self.cancelled?@"已停止":@"请先下载 / 检查所选模型");return NO;}return YES;
 }
-- (void)downloadModel {
+- (void)downloadModel {if(self.busy)return;OrTTSConfirmModelDownload(self,^(BOOL allow){if(!self.busy)[self downloadModelAllowMetered:allow];});}
+- (void)downloadModelAllowMetered:(BOOL)allowMetered {
     if(self.busy)return;[self dismissKeyboard];NSDictionary*model=self.selected;if(!model)return;self.cancelled=NO;[self working:YES];
+    [self.session invalidateAndCancel];self.session=[NSURLSession sessionWithConfiguration:OrTTSModelDownloadConfiguration(allowMetered)];
     dispatch_async(OrTTSDemoQueue(),^{NSError*error=nil;NSUInteger index=0;NSArray*assets=model[@"assets"];
         for(NSDictionary*a in assets){if(self.cancelled)break;NSURL*target=SpeechAsset(a[@"path"]);if(!target){error=SpeechError(@"模型路径无效");break;}[self message:[NSString stringWithFormat:@"%lu/%lu 检查 %@",(unsigned long)++index,(unsigned long)assets.count,target.lastPathComponent]];
             if(SpeechValid(target,a,^BOOL{return self.cancelled;}))continue;
@@ -168,12 +171,12 @@ if([scenario isEqual:@"ttl"])dispatch_after(dispatch_time(DISPATCH_TIME_NOW,31*N
                     else if(self.cancelled)failure=SpeechError(@"已停止");
                     else if([NSFileManager.defaultManager fileExistsAtPath:target.path]){[NSFileManager.defaultManager replaceItemAtURL:target withItemAtURL:temp backupItemName:nil options:0 resultingItemURL:nil error:&failure];}
                     else [NSFileManager.defaultManager moveItemAtURL:temp toURL:target error:&failure];dispatch_semaphore_signal(done);
-                }];[self message:[NSString stringWithFormat:@"%@ · 下载 %@（%.1f MB）",OrTTSDownloadChannelName(url),target.lastPathComponent,[a[@"bytes"] doubleValue]/1e6]];[self.downloadTask resume];if(self.cancelled)[self.downloadTask cancel];dispatch_semaphore_wait(done,DISPATCH_TIME_FOREVER);self.downloadTask=nil;
+                }];NSURLSessionDownloadTask*observed=self.downloadTask;dispatch_source_t meter=OrTTSObserveModelDownload(observed,[a[@"bytes"]longLongValue],^(NSString*text,double fraction){dispatch_async(dispatch_get_main_queue(),^{if(self.downloadTask==observed&&!self.cancelled)self.status.text=[NSString stringWithFormat:@"%@ · %@\n%@",OrTTSDownloadChannelName(url),target.lastPathComponent,text];});});[self.downloadTask resume];if(self.cancelled)[self.downloadTask cancel];dispatch_semaphore_wait(done,DISPATCH_TIME_FOREVER);dispatch_source_cancel(meter);self.downloadTask=nil;
                 if(!failure&&!self.cancelled){OrTTSDownloadSucceeded(url);installed=YES;break;}routeError=failure;
             }
             if(!installed){error=routeError?:SpeechError(self.cancelled?@"已停止":@"所有可用下载通道均失败");break;}
         }
-        [self done:self.cancelled?@"下载已停止，已校验文件会保留":error.localizedDescription ?: @"模型已就绪，大小与SHA256均通过"];
+        [self.session finishTasksAndInvalidate];[self done:self.cancelled?@"下载已停止，已校验文件会保留":error.localizedDescription ?: @"模型已就绪，大小与SHA256均通过"];
     });
 }
 - (void)primary {

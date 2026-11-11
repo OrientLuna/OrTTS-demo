@@ -39,7 +39,7 @@ public final class SpeechActivity extends Activity {
  @Override public void onCreate(Bundle saved){super.onCreate(saved);ScrollView scroll=new ScrollView(this);box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(24,24,24,24);scroll.addView(box);setContentView(scroll);
   TextView title=new TextView(this);title.setText("多模型合成与语音识别");title.setTextSize(26);box.addView(title);
   task=spinner();values(task,Arrays.asList("多模型合成 · TTS","语音识别 · 中文 / 英语"));model=spinner();voice=spinner();
-  info=new TextView(this);info.setTextIsSelectable(true);box.addView(info);creditsButton=button("模型许可与音色来源",this::credits);download=button("下载 / 检查所选模型",()->{JSONObject m=selected();if(m!=null)submit(()->store.download(m));});
+  info=new TextView(this);info.setTextIsSelectable(true);box.addView(info);creditsButton=button("模型许可与音色来源",this::credits);download=button("下载 / 检查所选模型",()->{JSONObject m=selected();if(m!=null&&!busy)DownloadNetworkPolicy.confirm(this,allowed->submit(()->DownloadNetworkPolicy.run(allowed,()->store.download(m))));});
   importModel=button("导入所选模型 ZIP",()->{if(!busy)startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/zip").addCategory(Intent.CATEGORY_OPENABLE),403);});
   input=new EditText(this);input.setMinLines(3);input.setText("Hello, welcome to local speech synthesis.");input.setHint("按音色语言输入；Kokoro 中文音色支持中文");box.addView(input);
   run=button("合成并播放",this::primary);importAudio=button("导入 WAV 识别（最多60秒）",()->{if(!busy){Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("audio/*").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,402);}});

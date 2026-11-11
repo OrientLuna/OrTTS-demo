@@ -1,5 +1,5 @@
 {
-  "manifest_url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-preview/DOWNLOAD_MANIFEST.json",
+  "manifest_url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-ptq-q4/variants/ptq-q4/DOWNLOAD_MANIFEST.json",
   "variant": "P3",
   "voice": "female",
   "threads": 4,
@@ -21,6 +21,25 @@
       "manifest_sha256": "bd0990804e25fd169fc00108c58bb5de577a7f6cdcd93ed1f2840863235fa9ea",
       "P5_bytes": 3067144664,
       "P3_bytes": 3278809190
+    },
+    {
+      "id": "OrientLuna/OrTTS-Qwen3-LFM-0.6B",
+      "name": "OrTTS 0.6B · PTQ Q4",
+      "revision": "v0.3.1-ptq-q4",
+      "manifest_url": "https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/v0.3.1-ptq-q4/variants/ptq-q4/DOWNLOAD_MANIFEST.json",
+      "manifest_sha256": "26cf9f79991fa38eb766541ee34a964c4521cb5130fd61034dad3302bebd0017",
+      "p3_only": true,
+      "supported_variants": [
+        "P3"
+      ],
+      "voices": [
+        "female",
+        "female_2",
+        "male",
+        "male_2"
+      ],
+      "decoder": "liquidcodec",
+      "P3_bytes": 1588857280
     }
   ]
 }

@@ -38,10 +38,22 @@ python3 tools/test_own_model_catalog.py --json-jar /absolute/path/json-20240303.
 
 ## 简化显示与跨版本复用
 
-模型主菜单使用“标准版、精简版、大模型版、旧版兼容”；模式显示为“日常模式 / 完整模式”，音色显示为女声、男声。原始模型 ID、版本号和解码器可通过“查看版本详情”核查。默认选择保持标准版，不据此宣称精简版性能已优于其他版本。
+模型主菜单使用“0.6B · Q4量化（精简）、0.6B · Q8量化（均衡）、1.7B · Q8量化（增强）、0.6B · LFM解码（历史版）”；模式显示为“轻量版 / 标准版”，音色显示为女声、男声。原始模型 ID、版本号和解码器可通过“查看版本详情”核查。移动端默认选择 Q4 精简包＋轻量版 P3，不自动下载；Android 已保存的明确选择保留。iOS 默认打开中文合成页。P3需额外小预测器，P5用原生预测器，两者共用主模型；Q4包不支持P5。默认选择不代表性能或听感已优于其他配置。
 
 两端下载前检查已安装自研包，按 **字节数 + SHA256** 匹配文件，再读取实际文件校验。内容完全一致即可复制到目标包，文件路径不同也能匹配；缺失、损坏或内容不同才下载。目标文件复制后再次校验，使用临时文件提交，不修改原版本。Android 复用已安装 release 目录，iOS 复用保留的已安装模型目录；尚未完成、没有安装清单的其他目录不作为来源。同一包中已通过校验的文件继续直接跳过。
 
 这保证减少网络下载，**不保证跨版本只占一份磁盘空间**：安装包目录仍独立，采用安全复制，底层是否共享物理数据块取决于文件系统；未引入硬链接或统一资产缓存。完整下载大小仍是完整文件量，实际下载因本地资源而不同。下载进度也包含读取校验/复制时间，不是卡住。
 
 按公开清单计算，标准 0.6B 与精简版的原生资源/音色/预测器约有 **372.6 MB** 完全相同；本地已安装对应完整文件时可省下这部分下载。该数值为清单交集，不是真机下载或存储基准。复用测试覆盖改名后内容匹配、损坏拒绝及两个安装副本相互独立。
+
+## 下载进度与流量保护
+
+自研模型和多模型 TTS/ASR 页面均显示单个文件名、已下载/清单总 MB 及百分比；大文件下载完成后继续进行 SHA256 校验和保存。进度不代表校验已完成。iOS 按下载任务字节计数每约250ms更新；Android按读取字节数节流更新。
+
+默认只允许非计费网络下载权重。移动数据、系统标记的计费网络或无法确认网络时会弹窗，用户可取消等待Wi-Fi，或仅允许本次任务；授权不保存至下次下载。iOS 同时限制系统标记的低数据模式。元数据目录/小清单与模型权重传输分开处理，前者不受大文件提示流程影响。
+
+Android 需要 ACCESS_NETWORK_STATE，未授权移动数据时将下载连接绑定到当前通过检查的非计费网络，并在传输期间重检。iOS 将 URLSession 的 allowsCellularAccess、allowsExpensiveNetworkAccess、allowsConstrainedNetworkAccess 默认设为 false。网络变更可能中断下载，下一次重新操作；不做大文件断点续传。网络分类依据操作系统，无法识别所有 Wi-Fi 上游是否实际使用流量。
+
+官方 API 依据：[Android ConnectivityManager](https://developer.android.com/reference/android/net/ConnectivityManager#isActiveNetworkMetered())、[Apple allowsCellularAccess](https://developer.apple.com/documentation/foundation/urlsessionconfiguration/allowscellularaccess)、[Apple allowsExpensiveNetworkAccess](https://developer.apple.com/documentation/foundation/urlsessionconfiguration/allowsexpensivenetworkaccess)。
+
+新增测试：iOS 模拟器通过本机生成的1MiB分块HTTP响应验证真实任务字节进度、默认禁用/显式允许的系统配置；Android JVM 测试验证未知网络默认拒绝、单任务授权、嵌套和异常后权限恢复。尚未实测物理手机Wi-Fi切蜂窝的计费流量；不将模拟器测试称为蜂窝实测。相关源码为 tests/apple_model_download_progress.m 与 tests/DownloadNetworkPolicyTest.java。

@@ -63,18 +63,18 @@ final class SpeechModels {
    for(String address:DownloadSources.candidates(context,a.getString("url"),a.optJSONArray("download_urls"))){
     if(cancelled.get())throw new IOException("已停止");File partial=File.createTempFile("ortts-",".part",target.getParentFile());
     try {
-     URL url=new URL(address);if(!"https".equals(url.getProtocol()))throw new IOException("模型下载需要HTTPS");
+     DownloadNetworkPolicy.check(context);URL url=new URL(address);if(!"https".equals(url.getProtocol()))throw new IOException("模型下载需要HTTPS");
      progress.update("下载通道："+DownloadSources.label(DownloadRoute.channel(address)));
-     HttpURLConnection c=(HttpURLConnection)url.openConnection();connection=c;c.setConnectTimeout(8000);c.setReadTimeout(20000);c.setInstanceFollowRedirects(true);
+     HttpURLConnection c=(HttpURLConnection)DownloadNetworkPolicy.open(context,url);connection=c;c.setConnectTimeout(8000);c.setReadTimeout(20000);c.setInstanceFollowRedirects(true);
      long count=0,last=0;
      try{int code=c.getResponseCode();if(code!=200||!"https".equals(c.getURL().getProtocol()))throw new IOException("模型下载HTTP "+code);
       try(InputStream in=c.getInputStream();OutputStream out=new FileOutputStream(partial)){
-       byte[] bytes=new byte[262144];int n;while((n=in.read(bytes))!=-1){if(cancelled.get())throw new IOException("已停止");count+=n;if(count>a.getLong("bytes"))throw new IOException("模型下载超过预期大小");out.write(bytes,0,n);long now=System.currentTimeMillis();if(now-last>250){progress.update(String.format(Locale.ROOT,"%s · %.1f / %.1f MB",DownloadSources.label(DownloadRoute.channel(address)),(done+count)/1e6,total/1e6));last=now;}}
+       byte[] bytes=new byte[262144];int n;while((n=in.read(bytes))!=-1){if(cancelled.get())throw new IOException("已停止");count+=n;if(count>a.getLong("bytes"))throw new IOException("模型下载超过预期大小");out.write(bytes,0,n);long now=System.currentTimeMillis();if(now-last>250){DownloadNetworkPolicy.check(context);progress.update(String.format(Locale.ROOT,"%s · %s · %.1f / %.1f MB · %.1f%%\n总计 %.1f / %.1f MB",DownloadSources.label(DownloadRoute.channel(address)),target.getName(),count/1e6,a.getLong("bytes")/1e6,a.getLong("bytes")>0?100.*count/a.getLong("bytes"):0,(done+count)/1e6,total/1e6));last=now;}}
       }
      }finally{c.disconnect();connection=null;}
      progress.update("校验SHA256 · "+target.getName());if(!valid(partial,a))throw new IOException("模型大小或SHA256不匹配，未安装");
      Files.move(partial.toPath(),target.toPath(),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);DownloadSources.success(context,address);installed=true;break;
-    }catch(Exception e){if(cancelled.get())throw new IOException("已停止");DownloadSources.rejected(address);failure=e;progress.update("当前通道失败，检查备用通道…");}finally{partial.delete();connection=null;}
+    }catch(Exception e){DownloadNetworkPolicy.check(context);if(cancelled.get())throw new IOException("已停止");DownloadSources.rejected(address);failure=e;progress.update("当前通道失败，检查备用通道…");}finally{partial.delete();connection=null;}
    }
    if(!installed)throw new IOException("所有可用下载通道均失败，未安装模型",failure);done+=a.getLong("bytes");
   }

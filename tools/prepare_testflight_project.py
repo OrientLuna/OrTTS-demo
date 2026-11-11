@@ -21,12 +21,12 @@ def main():
  (out/'Info.plist').write_bytes(plistlib.dumps(info));(out/'SpeechModels.json').write_bytes((ROOT/'runtime/models/catalog.example.json').read_bytes())
  q=lambda s:json.dumps(str(s))
  text='name: OrTTS\noptions:\n  deploymentTarget:\n    iOS: "16.3"\ntargets:\n  OrTTS:\n    type: application\n    platform: iOS\n    sources:\n'
- for name in ['main.m','Demo.m','SpeechDemo.m','StreamPlayback.m','WorkQueue.m','DownloadChannels.m','OwnModelPackage.m','OwnModelCatalog.m','SharedModelFiles.m']:text+='      - path: '+q(ROOT/'apple'/name)+'\n'
+ for name in ['main.m','Demo.m','SpeechDemo.m','StreamPlayback.m','WorkQueue.m','DownloadChannels.m','OwnModelPackage.m','OwnModelCatalog.m','SharedModelFiles.m','ModelDownloadUI.m']:text+='      - path: '+q(ROOT/'apple'/name)+'\n'
  text+='      - path: Assets.xcassets\n      - path: SpeechModels.json\n        buildPhase: resources\n'
  for name in ['espeak-ng-data','licenses']:text+='      - path: '+q(g2p/name)+'\n        type: folder\n        buildPhase: resources\n'
  text+='    dependencies:\n'
  for f in [engine/'OrTTS.framework',g2p/'espeak-ng.framework']:text+='      - framework: '+q(f)+'\n        embed: true\n'
- text+='      - sdk: AVFoundation.framework\n      - sdk: UniformTypeIdentifiers.framework\n    settings:\n      base:\n'
+ text+='      - sdk: AVFoundation.framework\n      - sdk: UniformTypeIdentifiers.framework\n      - sdk: Network.framework\n    settings:\n      base:\n'
  settings={'PRODUCT_BUNDLE_IDENTIFIER':a.bundle_id,'INFOPLIST_FILE':'Info.plist','DEVELOPMENT_TEAM':a.team,'CODE_SIGN_STYLE':'Automatic','TARGETED_DEVICE_FAMILY':'1','HEADER_SEARCH_PATHS':str(ROOT/'runtime/include'),'CLANG_ENABLE_OBJC_ARC':'YES','GCC_PREPROCESSOR_DEFINITIONS':'$(inherited) ORTTS_APP_CPU_PROFILE=\\"arm64-baseline\\"','ASSETCATALOG_COMPILER_APPICON_NAME':'AppIcon','MARKETING_VERSION':a.version,'CURRENT_PROJECT_VERSION':str(a.build)}
  for key,value in settings.items():text+='        '+key+': '+q(value)+'\n'
  (out/'project.yml').write_text(text);subprocess.run(['xcodegen','generate','--spec',str(out/'project.yml')],check=True)
