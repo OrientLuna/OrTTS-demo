@@ -53,6 +53,18 @@
       "scale": "1x",
       "idiom": "ios-marketing",
       "filename": "icon-1024-1.png"
+    },
+    {
+      "size": "1024x1024",
+      "scale": "1x",
+      "idiom": "ios-marketing",
+      "filename": "icon-dark.png",
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "dark"
+        }
+      ]
     }
   ],
   "info": {

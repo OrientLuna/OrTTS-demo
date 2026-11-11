@@ -1,10 +1,1 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
- <group android:translateX="12.3" android:translateY="12.3" android:scaleX="0.08145" android:scaleY="0.08145">
-  <path android:pathData="M484 326H792C892 326 948 388 948 488V786C948 890 892 946 790 946H490C390 946 340 884 340 786V480C340 386 392 326 484 326Z" android:fillColor="#F5BC37"/>
-  <path android:pathData="M394 94L726 74C834 68 898 126 898 232V406C898 504 846 558 750 558H670C602 558 560 522 560 464C560 408 532 382 474 382H394C314 382 266 340 266 270V214C266 142 314 100 394 94Z" android:fillColor="#F5653B"/>
-  <path android:pathData="M214 360H322C394 360 438 408 438 478V542C438 610 472 646 540 646H550C626 646 672 696 672 772V804C672 896 616 946 524 946H226C126 946 78 892 78 794V500C78 408 126 360 214 360Z" android:fillColor="#12A99A"/>
-  <path android:pathData="M736 180Q752 230 792 250Q752 270 736 320Q720 270 680 250Q720 230 736 180Z" android:fillColor="#FFF1BA"/>
-  <path android:pathData="M218 670V734M278 624V780M338 664V740" android:fillColor="#00000000" android:strokeColor="#087C75" android:strokeWidth="30" android:strokeLineCap="round"/>
-  <path android:pathData="M748 666V738M810 622V782M872 676V728" android:fillColor="#00000000" android:strokeColor="#E28C21" android:strokeWidth="28" android:strokeLineCap="round"/>
- </group>
-</vector>
+<inset xmlns:android="http://schemas.android.com/apk/res/android" android:inset="18dp"><bitmap android:src="@drawable/ortts_logo" android:gravity="fill" android:filter="true" /></inset>

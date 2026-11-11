@@ -1,22 +1,20 @@
 # OrTTS 三色语音积木
 
-由用户提供的参考插画中橙红、青绿、金黄积木衍生。使用圆润、无缝搭接的平面几何，减少外围留白，保留星芒与声波符号；没有复制人物或照片材质。`ortts-mark.svg` 是可编辑的标志源，`ortts-icon.svg` 增加暖白背景，平台图标从同一源生成。
+使用用户从三个草图中选定的第一个方案。橙红积木保持水平，青绿 L 型块与金黄色块自然拼接。`ortts-master.png` 是透明背景母图，保留选定造型与材质，不再手工重画、扭曲轮廓或添加白色底板。
 
-- `ortts-icon.png`：1024px、不透明应用图标和展示预览。
-- `ortts-desktop.png`：桌面圆角背景版本，四角透明。
-- `ortts.ico`：Windows 多尺寸图标（16–256px）。
-- `ortts.icns`：macOS 图标资源。
-- `ortts-mark.svg`：无画布底色的矢量标志；三块颜色直接衔接，不使用浅色描边或内部空隙。
+- `ortts-icon.png`、`ortts-desktop.png`、`ortts-preview.png`：保留 alpha 的 PNG。
+- `ortts.ico`：Windows 多尺寸透明图标，16–256px。
+- `ortts.icns`：macOS 透明图标资源。
+- `ortts-mark.svg`、`ortts-icon.svg`：为现有引用保留的嵌入 PNG 包装，不是真矢量源。
 
-Android 使用缩入安全区的自适应矢量前景、暖白背景和传统 mipmap 回退。iOS 的 CMake Demo 与 Xcode 生成入口共享 `apple/Assets.xcassets`；CMake 构建通过 actool 编译并合并图标声明。实际签名安装包包含 Assets.car 与 CFBundleIcons，不能只改图标文件而遗漏声明。
+Android 使用透明 PNG 前景与透明背景声明，并留出系统自适应遮罩所需区域；具体遮罩/底色显示由启动器决定。iOS 普通浅色图标提供品牌深青色不透明回退，不加白色边框；另提供透明暗色外观资源。透明 Logo 源文件与普通 iOS 浅色 AppIcon 不是同一种交付，不能以透明母图直接代替所有系统外观。iOS 预览见 `ortts-ios-preview.png`。
 
-目前 macOS PC 入口是 CLI，Windows/Linux 也没有新增图形客户端。桌面格式已提供，实际应用/安装器需在各自打包环节指定 ICO、ICNS 或 PNG。
+CMake 和 Xcode 生成入口共享 `apple/Assets.xcassets`，通过 actool 编译与图标声明集成。目前 PC 入口是命令行程序，桌面安装器可使用 ICO、ICNS 或 PNG。
 
-重新生成（Python 3、Pillow、CairoSVG 和本机 Cairo；不联网）：
+重新导出只需现有 Pillow，不联网：
 
 ```sh
-# macOS Homebrew 的 Cairo 可显式设置搜索路径
-DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib python3 tools/generate_brand_assets.py
+python3 tools/generate_brand_assets.py
 ```
 
-生成资源已提交；普通应用构建不需要重新安装这些绘图依赖。图标资产随本仓库提供，模型与第三方组件许可证独立处理。
+母图来源为用户选定的第一个草图。资源导出只做格式和尺寸适配，不改变积木的轮廓与拼搭关系。
