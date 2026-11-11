@@ -2,3 +2,4 @@
 # Unified diff context prefixes are data, not source trailing whitespace.
 tools/compatibility/*.patch -whitespace
 vendor/speech/*.patch -whitespace
+vendor/patches/cooperative-cancel*.patch -whitespace

@@ -16,8 +16,8 @@
 |---|---|---|
 | Android ARM64 | APK、模型下载 / ZIP 导入、语音合成与播放、多模型 TTS / ASR | [Android 快速开始](#android-快速开始) |
 | iOS ARM64 | UIKit Demo 源码，支持模型下载 / 文件夹导入；需自行构建和签名 | [iOS 使用](apple/README.md#ios-使用) |
-| macOS Apple Silicon | 最小桌面 GUI 与 `.app` / DMG 打包入口，已完成本机测试；另保留 CLI | [桌面版](desktop/README.md) · [CLI](apple/README.md#macos-使用) |
-| Linux x64 / ARM64 | CPU 命令行构建入口、C ABI 与 Rust 绑定；桌面安装包待开发 | [运行时集成](runtime/README.md) |
+| macOS Apple Silicon | 桌面 GUI、模型下载 / 导入、合成后播放、`.app` / DMG 打包；新版已在本机复验 | [桌面版](desktop/README.md) · [CLI](apple/README.md#macos-使用) |
+| Linux | 桌面 GUI、模型下载 / 导入、流式播放与文件夹包构建入口；另有 x64 / ARM64 运行时 | [Linux 桌面版](linux/README.md) · [运行时](runtime/README.md) |
 | Windows | 原生运行库和桌面客户端待完善 | [开发计划](#开发计划) |
 
 iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc 签名，尚未发布 Developer ID 签名并公证的正式安装包。没有对应 Release 附件的平台，请按文档自行构建。
@@ -32,9 +32,13 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 
 ### macOS 快速开始
 
-自行构建后打开 `OrTTS.app`，或通过 DMG 拖入“应用程序”。选择与本地包一致的模型版本，导入完整模型目录并校验，再输入文字、合成、播放或保存 WAV。
+自行构建后打开 `OrTTS.app`，或通过 DMG 拖入“应用程序”。选择模型版本，导入完整模型目录，或确认联网后下载；校验通过后即可输入文字、合成、播放或保存 WAV。
 
-当前桌面版默认 **0.6B Q4 / P3**，不自动下载模型，暂不提供第三方 TTS / ASR 或流式播放。构建、安装和签名边界见[桌面版说明](desktop/README.md)。
+当前桌面版默认 **0.6B Q4 / P3**。下载需用户确认，支持取消、断点继续和已校验文件复用，不在启动时自动下载。macOS 仍为合成后播放，暂不提供第三方 TTS / ASR。构建、安装和签名边界见[桌面版说明](desktop/README.md)。
+
+### Linux 快速开始
+
+按 [Linux 桌面版说明](linux/README.md) 组装文件夹包并运行 `./ortts`，或从源码启动。模型导入与下载界面和 macOS 共用，Linux 通过 ALSA 边合成边播放。文件夹包依赖系统 Python / Tk / ALSA，原生库还需匹配目标架构与发行版；当前不是通用 AppImage / `.deb`，无声设备自动化验证也不等于实体声卡试听通过。
 
 ## 模型与后端支持
 
@@ -44,7 +48,7 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 |---|---|---|
 | 0.6B · Q4（精简） | P3 | 当前默认组合，不支持 P5 |
 | 0.6B · Q8（均衡） | P3 / P5 | 标准模型包 |
-| 1.7B · Q8（增强） | P3 / P5 | 移动端可选；当前最小 macOS GUI 尚未接入 |
+| 1.7B · Q8（增强） | P3 / P5 | 移动端可选；当前 macOS / Linux 桌面菜单尚未接入 |
 
 音色按模型包实际资源提供，包含女声1 / 女声2 / 男声1 / 男声2；历史包可能只有部分音色。模型与变体不能任意混用。
 
@@ -66,9 +70,10 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 
 - [x] Android / iOS 本地语音 Demo、模型下载与导入、多模型 TTS / ASR 接入。
 - [x] macOS 最小桌面 Demo、Q4/P3 本机验证及 app / DMG 打包。
+- [x] macOS / Linux 共用模型下载、断点继续与文件复用；Linux 流式桌面及文件夹包构建入口。
 - [ ] macOS Developer ID 签名、公证与正式安装包发布。
-- [ ] Windows 原生运行库与桌面客户端，Linux 桌面客户端与 `.deb` 打包。
-- [ ] 桌面端模型下载、第三方 TTS / ASR 页面与流式播放。
+- [ ] Windows 原生运行库与桌面客户端；Linux 发行版兼容构建、`.deb` 打包与实体声卡验收。
+- [ ] 桌面端第三方 TTS / ASR 页面，以及 macOS 流式播放。
 - [ ] Apple Core ML / Metal、高通 QNN 等设备加速路线。
 - [ ] 更多音色、发音与自然度改善，以及更完整的音质评测。
 - [ ] 统一条件下的性能回归与跨设备验证。
@@ -80,6 +85,7 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 - [多模型 Demo 下载与 TTS/ASR 切换](docs/MOBILE_SPEECH_DEMO.md)
 - [构建与开发环境](docs/BUILD.md)
 - [macOS 桌面 Demo 与 app / DMG 打包](desktop/README.md)
+- [Linux 流式桌面 Demo 与文件夹包](linux/README.md)
 - [模型准备](docs/MODEL_ASSETS.md)
 - [解码器兼容](docs/DECODERS.md)
 - [CPU 构建档位](docs/CPU_PROFILES.md)与[性能记录](docs/BENCHMARKS.md)

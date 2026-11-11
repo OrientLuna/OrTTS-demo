@@ -76,4 +76,27 @@ On macOS use `DYLD_LIBRARY_PATH` during development. For deployment embed/sign t
 
 The prototype serializes engine operations within one loaded library. A concurrent load/synthesis returns `ORTTS_BUSY`. Existing runtime configuration uses process environment; our calls restore their changes on return. Do not concurrently use direct audio.cpp sessions or a second independently loaded copy of the engine in the same process. Do not reenter or free the engine in its callback, or free it concurrently with synthesis/cancellation. Per-session configuration isolation is a later improvement; this is not a multi-model concurrent server.
 
+### Optional cooperative cancellation
+
+Sources prepared with `tools/prepare_cancellable_runtime.py` expose
+`ortts_cooperative_cancel_version() == 1`; unchanged-source builds return 0 and retain
+legacy cancellation timing. ABI1 struct layouts are unchanged. Initially scoped to
+the Qwen CPU route, this adds cancellation at generation steps/CPU graph checkpoints
+and Liquid translator/codec CPU graph checkpoints, not arbitrary kernel or blocking-I/O preemption.
+
+`ortts_engine_cancel()` stops the current request without freeing the resident
+model/session. Partial request/KV/decoder state is reset before reuse. Do not free
+the engine as part of cancellation; reserve that for unload, model switch or shutdown.
+
+Creation has an additive `ortts_engine_create_cancellable(config, token, out)` entry.
+Allocate a sticky token with `ortts_cancel_token_create()` before starting creation;
+another thread may request it with `ortts_cancel_token_request()`. Keep it alive
+through the entire call and synchronize its free with requests. A cancelled load
+returns `ORTTS_CANCELLED` with null output and releases incomplete resources; it
+does not publish a partially loaded resident model. Existing `ortts_engine_create()`
+is unchanged. Check capability/symbols when dynamically loading older libraries.
+
+Opt-in real-model regression and separate build/package commands are documented in
+[desktop/AGENT_README.md](../desktop/AGENT_README.md#协作式取消构建q4p3-cpu).
+
 The wrapper and Rust binding follow the repository license. Runtime and model component licenses remain applicable; see the repository notices.

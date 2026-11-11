@@ -75,6 +75,7 @@ def main():
              'argv':commands,'speech':lock.get('speech'),'models_included':False,'liquidcodec':a.liquidcodec,
              'unified_source_receipt':json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text()) if a.liquidcodec else None}
     if 'cpu_dispatch' in lock:receipt['cpu_dispatch']=lock['cpu_dispatch']
+    if 'cancellation' in lock:receipt['cancellation']=lock['cancellation']
     print(json.dumps(receipt,indent=2))
     if a.dry_run:return
     if apple and platform.system()!='Darwin':raise RuntimeError('Apple SDK builds require a Mac with Xcode')

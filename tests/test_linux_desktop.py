@@ -1,5 +1,6 @@
 """Small offline fixtures; no network, GPU or model downloads."""
 import hashlib
+import gc
 import io
 import json
 import os
@@ -18,10 +19,18 @@ from linux.audio import StreamPlayer
 
 
 class DownloadTests(TestCase):
+    def tearDown(self):
+        # Tk objects must be collected on the GUI thread, not by a later worker.
+        self.doCleanups()
+        gc.collect()
+
     def setUp(self):
         self.temp = TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name) / "model"
+        # macOS aliases /var to /private/var; fixtures must use the canonical root
+        # without weakening the downloader's production symlink rejection.
+        self.temp_root = Path(self.temp.name).resolve()
+        self.root = self.temp_root / "model"
         self.files = {"native/dequant/MANIFEST.json": b"{}", "voices/female.f32": struct.pack("f", 0.1)}
         self.doc = {"schema": "ortts-download-manifest-v1", "model_id": "OrientLuna/OrTTS-Qwen3-LFM-0.6B",
                     "revision": "test", "runtime": {"decoder": {"dequant_manifest": "native/dequant/MANIFEST.json"}},
@@ -114,16 +123,16 @@ class DownloadTests(TestCase):
             download_pack(self.root, "Q4", "ModelScope")
         self.assertFalse((self.root / "voices/female.f32").exists())
 
-    @skipUnless(os.environ.get("DISPLAY"), "requires X display or xvfb-run")
+    @skipUnless(sys.platform == "darwin" or os.environ.get("DISPLAY"), "requires Aqua or X display")
     def test_gui_download_worker_import_and_close(self):
         import tkinter as tk
         from desktop.app import App
         window = tk.Tk()
         # Default desktop entry has NO streaming backend: downloads must still work.
-        app = App(window, state_dir=Path(self.temp.name) / "settings")
+        app = App(window, state_dir=self.temp_root / "settings")
         try:
             with mock.patch("desktop.app.messagebox.askyesno", return_value=True), \
-                    mock.patch("desktop.app.filedialog.askdirectory", return_value=self.temp.name):
+                    mock.patch("desktop.app.filedialog.askdirectory", return_value=str(self.temp_root)):
                 app.download()
             deadline = time.monotonic() + 10
             while app.busy and time.monotonic() < deadline:
@@ -272,7 +281,8 @@ class DownloadTests(TestCase):
         import tkinter as tk
         from desktop.app import App
         window = tk.Tk()
-        app = App(window, state_dir=Path(self.temp.name) / "settings")
+        app = App(window, state_dir=self.temp_root / "settings")
+        window.update()
         def cleanup():
             app.close()
             self.wait_ui(window, lambda: not app.worker.thread.is_alive())
@@ -283,7 +293,7 @@ class DownloadTests(TestCase):
         self.addCleanup(cleanup)
         return window, app
 
-    @skipUnless(os.environ.get("DISPLAY"), "requires X display or xvfb-run")
+    @skipUnless(sys.platform == "darwin" or os.environ.get("DISPLAY"), "requires Aqua or X display")
     def test_gui_decline_download_never_connects(self):
         window, app = self.gui()
         with mock.patch("desktop.app.messagebox.askyesno", return_value=False), \
@@ -293,12 +303,12 @@ class DownloadTests(TestCase):
         choose.assert_not_called()
         self.assertFalse(app.busy)
 
-    @skipUnless(os.environ.get("DISPLAY"), "requires X display or xvfb-run")
+    @skipUnless(sys.platform == "darwin" or os.environ.get("DISPLAY"), "requires Aqua or X display")
     def test_gui_http_failure_reenables_controls(self):
         from urllib.error import HTTPError
         window, app = self.gui()
         with mock.patch("desktop.app.messagebox.askyesno", return_value=True), \
-                mock.patch("desktop.app.filedialog.askdirectory", return_value=self.temp.name), \
+                mock.patch("desktop.app.filedialog.askdirectory", return_value=str(self.temp_root)), \
                 mock.patch("desktop.download.open_https", side_effect=HTTPError("https://example.invalid", 401, "Unauthorized", {}, None)):
             app.download()
             self.wait_ui(window, lambda: not app.busy)
@@ -308,7 +318,7 @@ class DownloadTests(TestCase):
         self.assertEqual(str(app.synth_button.cget("state")), "disabled")
         self.assertIsNone(app.pack)
 
-    @skipUnless(os.environ.get("DISPLAY"), "requires X display or xvfb-run")
+    @skipUnless(sys.platform == "darwin" or os.environ.get("DISPLAY"), "requires Aqua or X display")
     def test_gui_cancel_then_continue(self):
         window, app = self.gui()
         reading, release = threading.Event(), threading.Event()
@@ -322,11 +332,13 @@ class DownloadTests(TestCase):
                 return Delayed(self.files["voices/female.f32"])
             return self.open(url)
         with mock.patch("desktop.app.messagebox.askyesno", return_value=True), \
-                mock.patch("desktop.app.filedialog.askdirectory", return_value=self.temp.name), \
+                mock.patch("desktop.app.filedialog.askdirectory", return_value=str(self.temp_root)), \
                 mock.patch("desktop.download.open_https", side_effect=open):
             try:
                 app.download()
-                self.wait_ui(window, reading.is_set)
+                # The worker does not need Tk to reach the mocked blocking read.
+                # Do not let Aqua's initial redraw consume its timeout first.
+                self.assertTrue(reading.wait(5), "worker did not start reading")
                 self.assertEqual(app.stop_button.cget("text"), "取消下载")
                 app.stop()
                 release.set()
@@ -343,7 +355,7 @@ class DownloadTests(TestCase):
             finally:
                 release.set()
 
-    @skipUnless(os.environ.get("DISPLAY"), "requires X display or xvfb-run")
+    @skipUnless(sys.platform == "darwin" or os.environ.get("DISPLAY"), "requires Aqua or X display")
     def test_gui_cancel_during_network_timeout_is_not_error(self):
         window, app = self.gui()
         connecting, release = threading.Event(), threading.Event()
@@ -352,11 +364,11 @@ class DownloadTests(TestCase):
             release.wait(5)
             raise TimeoutError("network timed out after cancel")
         with mock.patch("desktop.app.messagebox.askyesno", return_value=True), \
-                mock.patch("desktop.app.filedialog.askdirectory", return_value=self.temp.name), \
+                mock.patch("desktop.app.filedialog.askdirectory", return_value=str(self.temp_root)), \
                 mock.patch("desktop.download.open_https", side_effect=timeout):
             try:
                 app.download()
-                self.wait_ui(window, connecting.is_set)
+                self.assertTrue(connecting.wait(5), "worker did not start connecting")
                 app.stop()
                 release.set()
                 self.wait_ui(window, lambda: not app.busy)

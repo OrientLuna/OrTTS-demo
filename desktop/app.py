@@ -332,7 +332,10 @@ class App:
             elif self.action == "import":
                 self.status.set("正在取消校验…原模型文件不会修改。")
             else:
-                self.status.set("正在停止…等待下一个 PCM 边界。" if self.streaming else "正在停止…离线计算可能需要等待当前推理返回。")
+                if getattr(self.worker.engine, "cooperative_cancel", False):
+                    self.status.set("正在停止…等待运行时安全退出，已加载模型会保留。")
+                else:
+                    self.status.set("正在停止…等待下一个 PCM 边界。" if self.streaming else "正在停止…离线计算可能需要等待当前推理返回。")
         else:
             self.status.set("播放已停止")
         self._buttons()

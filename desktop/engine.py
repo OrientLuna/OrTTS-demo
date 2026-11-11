@@ -52,6 +52,7 @@ class Engine:
         self.owner = threading.get_ident()
         self.lock = threading.Lock()
         self.handle = C.c_void_p()
+        self.loading_token = C.c_void_p()
         self.key = None
         self.loads = 0
         self.lib = C.CDLL(str(Path(library or default_library()).resolve()))
@@ -73,6 +74,23 @@ class Engine:
             fn.argtypes, fn.restype = args, result
         if self.lib.ortts_abi_version() != 1:
             raise RuntimeError("不支持的 OrTTS ABI（需要 ABI1）")
+        self.cooperative_cancel = False
+        self.cancellable_create = False
+        if hasattr(self.lib, "ortts_cooperative_cancel_version"):
+            fn = self.lib.ortts_cooperative_cancel_version
+            fn.argtypes, fn.restype = [], C.c_uint32
+            self.cooperative_cancel = fn() == 1
+        token_signatures = {
+            "ortts_cancel_token_create": ([], C.c_void_p),
+            "ortts_cancel_token_request": ([C.c_void_p], None),
+            "ortts_cancel_token_free": ([C.c_void_p], None),
+            "ortts_engine_create_cancellable": ([C.POINTER(Config), C.c_void_p, C.POINTER(C.c_void_p)], C.c_int),
+        }
+        if all(hasattr(self.lib, name) for name in token_signatures):
+            for name, (args, result) in token_signatures.items():
+                fn = getattr(self.lib, name)
+                fn.argtypes, fn.restype = args, result
+            self.cancellable_create = True
 
     def _owner(self):
         if threading.get_ident() != self.owner:
@@ -85,7 +103,7 @@ class Engine:
                 raise Cancelled(message)
             raise RuntimeError(f"OrTTS ({status}): {message}")
 
-    def load(self, pack, variant="P3", voice="female", threads=4, streaming=False):
+    def load(self, pack, variant="P3", voice="female", threads=4, streaming=False, cancel=None):
         self._owner()
         if variant not in pack.variants or voice not in pack.voices or not 1 <= threads <= 8:
             raise ValueError("当前模型不支持所选变体、音色或线程数")
@@ -98,7 +116,28 @@ class Engine:
                      os.fsencode(pack.root / "voices" / f"{voice}.f32"),
                       pack.bridge_sha256.encode(), threads, int(streaming))
         handle = C.c_void_p()
-        self._check(self.lib.ortts_engine_create(C.byref(cfg), C.byref(handle)))
+        if cancel is not None and cancel.is_set():
+            raise Cancelled("已取消加载")
+        try:
+            if self.cancellable_create:
+                with self.lock:
+                    self.loading_token = C.c_void_p(self.lib.ortts_cancel_token_create())
+                    if not self.loading_token:
+                        raise MemoryError("无法创建加载取消令牌")
+                    if cancel is not None and cancel.is_set():
+                        self.lib.ortts_cancel_token_request(self.loading_token)
+                self._check(self.lib.ortts_engine_create_cancellable(C.byref(cfg), self.loading_token, C.byref(handle)))
+            else:
+                self._check(self.lib.ortts_engine_create(C.byref(cfg), C.byref(handle)))
+        finally:
+            with self.lock:
+                if self.loading_token:
+                    self.lib.ortts_cancel_token_free(self.loading_token)
+                    self.loading_token = C.c_void_p()
+        if cancel is not None and cancel.is_set():
+            if handle:
+                self.lib.ortts_engine_free(handle)
+            raise Cancelled("已取消加载")
         with self.lock:
             self.handle, self.key = handle, key
         self.loads += 1
@@ -149,6 +188,8 @@ class Engine:
     def cancel(self):
         # Only cross-thread operation; lock excludes free/replacement, not inference.
         with self.lock:
+            if self.loading_token:
+                self.lib.ortts_cancel_token_request(self.loading_token)
             if self.handle:
                 self.lib.ortts_engine_cancel(self.handle)
 

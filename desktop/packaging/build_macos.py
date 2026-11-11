@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build an onedir .app on Apple Silicon. No model weights are bundled."""
 from pathlib import Path
+import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -63,11 +64,17 @@ def host_licenses():
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--engine-build", type=Path, default=ROOT / "build/pc-engine-macos")
+    parser.add_argument("--dist-dir", type=Path, default=ROOT / "dist/macos-arm64")
+    args = parser.parse_args()
     if sys.platform != "darwin" or platform.machine() != "arm64":
         raise SystemExit("This recipe must run on an Apple Silicon Mac")
     source_state = git_metadata(ROOT)
-    library = ROOT / "build/pc-engine-macos/install/lib/libortts.dylib"
-    receipt = json.loads((ROOT / "build/pc-engine-macos/ENGINE_BUILD_RECEIPT.json").read_text())
+    engine_build = args.engine_build.resolve()
+    dist_dir = args.dist_dir.resolve()
+    library = engine_build / "install/lib/libortts.dylib"
+    receipt = json.loads((engine_build / "ENGINE_BUILD_RECEIPT.json").read_text())
     if receipt["target"] != "macos-arm64" or receipt["cpu_profile"] != "arm64-baseline" or receipt["status"] not in ("BUILT_NOT_TARGET_TESTED", "TARGET_TESTED"):
         raise SystemExit("Build the macos-arm64 baseline runtime first")
     deps = subprocess.check_output(["otool", "-L", str(library)], text=True)
@@ -85,10 +92,10 @@ def main():
                     "--add-data", f"{ROOT / 'NOTICE.md'}:licenses",
                     "--add-data", f"{ROOT / 'licenses'}:licenses/components",
                     "--add-data", f"{license_dir}:licenses/desktop-host",
-                    "--distpath", str(ROOT / "dist/macos-arm64"),
+                    "--distpath", str(dist_dir),
                     "--workpath", str(ROOT / "build/desktop-pyinstaller"),
                     "--specpath", str(ROOT / "local"), str(ROOT / "desktop/app.py")], check=True)
-    app = ROOT / "dist/macos-arm64/OrTTS.app"
+    app = dist_dir / "OrTTS.app"
     import plistlib
     plist_path = app / "Contents/Info.plist"
     with plist_path.open("rb") as f:
@@ -117,7 +124,7 @@ def main():
             if dependency.startswith("/") and not dependency.startswith(("/usr/lib/", "/System/Library/")):
                 raise SystemExit(f"Nonportable dependency in {path}: {dependency}")
     info = {"schema_version": 1, "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-            "app": str(app.relative_to(ROOT)), "architecture": "arm64", "cpu_profile": "arm64-baseline",
+            "app": str(app.relative_to(ROOT)) if app.is_relative_to(ROOT) else str(app), "architecture": "arm64", "cpu_profile": "arm64-baseline",
             **source_state,
             "python_version": platform.python_version(),
             "pyinstaller_version": importlib.metadata.version("pyinstaller"),

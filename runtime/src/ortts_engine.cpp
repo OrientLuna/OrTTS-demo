@@ -17,6 +17,14 @@
 #include <string>
 #include <utility>
 #include <vector>
+#ifndef ORTTS_WITH_COOPERATIVE_CANCEL
+#define ORTTS_WITH_COOPERATIVE_CANCEL 0
+#endif
+#if ORTTS_WITH_COOPERATIVE_CANCEL
+#include "engine/framework/core/ortts_cancellation.h"
+#endif
+
+struct ortts_cancel_token { std::atomic<bool> cancelled{false}; };
 
 namespace ortts::detail {
 thread_local std::string error;
@@ -24,6 +32,14 @@ std::mutex execution_gate;
 }
 
 namespace {
+#if ORTTS_WITH_COOPERATIVE_CANCEL
+using CancelScope = engine::core::ortts_cancel::Scope;
+#else
+struct CancelScope { explicit CancelScope(const std::atomic<bool>*) {} };
+#endif
+void cancellation_checkpoint(const ortts_cancel_token* token) {
+ if(token && token->cancelled.load())throw std::runtime_error("Engine loading cancelled");
+}
 using Clock = std::chrono::steady_clock;
 using ortts::detail::error;
 using ortts::detail::execution_gate;
@@ -147,7 +163,16 @@ int capture(const audiocpp_event* event,void* user) noexcept {
 extern "C" {
 uint32_t ortts_abi_version(void){return ORTTS_ABI_VERSION;}
 const char* ortts_last_error(void){return error.c_str();}
+uint32_t ortts_cooperative_cancel_version(void) { return ORTTS_WITH_COOPERATIVE_CANCEL ? 1u : 0u; }
+ortts_cancel_token* ortts_cancel_token_create(void) {
+ try { return new ortts_cancel_token(); } catch(...) { return nullptr; }
+}
+void ortts_cancel_token_request(ortts_cancel_token* token) { if(token)token->cancelled=true; }
+void ortts_cancel_token_free(ortts_cancel_token* token) { delete token; }
 ortts_status ortts_engine_create(const ortts_config* cfg,ortts_engine** out) {
+ return ortts_engine_create_cancellable(cfg,nullptr,out);
+}
+ortts_status ortts_engine_create_cancellable(const ortts_config* cfg,ortts_cancel_token* token,ortts_engine** out) {
  if(out)*out=nullptr;
  error.clear();
  if(!cfg||!out||cfg->struct_size!=sizeof(*cfg)||!cfg->asset_root||!cfg->variant||
@@ -156,6 +181,8 @@ ortts_status ortts_engine_create(const ortts_config* cfg,ortts_engine** out) {
  std::unique_lock<std::mutex> lock(execution_gate,std::try_to_lock);
  if(!lock.owns_lock()){error="Another engine operation is active";return ORTTS_BUSY;}
  try {
+  CancelScope cancellation(token?&token->cancelled:nullptr);
+  cancellation_checkpoint(token);
   Environment env;
   auto e=std::make_unique<ortts_engine>();
   e->root=std::filesystem::absolute(cfg->asset_root).string();e->variant=cfg->variant;
@@ -171,9 +198,11 @@ ortts_status ortts_engine_create(const ortts_config* cfg,ortts_engine** out) {
   e->predictor_sha=ortts::pack::native_predictor_hash(e->root,e->variant);
   e->ptq=ortts::ptq::policy(e->root,e->variant);
   e->environment(env);
+  cancellation_checkpoint(token);
   check(audiocpp_registry_create(nullptr,&e->registry));
   audiocpp_model_config model{"qwen3_tts",nullptr,nullptr,nullptr};
   check(audiocpp_model_load(e->registry,child(e->root,"native/model.gguf").c_str(),&model,nullptr,&e->model));
+  cancellation_checkpoint(token);
   OptionsOwner options;if(!options.p)throw std::runtime_error("Options allocation failed");
   auto opt=[&](const char* k,const std::string& v){check(audiocpp_options_set(options.p,k,v.c_str()));};
   opt("qwen3_tts.fixed_speaker_f32",e->speaker);opt("qwen3_tts.lfm_b0_bundle",e->decoder.dequant_bundle.empty()?child(e->root,"native/bridge"):e->decoder.dequant_bundle);
@@ -184,10 +213,11 @@ ortts_status ortts_engine_create(const ortts_config* cfg,ortts_engine** out) {
   for(auto kv:ortts::inference::session_defaults)opt(kv.first,kv.second);
   audiocpp_backend_config backend{"cpu",0,e->threads};
   check(audiocpp_session_create(e->model,"tts",e->streaming?"streaming":"offline",&backend,options.p,&e->session));
+  cancellation_checkpoint(token);
   *out=e.release();return ORTTS_OK;
- }catch(const std::invalid_argument& x){error=x.what();return ORTTS_INVALID;}
- catch(const std::exception& x){error=x.what();return ORTTS_RUNTIME_ERROR;}
- catch(...){error="Unknown engine load failure";return ORTTS_RUNTIME_ERROR;}
+ }catch(const std::invalid_argument& x){error=x.what();return token&&token->cancelled?ORTTS_CANCELLED:ORTTS_INVALID;}
+ catch(const std::exception& x){error=x.what();return token&&token->cancelled?ORTTS_CANCELLED:ORTTS_RUNTIME_ERROR;}
+ catch(...){error="Unknown engine load failure";return token&&token->cancelled?ORTTS_CANCELLED:ORTTS_RUNTIME_ERROR;}
 }
 ortts_status ortts_engine_synthesize(ortts_engine* e,const ortts_request* req,ortts_pcm_callback sink,void* user,ortts_audio** out) {
  const auto api_start=Clock::now();
@@ -201,6 +231,7 @@ ortts_status ortts_engine_synthesize(ortts_engine* e,const ortts_request* req,or
  if(!lock.owns_lock()){error="Another engine operation is active";return ORTTS_BUSY;}
  try {
   Environment env;e->environment(env);Running running(*e);
+  CancelScope cancellation(&e->cancelled);
   RequestOwner q;if(!q.p)throw std::runtime_error("Request allocation failed");
   check(audiocpp_request_set_text(q.p,req->text,nullptr));
   for(auto kv:ortts::inference::request_defaults)check(audiocpp_request_set_option(q.p,kv.first,kv.second));
@@ -223,7 +254,7 @@ ortts_status ortts_engine_synthesize(ortts_engine* e,const ortts_request* req,or
    if(status!=AUDIOCPP_OK)throw std::runtime_error(stream_error);
    check(audiocpp_stream_finish(e->session,&result.p));
   }else check(audiocpp_session_run(e->session,q.p,&result.p));
-  if(e->cancelled){error="Generation cancelled";return ORTTS_CANCELLED;}
+  if(e->cancelled)throw std::runtime_error("Generation cancelled");
   const float* pcm=nullptr;size_t n=0;int rate=0,channels=0;
   check(audiocpp_result_audio(result.p,&pcm,&n,&rate,&channels));
   if(!n||!pcm||rate!=24000||channels!=1||(e->streaming&&c.samples!=n))throw std::runtime_error("Invalid/incomplete result PCM");
@@ -235,8 +266,11 @@ ortts_status ortts_engine_synthesize(ortts_engine* e,const ortts_request* req,or
   *out=audio.release();return ORTTS_OK;
  }catch(const std::exception& x) {error=x.what();}
  catch(...) {error="Unknown synthesis failure";}
- (void)audiocpp_stream_set_callback(e->session,nullptr,nullptr);
- (void)audiocpp_stream_reset(e->session);
+ if(e->streaming) {
+  (void)audiocpp_stream_set_callback(e->session,nullptr,nullptr);
+  (void)audiocpp_stream_reset(e->session);
+ }
+ if(e->cancelled){error="Generation cancelled; model remains loaded";return ORTTS_CANCELLED;}
  return ORTTS_RUNTIME_ERROR;
 }
 void ortts_engine_cancel(ortts_engine* e){if(e&&e->running.load())e->cancelled=true;}

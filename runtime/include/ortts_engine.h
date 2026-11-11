@@ -13,6 +13,7 @@ extern "C" {
 #define ORTTS_ABI_VERSION 1u
 typedef struct ortts_engine ortts_engine;
 typedef struct ortts_audio ortts_audio;
+typedef struct ortts_cancel_token ortts_cancel_token;
 typedef enum ortts_status {
  ORTTS_OK=0, ORTTS_INVALID=1, ORTTS_RUNTIME_ERROR=2, ORTTS_BUSY=3, ORTTS_CANCELLED=4
 } ortts_status;
@@ -45,9 +46,20 @@ typedef int (*ortts_pcm_callback)(void *user, const float *pcm, size_t samples, 
 ORTTS_API uint32_t ortts_abi_version(void);
 ORTTS_API const char *ortts_last_error(void); /* Borrowed, thread-local. */
 ORTTS_API ortts_status ortts_engine_create(const ortts_config*, ortts_engine**);
+/* Additive capability: 1 means cooperative Qwen CPU graph/step cancellation.
+ * 0 retains legacy compute-then-discard behavior. ABI1 structs are unchanged. */
+ORTTS_API uint32_t ortts_cooperative_cancel_version(void);
+/* Sticky token for synchronous creation. Caller owns it until create returns;
+ * request is thread-safe. Never free concurrently with request/create. */
+ORTTS_API ortts_cancel_token *ortts_cancel_token_create(void);
+ORTTS_API void ortts_cancel_token_request(ortts_cancel_token*);
+ORTTS_API void ortts_cancel_token_free(ortts_cancel_token*);
+ORTTS_API ortts_status ortts_engine_create_cancellable(const ortts_config*, ortts_cancel_token*, ortts_engine**);
 ORTTS_API ortts_status ortts_engine_synthesize(ortts_engine*, const ortts_request*, ortts_pcm_callback, void*, ortts_audio**);
-/* Thread-safe while handle is alive. Streaming checks at PCM chunk boundaries;
- * offline cancellation can only discard the result after its compute returns.
+/* Thread-safe while handle is alive. Cooperative builds stop at CPU graph/step
+ * checkpoints; a running kernel or blocking read may still need to return.
+ * Legacy builds may only discard the result after offline compute returns.
+ * Cancellation resets request state, keeping loaded weights/session resident.
  * Calling cancel while idle has no effect. */
 ORTTS_API void ortts_engine_cancel(ortts_engine*);
 /* Do not free a handle concurrently with synthesis/cancel. */

@@ -102,7 +102,8 @@ class Worker:
                             with self.engine_lock:
                                 self.engine = engine
                         self._status("加载模型 / 流式合成中…" if self.pcm_sink else "加载模型 / 合成中…（离线推理停止可能需等待当前计算结束）")
-                        self.engine.load(pack, args["variant"], args["voice"], args["threads"], streaming=self.pcm_sink is not None)
+                        self.engine.load(pack, args["variant"], args["voice"], args["threads"], streaming=self.pcm_sink is not None,
+                                         cancel=self.cancelled)
                         audio = self.engine.synthesize(args["text"], self.cancelled, pcm_sink=self.pcm_sink)
                         self.output_dir.mkdir(parents=True, exist_ok=True)
                         path = self.output_dir / f"ortts-{time.time_ns()}.wav"
@@ -117,6 +118,8 @@ class Worker:
                         raise ValueError(f"未知任务：{action}")
                 except Cancelled:
                     message = "下载已取消，可以选择相同位置继续。" if action == "download" else "校验已取消，原文件未修改。" if action == "import" else "已停止"
+                    if action == "synthesize" and self.engine and self.engine.handle:
+                        message = "已停止 · 模型保持加载，可继续合成"
                     self.events.put(("cancelled", message))
                 except Exception as exc:
                     if self.cancelled.is_set() and action in ("download", "import"):

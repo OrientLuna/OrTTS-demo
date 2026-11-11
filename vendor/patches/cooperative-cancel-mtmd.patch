@@ -1,0 +1,24 @@
+--- a/clip.h
++++ b/clip.h
+@@ -13,6 +13,8 @@
+ #define MTMD_INTERNAL_HEADER
+ 
+ struct clip_ctx;
++// Internal CPU cancellation hook; callback/data must outlive joined compute.
++void clip_set_abort_callback(clip_ctx *, ggml_abort_callback, void *);
+ struct clip_enc_state;
+ struct clip_gen_state;
+ 
+--- a/clip.cpp
++++ b/clip.cpp
+@@ -4650,6 +4650,10 @@
+     return hparams.image_max_pixels / patch_area;
+ }
+ 
++void clip_set_abort_callback(clip_ctx * ctx, ggml_abort_callback callback, void * data) {
++    ggml_backend_cpu_set_abort_callback(ctx->backend_cpu, callback, data);
++}
++
+ void clip_free(clip_ctx * ctx) {
+     if (ctx == nullptr) {
+         return;

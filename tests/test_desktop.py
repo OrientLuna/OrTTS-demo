@@ -9,6 +9,7 @@ import math
 import struct
 import subprocess
 import threading
+from types import SimpleNamespace
 import wave
 
 from desktop.audio import Player, write_wav
@@ -223,6 +224,76 @@ class BuildMetadataTests(TestCase):
         state = git_metadata(self.root)["working_tree"]
         self.assertFalse(state["dirty"])
         self.assertEqual(state["untracked_files"], 0)
+
+
+class CancellationHostTests(TestCase):
+    def engine(self):
+        engine = Engine.__new__(Engine)
+        engine.owner = threading.get_ident()
+        engine.lock = threading.Lock()
+        engine.handle = ctypes.c_void_p()
+        engine.loading_token = ctypes.c_void_p()
+        engine.key = None
+        engine.loads = 0
+        engine.cancellable_create = True
+        engine.lib = SimpleNamespace(
+            ortts_cancel_token_create=mock.Mock(return_value=17),
+            ortts_cancel_token_request=mock.Mock(),
+            ortts_cancel_token_free=mock.Mock(),
+            ortts_engine_free=mock.Mock(),
+            ortts_last_error=lambda: b"cancelled",
+        )
+        return engine
+
+    def pack(self):
+        return SimpleNamespace(root=Path("/model"), manifest_sha256="a" * 64,
+                               bridge_sha256="b" * 64, voices=("female",), variants=("P3",))
+
+    def test_loading_token_published_for_cross_thread_cancel_and_freed(self):
+        engine = self.engine()
+        def create(cfg, token, output):
+            self.assertEqual(engine.loading_token.value, 17)
+            engine.cancel()
+            return 4
+        engine.lib.ortts_engine_create_cancellable = create
+        with self.assertRaises(Cancelled):
+            engine.load(self.pack())
+        engine.lib.ortts_cancel_token_request.assert_called_once()
+        engine.lib.ortts_cancel_token_free.assert_called_once()
+        self.assertFalse(engine.loading_token)
+        self.assertFalse(engine.handle)
+        self.assertEqual(engine.loads, 0)
+
+    def test_late_loading_cancel_frees_unpublished_engine(self):
+        engine = self.engine()
+        cancel = threading.Event()
+        def create(cfg, token, output):
+            output._obj.value = 99
+            cancel.set()
+            return 0
+        engine.lib.ortts_engine_create_cancellable = create
+        with self.assertRaises(Cancelled):
+            engine.load(self.pack(), cancel=cancel)
+        engine.lib.ortts_engine_free.assert_called_once()
+        self.assertFalse(engine.handle)
+
+    def test_precancelled_load_does_not_create_token(self):
+        engine = self.engine()
+        cancel = threading.Event()
+        cancel.set()
+        with self.assertRaises(Cancelled):
+            engine.load(self.pack(), cancel=cancel)
+        engine.lib.ortts_cancel_token_create.assert_not_called()
+
+    def test_existing_handle_reused_without_token_or_reload(self):
+        engine = self.engine()
+        pack = self.pack()
+        engine.handle = ctypes.c_void_p(99)
+        engine.key = (pack.root, pack.manifest_sha256, "P3", "female", 4, False)
+        engine.load(pack)
+        engine.lib.ortts_cancel_token_create.assert_not_called()
+        engine.lib.ortts_engine_free.assert_not_called()
+        self.assertEqual(engine.handle.value, 99)
 
 
 if __name__ == "__main__":

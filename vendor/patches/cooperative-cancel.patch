@@ -1,0 +1,197 @@
+--- /dev/null
++++ b/include/engine/framework/core/ortts_cancellation.h
+@@ -0,0 +1,21 @@
++#pragma once
++#include <atomic>
++#include <stdexcept>
++
++// A single operation owns the execution gate; token outlives joined CPU work.
++namespace engine::core::ortts_cancel {
++inline std::atomic<const std::atomic<bool> *> active{nullptr};
++inline bool requested(void * = nullptr) noexcept {
++    const auto * token = active.load(std::memory_order_acquire);
++    return token && token->load(std::memory_order_relaxed);
++}
++inline void checkpoint() {
++    if (requested()) throw std::runtime_error("OrTTS operation cancelled");
++}
++struct Scope {
++    explicit Scope(const std::atomic<bool> * token) { active.store(token, std::memory_order_release); }
++    ~Scope() { active.store(nullptr, std::memory_order_release); }
++    Scope(const Scope &) = delete;
++    Scope & operator=(const Scope &) = delete;
++};
++}
+--- a/src/framework/core/backend.cpp
++++ b/src/framework/core/backend.cpp
+@@ -1,5 +1,7 @@
+ #include "engine/framework/core/backend.h"
+ #include "engine/framework/core/execution_context.h"
++#include "engine/framework/core/ortts_cancellation.h"
++#include "ggml-cpu.h"
+ 
+ #include <algorithm>
+ #include <cstdlib>
+@@ -232,6 +234,7 @@
+             if (backend == nullptr) {
+                 throw std::runtime_error("Failed to initialize CPU backend");
+             }
++            ggml_backend_cpu_set_abort_callback(backend, ortts_cancel::requested, nullptr);
+             return backend;
+         }
+         case BackendType::Hip:
+@@ -420,6 +423,7 @@
+ }
+ 
+ void validate_backend_graph_supported(ggml_backend_t backend, ggml_cgraph * graph, const char * label) {
++    ortts_cancel::checkpoint();
+     if (backend == nullptr || graph == nullptr) {
+         throw std::runtime_error("Cannot validate backend graph support for null backend or graph");
+     }
+@@ -602,6 +606,7 @@
+     ggml_cgraph * graph,
+     HostGraphPlan & plan,
+     const char * label) {
++    ortts_cancel::checkpoint();
+     if (plan.active()) {
+         return ggml_backend_graph_plan_compute(plan.backend, plan.plan);
+     }
+--- a/src/models/qwen3_tts/talker.cpp
++++ b/src/models/qwen3_tts/talker.cpp
+@@ -1,6 +1,7 @@
+ static thread_local bool lc_last_eos=false;
+ extern "C" bool ortts_lc_eos_known(){return lc_last_eos;}
+ #include "engine/models/qwen3_tts/talker.h"
++#include "engine/framework/core/ortts_cancellation.h"
+ 
+ #include "engine/framework/assets/tensor_source.h"
+ #include "engine/framework/core/backend.h"
+@@ -2196,6 +2197,9 @@
+         const Qwen3TTSGenerationOptions & options,
+         float repetition_penalty,
+         const std::function<void(const std::vector<int32_t> &)> & on_frame) {
++        try {
++        core::ortts_cancel::checkpoint();
++        lc_last_eos = false;
+         const auto total_start = Clock::now();
+         const int64_t max_new_tokens = options.max_new_tokens;
+         if (max_new_tokens <= 0 || max_new_tokens > generation_capacity_) {
+@@ -2350,6 +2354,7 @@
+                 "step,prompt_steps,cache_capacity,predictor_ms,predictor_compute_ms,predictor_upload_ms,predictor_read_ms,talker_ms,talker_compute_ms,talker_upload_ms,mask_ms,read_ms,build_ms,import_ms,frame_embed_ms,callback_ms,cpu_begin,cpu_end,storage_capacity"));
+         }
+         for (int64_t step = 0; step < max_new_tokens; ++step) {
++            core::ortts_cancel::checkpoint();
+             const auto profile_build_before = cached_step_build_ms;
+             const auto profile_import_before = import_prefill_state_ms;
+             const auto profile_embed_before = frame_embed_ms;
+@@ -2477,7 +2482,19 @@
+             debug::trace_log_scalar("ortts.talker.exported_code_frames", out.generated_codes.frames);
+             debug::trace_log_scalar("ortts.talker.exported_code_groups", out.generated_codes.code_groups);
+         }
++        core::ortts_cancel::checkpoint();
+         return out;
++        } catch (...) {
++            // Drop partial request graphs/KV, not weights_ or its packed tensors.
++            cached_step_graph_.reset();
++            shared_kv_.reset();
++            cached_prefill_output_.reset();
++            cached_prompt_state_.reset();
++            cached_prompt_prefill_.reset();
++            graph_.reset();
++            lc_last_eos = false;
++            throw;
++        }
+     }
+ 
+     int64_t release_cached_step_graph() {
+--- a/src/models/qwen3_tts/ortts_joint/session_private.cpp
++++ b/src/models/qwen3_tts/ortts_joint/session_private.cpp
+@@ -1,5 +1,6 @@
+ #include "fixed_speaker_io.h"
+ #include "private_adapter.h"
++#include "engine/framework/core/ortts_cancellation.h"
+ #include "engine/framework/io/json.h"
+ #include <cstdlib>
+ #include "engine/models/qwen3_tts/session.h"
+@@ -667,6 +668,8 @@
+ 
+ void Qwen3TTSSession::reset_stream_state() {
+     stream_audio_.reset();
++    if (talker_step_) talker_step_->release_cached_step_graph();
++    if (lfm_b0_) lfm_b0_->start_stream();
+ }
+ 
+ runtime::AudioBuffer Qwen3TTSSession::generate_audio(
+@@ -677,6 +680,7 @@
+     runtime::StreamingAudioChunkPolicy stream_policy,
+     double & talker_ms,
+     double & decoder_ms) {
++    core::ortts_cancel::checkpoint();
+     if (stream_frames == 0) {
+         const auto talker_start = Clock::now();
+         const auto codes = talker_step_->generate(prefill, options, options.repetition_penalty);
+@@ -787,7 +791,7 @@
+     return audio;
+ }
+ 
+-runtime::TaskResult Qwen3TTSSession::synthesize(const runtime::TaskRequest & request, bool streaming) {
++runtime::TaskResult Qwen3TTSSession::synthesize(const runtime::TaskRequest & request, bool streaming) try {
+     if (fixed_voice_prompt_ && ((streaming && !lfm_b0_) || cpu_chunk_frames_ > 0 || stitch_decode_))
+         throw std::invalid_argument("fixed voice prototype requires offline full-WAV/no chunks/stitch");
+     if (fixed_voice_prompt_) {
+@@ -972,6 +976,13 @@
+     return result;
+ }
+ 
++catch (...) {
++    // Offline sessions cannot use audiocpp_stream_reset. Reset at the model
++    // boundary on unwind, retaining loaded talker/decoder weights.
++    reset_stream_state();
++    throw;
++}
++
+ void Qwen3TTSSession::log_cpu_chunk_return() const {
+     if (cpu_chunk_frames_ <= 0) return;
+     debug::timing_log_scalar("qwen3_tts.cpu_chunks.first_pcm_ready_ms", cpu_first_pcm_ms_);
+--- a/src/models/qwen3_tts/ortts_joint/translator.h
++++ b/src/models/qwen3_tts/ortts_joint/translator.h
+@@ -1,6 +1,7 @@
+ #pragma once
+ #include "ggml.h"
+ #include "ggml-cpu.h"
++#include "engine/framework/core/ortts_cancellation.h"
+ #include "nlohmann/json.hpp"
+ #include <fstream>
+ #include <map>
+@@ -15,7 +16,7 @@
+ inline void writef(const std::string&p,const V&v){std::ofstream f(p,std::ios::binary);f.write((char*)v.data(),v.size()*4);if(!f)throw std::runtime_error("write F32");}
+ inline ggml_tensor* affine(ggml_context*c,ggml_tensor*w,ggml_tensor*x,ggml_tensor*b){auto*y=ggml_mul_mat(c,w,x);ggml_mul_mat_set_prec(y,GGML_PREC_F32);return b?ggml_add(c,y,ggml_reshape_2d(c,b,y->ne[0],1)):y;}
+ inline ggml_tensor* tensor(ggml_context*c,int dim,int t,const V&v){if(v.size()!=size_t(dim*t))throw std::runtime_error("tensor size");auto*x=ggml_new_tensor_2d(c,GGML_TYPE_F32,dim,t);memcpy(x->data,v.data(),v.size()*4);return x;}
+-inline void compute(ggml_context*c,ggml_cgraph*g,int threads){if(ggml_graph_compute_with_ctx(c,g,threads)!=GGML_STATUS_SUCCESS)throw std::runtime_error("GGML compute");}
++inline void compute(ggml_context*c,ggml_cgraph*g,int threads){engine::core::ortts_cancel::checkpoint();auto plan=ggml_graph_plan(g,threads,nullptr);std::vector<uint8_t>work(plan.work_size);plan.work_data=work.data();plan.abort_callback=engine::core::ortts_cancel::requested;plan.abort_callback_data=nullptr;if(ggml_graph_compute(g,&plan)!=GGML_STATUS_SUCCESS)throw std::runtime_error("GGML compute cancelled/failed");engine::core::ortts_cancel::checkpoint();}
+ struct Translator {
+  Ctx weights{32ull<<20};std::map<std::string,ggml_tensor*>w;V histu;std::vector<V>hist;int64_t seen=0;bool finished=false,expanded;int threads;
+  Translator(const std::string&root,bool exp,int nt):expanded(exp),threads(nt){
+--- a/src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp
++++ b/src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp
+@@ -21,14 +21,17 @@
+   auto v=clip_init((root+"/"+core_file).c_str(),p);if(v.ctx_v||v.ctx_a||!v.ctx_gen_a)throw std::runtime_error("codec-only load contract");clip=v.ctx_gen_a;state=clip_gen_state_init(clip,7);if(!state)throw std::runtime_error("codec state");
+   pw=tensor(projw.c,48,256,readf(root+"/project_out.weight.f32"));pb=tensor(projw.c,256,1,readf(root+"/project_out.bias.f32"));fw=tensor(projw.c,256,512,readf(root+"/from_quantizer.weight.f32"));fb=tensor(projw.c,512,1,readf(root+"/from_quantizer.bias.f32"));reset();
+  }
+- ~Codec(){if(state)clip_gen_state_free(state);if(clip)clip_free(clip);}
++  ~Codec(){if(state)clip_gen_state_free(state);if(clip)clip_free(clip);}
+  void reset(){translator.reset();clip_gen_state_reset(state);ola.reset();finished=false;frames_seen=q_seen=samples_seen=0;}
+- V push(const V&z,bool final,LCReply&r,V*qout=nullptr,V*hout=nullptr){
++  V push(const V&z,bool final,LCReply&r,V*qout=nullptr,V*hout=nullptr){
++   engine::core::ortts_cancel::checkpoint();
++   clip_set_abort_callback(clip, engine::core::ortts_cancel::requested, nullptr);
+   if(finished)throw std::runtime_error("codec finalized");frames_seen+=z.size()/512;auto t=Clock::now();V q=translator.push(z,final);r.translator_ms=ms(t);if(qout)*qout=q;V pcm;
+   if(!q.empty()){
+    int T=q.size()/48;q_seen+=T;t=Clock::now();Ctx graph(16ull<<20);auto*c=graph.c;auto*h=affine(c,fw,affine(c,pw,tensor(c,48,T,q),pb),fb);auto*g=ggml_new_graph(c);ggml_build_forward_expand(g,h);compute(c,g,threads);V hv((float*)h->data,(float*)h->data+T*512);r.projection_ms=ms(t);if(hout)*hout=hv;
+    t=Clock::now();clip_image_f32 dummy;dummy.set_size({1,1},false,true);dummy.cpy_buf(V{0});clip_image_f32_batch imgs;imgs.is_audio=true;imgs.entries.push_back(std::move(dummy));V feats;clip_encode_params p;p.imgs=&imgs;p.n_threads=threads;p.gen_process=CLIP_GEN_PROCESS_GEN_WAV;p.feats=&hv;p.out_feats=&feats;p.gen_state=state;
+-   if(!clip_encode(clip,&p)||feats.size()!=size_t(T*6*1282))throw std::runtime_error("continuous codec spectrum shape");r.codec_ms=ms(t);t=Clock::now();V spec(1282);
++    engine::core::ortts_cancel::checkpoint();
++    if(!clip_encode(clip,&p)||feats.size()!=size_t(T*6*1282))throw std::runtime_error("continuous codec spectrum shape");r.codec_ms=ms(t);engine::core::ortts_cancel::checkpoint();t=Clock::now();V spec(1282);
+    for(int f=0;f<T*6;f++){auto*fr=feats.data()+f*1282;for(int j=0;j<641;j++){float mag=std::exp(fr[j]);spec[2*j]=mag*std::cos(fr[641+j]);spec[2*j+1]=mag*std::sin(fr[641+j]);}auto chunk=ola.process_frame(spec.data());pcm.insert(pcm.end(),chunk.begin(),chunk.end());}r.istft_ms=ms(t);
+   }
+   if(final){auto t=Clock::now();if(q_seen){auto tail=ola.flush();if(tail.size()<480)throw std::runtime_error("OLA tail");tail.resize(tail.size()-480);pcm.insert(pcm.end(),tail.begin(),tail.end());}finished=true;r.istft_ms+=ms(t);if(q_seen!=frames_seen)throw std::runtime_error("EOF q count");}

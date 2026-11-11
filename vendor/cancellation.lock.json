@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "patch": "vendor/patches/cooperative-cancel.patch",
+  "patch_sha256": "020a324b19280683a3fb590311f201c4e34fb457c8d3c15aeff06d306c3b1f01",
+  "files": [
+    {
+      "path": "include/engine/framework/core/ortts_cancellation.h",
+      "base_sha256": null,
+      "sha256": "6d1e8afdaf07a13e342502a924d619f321f8d3f6f84a4bb5b0faf47cbf2b79b5"
+    },
+    {
+      "path": "src/framework/core/backend.cpp",
+      "base_sha256": "2775c727c608e678d0d7d5bf71af1ed20d86a2773b4b7f6d3b7241c5d560bb8e",
+      "sha256": "4a0426b67078992925a9b994afe3f174a056904d4175224e4f421151fc93d65b"
+    },
+    {
+      "path": "src/models/qwen3_tts/talker.cpp",
+      "base_sha256": "ea6e80239d51b9aed3bc0abb4d1fd74e3475d5ded0dbbeb3c686d5f6486a7e6e",
+      "sha256": "054e4356b5817dd656c09459987ce8c6f746d9974d193652a650ee85ec02cf71"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/session_private.cpp",
+      "base_sha256": "f2d116e546ca80814cb5e04e8fe23dd4e0166450948f8fe886ca1b26d8523b44",
+      "sha256": "3481f15f281ed0377858544a6c96b894e18687bbd9f615b07e58402a7b0a6869"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/translator.h",
+      "base_sha256": "9c40ae956007d55ce03515cbb6bb375b0bc43b161375de7107e01666389ad135",
+      "sha256": "9ca2032f1b3c821ec085f3c9948dc2f8b1da0382360782784e2c8e9d152e465e"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp",
+      "base_sha256": "01a7bd04f18cf1f571377962d4db9d9e4b8310faae5382615c7df4e8fffdf713",
+      "sha256": "fffbbd97b58c7d1865f5083f50922d51e70405442e63d191d0f5ae5b64b56220"
+    }
+  ],
+  "mtmd_patch": "vendor/patches/cooperative-cancel-mtmd.patch",
+  "mtmd_patch_sha256": "9242820bf296549a074ddaa818c5abc7097b6e64dfad4190168256e6d7929cbb",
+  "mtmd_files": [
+    {
+      "path": "clip.h",
+      "base_sha256": "c3c7c57eb7bdea4ce092de237552caa235d46126415c14e54857729294610658",
+      "sha256": "36a9ea9736343f8356baeb7a40cbd51b5743aac14d6b68aa66d839eaf3f8707b"
+    },
+    {
+      "path": "clip.cpp",
+      "base_sha256": "c8f3cf1b9e8d71aa171d462f909828b5e5f5d63ac1cdc8c5d78db2c4ef8fbb02",
+      "sha256": "bd75bcfe256676b4f6055f4235f966511afe5ea96e78988c3fab434c9cee298b"
+    }
+  ]
+}

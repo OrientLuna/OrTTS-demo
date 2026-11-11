@@ -2,6 +2,13 @@
 from pathlib import Path
 import json,hashlib
 ROOT=Path(__file__).resolve().parents[1]
+def verify_mtmd_sources(source, expected, cancellation):
+ for path,digest in expected.items():
+  if path in cancellation:
+   if digest!=cancellation[path]['base_sha256']:raise ValueError('Cancellation mtmd base identity mismatch: '+path)
+   digest=cancellation[path]['sha256']
+  if hashlib.sha256((source.parent/'mtmd'/path).read_bytes()).hexdigest()!=digest:raise ValueError('Patched mtmd source modified: '+path)
+
 def identity(source,liquidcodec=False,speech=False):
  source=Path(source);lock=json.loads((ROOT/'vendor/runtime.lock.json').read_text())
  receipt=json.loads((source/'ORTTS_SOURCE_RECEIPT.json').read_text())
@@ -29,8 +36,10 @@ def identity(source,liquidcodec=False,speech=False):
     digest=next((x['sha256'] for x in dispatch['files'] if x['scope']=='ggml' and x['path']==relative),digest)
    if hashlib.sha256(actual.read_bytes()).hexdigest()!=digest:raise ValueError('Pinned llama source modified: '+item['path'])
   if ur.get('mtmd_sources'):
-   for path,digest in ur['mtmd_sources'].items():
-    if hashlib.sha256((source.parent/'mtmd'/path).read_bytes()).hexdigest()!=digest:raise ValueError('Patched mtmd source modified: '+path)
+   cancel_mtmd={}
+   if (source/'ORTTS_CANCELLATION_RECEIPT.json').exists():
+    cancel_mtmd={x['path']:x for x in json.loads((ROOT/'vendor/cancellation.lock.json').read_text()).get('mtmd_files',[])}
+   verify_mtmd_sources(source,ur['mtmd_sources'],cancel_mtmd)
   for path,digest in ul['support_files'].items():
    if hashlib.sha256((source.parent/path).read_bytes()).hexdigest()!=digest:raise ValueError('Unified support source modified: '+path)
   changes={x['path']:x['sha256']for x in ul['changed_files']}
@@ -65,6 +74,15 @@ def identity(source,liquidcodec=False,speech=False):
     if hashlib.sha256((ggml/item['path']).read_bytes()).hexdigest()!=item['sha256']:raise ValueError('CPU dispatch ggml modified: '+item['path'])
    else:raise ValueError('Unknown CPU dispatch source scope')
   lock={**lock,'cpu_dispatch':dispatch}
+ cancellation=source/'ORTTS_CANCELLATION_RECEIPT.json'
+ if cancellation.exists():
+  cl=json.loads((ROOT/'vendor/cancellation.lock.json').read_text())
+  if json.loads(cancellation.read_text())!=cl or hashlib.sha256((ROOT/cl['patch']).read_bytes()).hexdigest()!=cl['patch_sha256']:raise ValueError('Cancellation source receipt mismatch')
+  if hashlib.sha256((ROOT/cl['mtmd_patch']).read_bytes()).hexdigest()!=cl['mtmd_patch_sha256']:raise ValueError('Cancellation mtmd patch mismatch')
+  for item in cl['files']:
+   if item['base_sha256'] is not None and item['path'] in expected and expected[item['path']]!=item['base_sha256']:raise ValueError('Cancellation patch ordering mismatch: '+item['path'])
+   expected[item['path']]=item['sha256']
+  lock={**lock,'cancellation':cl}
  for rel,digest in expected.items():
   if hashlib.sha256((source/rel).read_bytes()).hexdigest()!=digest:raise ValueError('Prepared source modified: '+rel)
  return lock
