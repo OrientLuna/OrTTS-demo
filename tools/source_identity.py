@@ -11,6 +11,7 @@ def verify_mtmd_sources(source, expected, cancellation):
 
 def identity(source,liquidcodec=False,speech=False):
  source=Path(source);lock=json.loads((ROOT/'vendor/runtime.lock.json').read_text())
+ if (source/'ORTTS_CPU_DISPATCH_RECEIPT.json').exists() and (source/'ORTTS_CANCELLATION_RECEIPT.json').exists():raise ValueError('Cooperative cancellation + CPU auto-dispatch is unsupported; use a fixed CPU profile')
  receipt=json.loads((source/'ORTTS_SOURCE_RECEIPT.json').read_text())
  for k in ('base_commit','patch_sha256'):
   if receipt[k]!=lock[k]:raise ValueError('Source identity mismatch: '+k)
@@ -78,6 +79,7 @@ def identity(source,liquidcodec=False,speech=False):
  if cancellation.exists():
   cl=json.loads((ROOT/'vendor/cancellation.lock.json').read_text())
   if json.loads(cancellation.read_text())!=cl or hashlib.sha256((ROOT/cl['patch']).read_bytes()).hexdigest()!=cl['patch_sha256']:raise ValueError('Cancellation source receipt mismatch')
+  if dispatch:raise ValueError('Cooperative cancellation does not support CPU dispatch modules; use a fixed CPU profile')
   if hashlib.sha256((ROOT/cl['mtmd_patch']).read_bytes()).hexdigest()!=cl['mtmd_patch_sha256']:raise ValueError('Cancellation mtmd patch mismatch')
   for item in cl['files']:
    if item['base_sha256'] is not None and item['path'] in expected and expected[item['path']]!=item['base_sha256']:raise ValueError('Cancellation patch ordering mismatch: '+item['path'])

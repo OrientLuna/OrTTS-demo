@@ -1,102 +1,64 @@
 # OrTTS CPU engine
 
-Embed P3/P5 speech synthesis in your application through a small C ABI. Linux and Android use `libortts.so`, macOS uses `libortts.dylib`, and iOS uses `OrTTS.framework`. Model files are external and shared by the variants.
+Embed P3/P5 speech synthesis through a small C ABI, or use the [Rust SDK](rust/README.md).
+The runtime supports loading, offline/streaming synthesis and cancellation. It returns
+24 kHz mono float32 PCM; playback, model downloads and file saving belong to the host app.
 
-The API supports model loading, offline synthesis, incremental float PCM, cancellation, timing and explicit release. It does not create an app, play audio, download weights or write generated files. Audio is mono float32 at 24 kHz.
-
-## Optional multi-model speech SDK
-
-The additive [speech API](SPEECH.md) adds five TTS and two ASR families to the same CPU library/ggml build. Use `--speech` with separately prepared speech sources; existing P3/P5 calls keep ABI1. Output formats are native per model, and ASR has its own bounded input/final/reset API; a separately versioned Moonshine incremental API adds revisable partial/final events, bounded segments and cancellation. This is model-specific execution, not a general ONNX importer. Mobile cross-builds do not certify model execution.
+For other TTS and ASR models, see the optional [speech API](SPEECH.md).
 
 ## Build
 
-Use the verified local audio.cpp source prepared by `tools/prepare_runtime.py`, plus existing compilers and SDKs. Nothing is downloaded by the build tool.
-
-```sh
-python3 tools/build_engine.py --target linux-x86_64 --profile x86_64-baseline \
-  --source _work/runtime --out build/engine-linux-baseline
-```
-
-| Target | CPU profiles |
-|---|---|
-| Linux x86-64 | `x86_64-baseline`, `x86_64-avx2` |
-| Linux ARM64, Android ARM64 | `arm64-baseline`, `arm64-dotprod`, `arm64-i8mm` |
-| macOS Apple Silicon | `arm64-baseline`, `arm64-dotprod`, `arm64-i8mm` |
-| macOS Intel | `x86_64-baseline`, `x86_64-avx2` |
-| iOS device | `arm64-baseline`, `arm64-dotprod`, `arm64-i8mm` |
-| Apple Silicon simulator | `arm64-baseline` |
-
-Choose the profile before loading the library. AVX2 also requires SSE4.2, FMA, F16C, BMI2 and OS support for AVX state. ARM optimized profiles require the named extensions and FP16. An unsupported profile can crash before an API call; this prototype does not automatically dispatch between separate libraries. Use the baseline when uncertain. Optimized profiles are candidates until tested on the target device.
-
-`python3 tools/cpu_profile.py` recommends a profile from Linux CPU features before any engine library is loaded, taking the common features across exposed cores. It falls back to a baseline when features are unknown. Apple uses the baseline in this helper. This is a host-side selection aid; an Android app needs equivalent native capability checks before loading an optimized library.
-
-Instruction-set compatibility and OS compatibility are separate. Linux binaries built on a new distribution can require a newer glibc/libstdc++; build on the oldest supported Linux toolchain for redistribution. Model execution must still be checked on each target.
-
-Linux cross-builds require `--toolchain` for an existing Linux ARM64 compiler; Android requires `--ndk`. Apple targets require a Mac with Xcode. For example:
+Prepare the native sources using the [build guide](../docs/BUILD.md), then build the
+library for your target. For example:
 
 ```sh
 python3 tools/build_engine.py --target macos-arm64 --profile arm64-baseline \
   --source _work/runtime --out build/engine-macos
-python3 tools/build_engine.py --target ios-arm64 --profile arm64-baseline \
-  --source _work/runtime --out build/engine-iphone
-python3 tools/build_engine.py --target ios-simulator-arm64 --profile arm64-baseline \
-  --source _work/runtime --out build/engine-simulator
-python3 tools/package_apple_engine.py \
-  --device build/engine-iphone/install/OrTTS.framework \
-  --simulator build/engine-simulator/install/OrTTS.framework \
-  --out build/OrTTS.xcframework
 ```
 
-Apple CPU prototypes and local verification notes are in [apple/README.md](../apple/README.md). Minimum deployment targets are macOS 13.3 and iOS 16.3. Engine builds use Ninja to preserve same-basename upstream objects; app projects can use Xcode. Apple Silicon Mac and iPhone 17 model execution has been tested; this does not cover all Apple devices. See [CPU profiles and measurements](../docs/CPU_PROFILES.md). CPU is the implemented route. These recipes do not enable Metal or Core ML.
+| Platform | Library | Host setup |
+|---|---|---|
+| Linux / Android | `libortts.so` | Link or load the matching architecture |
+| macOS | `libortts.dylib` | Embed the library and configure its runpath |
+| iOS | `OrTTS.framework` / XCFramework | Select the device or simulator slice; embed and sign |
 
-## C interface
+Use a baseline CPU profile unless you know the device supports the optimized one.
+Apple builds require Xcode; minimum deployment targets are macOS 13.3 and iOS 16.3.
+Other build profiles and toolchains are listed in [CPU profiles](../docs/CPU_PROFILES.md).
 
-Include [`ortts_engine.h`](include/ortts_engine.h) and link the library. Set the configuration/request `struct_size` fields to `sizeof` their types. Create a streaming or offline engine, synthesize, copy/use the result, then release the audio and engine. Errors return a status; read `ortts_last_error()` immediately on that thread.
+## C API
 
-Pass the installed asset root, P3/P5, the model-specific speaker vector (1024 or 2048 F32 values), and the trusted selected bridge/dequant manifest SHA from your verified model manifest. The initial loader accepts the current native package layout. It does not replace download-manifest verification. Input paths must remain available for the engine lifetime.
+Include [`ortts_engine.h`](include/ortts_engine.h). Set each configuration/request
+`struct_size`, create an engine, synthesize, then release the audio and engine.
+Read `ortts_last_error()` on the calling thread when an operation fails.
 
-The PCM callback runs on the generating thread. Copy or enqueue each chunk and return promptly; do not block it on speaker playback. Return nonzero to cancel. The C API also permits a cancellation request from another thread while the engine remains alive. Streaming cancellation is checked at chunk boundaries; offline cancellation discards the completed result rather than interrupting an in-flight matrix operation.
+- Supply a prepared model directory, P3/P5, a matching voice and the model's manifest identity.
+- PCM chunks are borrowed during the callback. Copy or enqueue them without blocking generation.
+- Return nonzero from the callback to stop generation.
+- Cooperative builds support cancellable loading and synthesis with a fresh token per operation.
+  Older libraries may only stop at boundaries or discard the result after compute returns.
+- Keep engines on a dedicated worker. Competing native operations return `ORTTS_BUSY`;
+  do not free an engine during a call or from its callback.
 
-API wall includes callback time; `generation_ms` excludes that callback time and is not pure kernel time. `first_pcm_ms` is PCM availability, not acoustic onset. Success returns finite PCM; it does not certify EOS, pronunciation or voice quality.
+For token ownership and older-library capability checks, see [maintainer notes](AGENT_README.md).
 
 ## Rust
 
-The dependency-free binding in [`rust/`](rust/) owns handles and copies final PCM into a Rust `Vec<f32>`. Its streaming closure receives borrowed chunks and may return `false` to cancel; panics are caught before returning across FFI. Create/use the engine on a dedicated worker. The safe wrapper is intentionally neither `Send` nor `Sync`.
+The [Rust SDK](rust/README.md) owns native handles and returns PCM in a `Vec<f32>`.
+`Task` and `CancelHandle` provide task-scoped cross-thread cancellation; cancelled
+operations return `Error::Cancelled`, and the loaded engine can be used again.
+
+Set `ORTTS_LIB_DIR` to the native library directory, or `ORTTS_FRAMEWORK_DIR` to the
+parent of the selected iOS framework. For example, on macOS:
 
 ```sh
-ORTTS_LIB_DIR="$PWD/build/engine-linux-baseline/install/lib" \
-LD_LIBRARY_PATH="$PWD/build/engine-linux-baseline/install/lib" \
+ORTTS_LIB_DIR="$PWD/build/engine-macos/install/lib" \
+DYLD_LIBRARY_PATH="$PWD/build/engine-macos/install/lib" \
 cargo run --offline --manifest-path runtime/rust/Cargo.toml --example synthesize -- \
   /path/to/models P3 TRUSTED_BRIDGE_SHA '你好，欢迎使用。' sample.f32 stream
 ```
 
-On macOS use `DYLD_LIBRARY_PATH` during development. For deployment embed/sign the dylib or framework with the host application and configure its runpath. The iOS binding uses `ORTTS_FRAMEWORK_DIR` for the selected framework slice. Rust is optional: other hosts can use the same C ABI, including runtime symbol loading after checking `ortts_abi_version()`.
+On Linux use `LD_LIBRARY_PATH` instead. Embed/sign the native library for deployment.
+Android CPU auto-dispatch and cooperative cancellation cannot currently be combined.
 
-## Concurrency
-
-The prototype serializes engine operations within one loaded library. A concurrent load/synthesis returns `ORTTS_BUSY`. Existing runtime configuration uses process environment; our calls restore their changes on return. Do not concurrently use direct audio.cpp sessions or a second independently loaded copy of the engine in the same process. Do not reenter or free the engine in its callback, or free it concurrently with synthesis/cancellation. Per-session configuration isolation is a later improvement; this is not a multi-model concurrent server.
-
-### Optional cooperative cancellation
-
-Sources prepared with `tools/prepare_cancellable_runtime.py` expose
-`ortts_cooperative_cancel_version() == 1`; unchanged-source builds return 0 and retain
-legacy cancellation timing. ABI1 struct layouts are unchanged. Initially scoped to
-the Qwen CPU route, this adds cancellation at generation steps/CPU graph checkpoints
-and Liquid translator/codec CPU graph checkpoints, not arbitrary kernel or blocking-I/O preemption.
-
-`ortts_engine_cancel()` stops the current request without freeing the resident
-model/session. Partial request/KV/decoder state is reset before reuse. Do not free
-the engine as part of cancellation; reserve that for unload, model switch or shutdown.
-
-Creation has an additive `ortts_engine_create_cancellable(config, token, out)` entry.
-Allocate a sticky token with `ortts_cancel_token_create()` before starting creation;
-another thread may request it with `ortts_cancel_token_request()`. Keep it alive
-through the entire call and synchronize its free with requests. A cancelled load
-returns `ORTTS_CANCELLED` with null output and releases incomplete resources; it
-does not publish a partially loaded resident model. Existing `ortts_engine_create()`
-is unchanged. Check capability/symbols when dynamically loading older libraries.
-
-Opt-in real-model regression and separate build/package commands are documented in
-[desktop/AGENT_README.md](../desktop/AGENT_README.md#协作式取消构建q4p3-cpu).
-
-The wrapper and Rust binding follow the repository license. Runtime and model component licenses remain applicable; see the repository notices.
+See [licenses and notices](../NOTICE.md) for runtime and model dependencies.

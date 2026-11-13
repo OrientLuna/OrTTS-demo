@@ -83,7 +83,8 @@ extern "C" {
 fn cp(s: &Option<CString>) -> *const c_char {
     s.as_ref().map_or(ptr::null(), |s| s.as_ptr())
 }
-fn pairs(v: &[(&str, &str)]) -> Result<(Vec<(CString, CString)>, Vec<Pair>), String> {
+type OptionPairs = (Vec<(CString, CString)>, Vec<Pair>);
+fn pairs(v: &[(&str, &str)]) -> Result<OptionPairs, String> {
     let owned = v
         .iter()
         .map(|(k, v)| Ok((cstring(k)?, cstring(v)?)))
@@ -226,7 +227,7 @@ impl Tts {
             ch: i32,
         ) -> i32 {
             let s = &mut *(u as *mut State<F>);
-            if ch < 1 || ch > 2 || n.checked_mul(ch as usize).is_none() {
+            if !(1..=2).contains(&ch) || n.checked_mul(ch as usize).is_none() {
                 return 1;
             }
             match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -301,7 +302,7 @@ impl Tts {
                 ortts_speech_audio_samples(a.0),
             )
         };
-        if ch < 1 || ch > 2 || p.is_null() || frames == 0 {
+        if !(1..=2).contains(&ch) || p.is_null() || frames == 0 {
             return Err("Invalid native PCM".into());
         }
         let n = frames.checked_mul(ch as usize).ok_or("PCM size overflow")?;
@@ -373,5 +374,30 @@ impl Asr {
 impl Drop for Asr {
     fn drop(&mut self) {
         unsafe { ortts_asr_free(self.raw) }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn option_pairs_retain_c_string_storage() {
+        let (owned, raw) = pairs(&[("language", "zh"), ("voice", "female")]).unwrap();
+        assert_eq!(owned.len(), raw.len());
+        for ((key, value), pair) in owned.iter().zip(&raw) {
+            assert_eq!(pair.key, key.as_ptr());
+            assert_eq!(pair.value, value.as_ptr());
+            assert_eq!(unsafe { CStr::from_ptr(pair.key) }, key.as_c_str());
+            assert_eq!(unsafe { CStr::from_ptr(pair.value) }, value.as_c_str());
+        }
+        let (owned, raw) = pairs(&[]).unwrap();
+        assert!(owned.is_empty() && raw.is_empty());
+    }
+
+    #[test]
+    fn option_pairs_reject_interior_nul() {
+        assert!(pairs(&[("bad\0key", "value")]).is_err());
+        assert!(pairs(&[("key", "bad\0value")]).is_err());
     }
 }

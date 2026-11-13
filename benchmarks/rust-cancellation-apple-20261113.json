@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "date": "2026-11-13",
+  "classification": "functional_regression_baseline_with_latency_observations",
+  "controlled_performance_baseline": false,
+  "performance_ranking_permitted": false,
+  "provenance": "runtime/rust/acceptance/apple-20261113.json",
+  "runtime_snapshot": "OrTTS-Rust-Apple-SDK-20261113-r2; before the subsequent speech.rs lint-only source cleanup",
+  "workload": {
+    "model": "Q4/P3, default female voice",
+    "model_manifest_sha256": "26cf9f79991fa38eb766541ee34a964c4521cb5130fd61034dad3302bebd0017",
+    "cpu_profile": "arm64-baseline",
+    "threads": 4,
+    "seed": 42,
+    "max_tokens": 513,
+    "recovery_text": "你好，欢迎使用本地语音合成。",
+    "cancel_text_base": "今天我们测试本地语音合成的安全取消。取消后模型保持驻留，可以继续合成下一段文字。",
+    "cancel_text_repeat": 3,
+    "load_cancel_delay_ms": 10,
+    "sample_order": [
+      {"streaming": false, "cancel_delay_ms": 5},
+      {"streaming": false, "cancel_delay_ms": 30},
+      {"streaming": false, "cancel_delay_ms": 150},
+      {"streaming": true, "cancel_delay_ms": 5},
+      {"streaming": true, "cancel_delay_ms": 30},
+      {"streaming": true, "cancel_delay_ms": 150}
+    ]
+  },
+  "measurement": {
+    "source": "runtime/rust/examples/cancellation.rs",
+    "latency_boundary": "Instant captured immediately before cancel(); elapsed sampled by the worker after native return and joining the cancel thread. Includes request, native unwind/cleanup and scheduling/join overhead; not pure graph-checkpoint latency.",
+    "samples_per_mode_and_delay": 1,
+    "independent_sessions_per_target": 1,
+    "cold_vs_warm": "Loading cancellation measured separately; synthesis cancellation uses an engine loaded and exercised by a baseline synthesis first.",
+    "environment_control": "No controlled thermal/power/background-load protocol or balanced multi-session repetition.",
+    "latency_threshold_enforced": false
+  },
+  "targets": {
+    "macos": {
+      "status": "passed",
+      "os": "27.2",
+      "native_sha256": "1ab23d330263b1155c376765da4a68b0e9bd8d0f1948a644bba0aedba918a78d",
+      "raw_report_sha256": "478876925c6edc42af6ee0efa3aedd45777fdc0e7cd23e17034200455a7dfbb1",
+      "load_cancel_latency_ms_observed": 2244.655,
+      "synthesis_cancel_latency_ms_observed": [3.908, 4.567, 5.686, 4.157, 1.066, 2.555]
+    },
+    "ios_device": {
+      "status": "passed",
+      "device": "iPhone 17 / iPhone18,3",
+      "os": "27.0.1 (24A446)",
+      "native_sha256": "7b869c05eddcb669f491bde84fa0fa4215615bfdd68c2cebda14d845993a5ba9",
+      "raw_report_sha256": "5dd8315e5b7b483858a8d253000c406284cb4fddb76594c5fed3ab2fa73f2940",
+      "load_cancel_latency_ms_observed": 3.48,
+      "synthesis_cancel_latency_ms_observed": [1.92, 1.886, 1.924, 1.714, 3.123, 1.752],
+      "thermal_state_end": 0,
+      "low_power_mode": false
+    },
+    "ios_simulator": {
+      "status": "passed",
+      "os": "26.5 (23F77)",
+      "native_sha256": "3043366f29b08367bdc6d49786603d1fd79503b788b80f0d621b2d407010e680",
+      "raw_report_sha256": "ba9722f371f2c4e7cc2d67d51ee4d371304f098883634ab468bbe00667fc9cc3",
+      "load_cancel_latency_ms_observed": 1543.983,
+      "synthesis_cancel_latency_ms_observed": [4.633, 6.34, 1.641, 0.917, 2.952, 2.775],
+      "thermal_state_end": 0,
+      "low_power_mode": false
+    }
+  },
+  "functional_expectations_all_targets": {
+    "loading_and_synthesis_return_structured_cancelled": true,
+    "all_six_recovery_pcm_equal_baseline": true,
+    "stale_handle_is_inert": true,
+    "drop_safe": true,
+    "execution_gate_busy": true,
+    "callback_cancel_and_panic_recovery": true
+  },
+  "legacy_library_observations": {
+    "v1": {
+      "status": "passed",
+      "loading_mode": "Cooperative",
+      "synthesis_mode": "DiscardAfterReturn",
+      "raw_report_sha256": "626439c60562a227a65e33116d0e03b5ecba54d063ccadc8b3b81e52208b067f"
+    },
+    "pre_token": {
+      "status": "passed",
+      "loading_mode": "DiscardAfterReturn",
+      "synthesis_mode": "DiscardAfterReturn",
+      "raw_report_sha256": "f7b30e48a600a3f8b3de1bf95d6f5a4ae7dad70be680ef3382883b19083d4b7c"
+    },
+    "comparison_note": "Safe degradation, not early interruption. Do not derive performance speedup ratios from these separate runs."
+  },
+  "product_smoke_observation": {
+    "classification": "single_request_functional_smoke_not_throughput_baseline",
+    "device": "iPhone 17 / iOS 27.0.1",
+    "app_version": "0.4.1",
+    "app_build": "2026111301",
+    "text": "你好，这是新版 OrTTS 的真机语音合成检查。",
+    "mode": "streaming with playback",
+    "sample_rate": 24000,
+    "channels": 1,
+    "pcm_frames": 117120,
+    "audio_s": 4.88,
+    "synthesis_s_displayed_rounded": 2.09,
+    "rtf_displayed_rounded": 0.43,
+    "stream_started_and_drained": true,
+    "stop_generation_smoke": "passed in a separate request",
+    "log_sha256": "cf66b2985db8c9c53d0676c999757d92cbe09cdfd616ca7facaf7307382f78e8",
+    "caf_sha256": "ae7948c1f40b7dbb01c9262829c94f6aaa53ffb333848062fb6c4ad3c6eb2b46",
+    "comparison_limit": "One short request, with playback; no controlled repeats, thermal history, EOS/readback or listening certification. Cannot replace old hot/cold RTF matrices or establish speedup."
+  },
+  "future_performance_retest_protocol": "docs/development/tts-comparison-retest-pending.md",
+  "not_claimed": [
+    "hard cancellation deadline or percentile distribution",
+    "cross-device speed comparison",
+    "old/new model or backend performance ranking",
+    "load-cancel latency is consistently millisecond-level on every target",
+    "subjective audio quality",
+    "new controlled device performance runs during this lint cleanup"
+  ]
+}

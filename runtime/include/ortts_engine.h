@@ -56,6 +56,10 @@ ORTTS_API void ortts_cancel_token_request(ortts_cancel_token*);
 ORTTS_API void ortts_cancel_token_free(ortts_cancel_token*);
 ORTTS_API ortts_status ortts_engine_create_cancellable(const ortts_config*, ortts_cancel_token*, ortts_engine**);
 ORTTS_API ortts_status ortts_engine_synthesize(ortts_engine*, const ortts_request*, ortts_pcm_callback, void*, ortts_audio**);
+/* Per-operation sticky cancellation, including before execution starts. Use a
+ * fresh token for every invocation; do not reset/reuse or free it while in use.
+ * Older libraries may lack this additive symbol. The execution gate is unchanged. */
+ORTTS_API ortts_status ortts_engine_synthesize_cancellable(ortts_engine*, const ortts_request*, ortts_cancel_token*, ortts_pcm_callback, void*, ortts_audio**);
 /* Thread-safe while handle is alive. Cooperative builds stop at CPU graph/step
  * checkpoints; a running kernel or blocking read may still need to return.
  * Legacy builds may only discard the result after offline compute returns.

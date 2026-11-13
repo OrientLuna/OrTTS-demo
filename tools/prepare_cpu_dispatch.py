@@ -10,6 +10,7 @@ def prepare(source,out):
  source=source.resolve();out=out.resolve()
  if out.exists() or out==source or out.is_relative_to(source):raise ValueError('Choose a fresh output outside the input tree')
  if (source/'ORTTS_CPU_DISPATCH_RECEIPT.json').exists():raise ValueError('CPU dispatch already applied')
+ if (source/'ORTTS_CANCELLATION_RECEIPT.json').exists():raise ValueError('CPU auto-dispatch + cooperative cancellation is unsupported; use separate fixed-profile cancellation sources')
  speech=(source/'ORTTS_SPEECH_SOURCE_RECEIPT.json').exists()
  identity(source,True,speech)
  ur=json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text());ggml=Path(ur['ggml_source_dir'])

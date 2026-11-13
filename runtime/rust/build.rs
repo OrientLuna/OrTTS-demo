@@ -1,4 +1,10 @@
 fn main() {
+    if matches!(
+        std::env::var("CARGO_CFG_TARGET_OS").as_deref(),
+        Ok("linux" | "android")
+    ) {
+        println!("cargo:rustc-link-lib=dl");
+    }
     println!("cargo:rerun-if-env-changed=ORTTS_LIB_DIR");
     println!("cargo:rerun-if-env-changed=ORTTS_FRAMEWORK_DIR");
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("ios") {

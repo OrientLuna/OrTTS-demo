@@ -1,0 +1,13 @@
+[package]
+name = "ortts-rust-cancel-probe"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+ortts-engine = { path = "../../runtime/rust" }
+
+[workspace]

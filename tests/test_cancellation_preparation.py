@@ -1,17 +1,50 @@
 """Cancellation lock and preparation safety, without models or a compiler."""
 import hashlib
 import json
+import subprocess
+import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase, mock
 
 from tools import prepare_cancellable_runtime
-from tools.source_identity import verify_mtmd_sources
+from tools.source_identity import verify_mtmd_sources, identity
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class CancellationPreparationTests(TestCase):
+    def test_identity_rejects_cancel_dispatch_combination_before_build(self):
+        with TemporaryDirectory() as directory:
+            source = Path(directory)
+            (source / "ORTTS_CPU_DISPATCH_RECEIPT.json").write_text("{}")
+            (source / "ORTTS_CANCELLATION_RECEIPT.json").write_text("{}")
+            with self.assertRaisesRegex(ValueError, "auto-dispatch is unsupported"):
+                identity(source, True, True)
+
+    def test_dispatch_preparation_rejects_cancellation_source(self):
+        with TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            source.mkdir()
+            (source / "ORTTS_CANCELLATION_RECEIPT.json").write_text("{}")
+            output = Path(directory) / "output"
+            result = subprocess.run([sys.executable, str(ROOT / "tools/prepare_cpu_dispatch.py"),
+                                     "--source", str(source), "--out", str(output)], capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("auto-dispatch + cooperative cancellation is unsupported", result.stderr)
+            self.assertFalse(output.exists())
+
+    def test_cancellation_preparation_rejects_dispatch_source(self):
+        with TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            source.mkdir()
+            (source / "ORTTS_CPU_DISPATCH_RECEIPT.json").write_text("{}")
+            output = Path(directory) / "output"
+            with mock.patch.object(prepare_cancellable_runtime, "identity"):
+                with self.assertRaisesRegex(ValueError, "not CPU dispatch"):
+                    prepare_cancellable_runtime.prepare(source, output)
+            self.assertFalse(output.exists())
+
     def test_every_mtmd_file_is_verified_not_just_last_entry(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)

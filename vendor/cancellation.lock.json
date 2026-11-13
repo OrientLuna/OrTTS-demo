@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "patch": "vendor/patches/cooperative-cancel.patch",
-  "patch_sha256": "020a324b19280683a3fb590311f201c4e34fb457c8d3c15aeff06d306c3b1f01",
+  "patch_sha256": "d049757995b2dc02e2add106a1797341a8a55de1683f042eb1cad15c1f7147d2",
   "files": [
     {
       "path": "include/engine/framework/core/ortts_cancellation.h",
       "base_sha256": null,
-      "sha256": "6d1e8afdaf07a13e342502a924d619f321f8d3f6f84a4bb5b0faf47cbf2b79b5"
+      "sha256": "af140540e0d08828efb31bf0fafdff372fbff2f4f371a1e5b7a4bff0abff9ad3"
     },
     {
       "path": "src/framework/core/backend.cpp",

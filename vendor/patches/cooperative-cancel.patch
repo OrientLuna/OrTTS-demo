@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/include/engine/framework/core/ortts_cancellation.h
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,27 @@
 +#pragma once
 +#include <atomic>
 +#include <stdexcept>
@@ -8,16 +8,22 @@
 +// A single operation owns the execution gate; token outlives joined CPU work.
 +namespace engine::core::ortts_cancel {
 +inline std::atomic<const std::atomic<bool> *> active{nullptr};
++inline std::atomic<const std::atomic<bool> *> secondary{nullptr};
 +inline bool requested(void * = nullptr) noexcept {
 +    const auto * token = active.load(std::memory_order_acquire);
-+    return token && token->load(std::memory_order_relaxed);
++    const auto * other = secondary.load(std::memory_order_acquire);
++    return (token && token->load(std::memory_order_relaxed)) ||
++           (other && other->load(std::memory_order_relaxed));
 +}
 +inline void checkpoint() {
 +    if (requested()) throw std::runtime_error("OrTTS operation cancelled");
 +}
 +struct Scope {
-+    explicit Scope(const std::atomic<bool> * token) { active.store(token, std::memory_order_release); }
-+    ~Scope() { active.store(nullptr, std::memory_order_release); }
++    explicit Scope(const std::atomic<bool> * token, const std::atomic<bool> * other = nullptr) {
++        secondary.store(other, std::memory_order_release);
++        active.store(token, std::memory_order_release);
++    }
++    ~Scope() { active.store(nullptr, std::memory_order_release); secondary.store(nullptr, std::memory_order_release); }
 +    Scope(const Scope &) = delete;
 +    Scope & operator=(const Scope &) = delete;
 +};

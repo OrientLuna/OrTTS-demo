@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "date": "2026-11-13",
+  "source_base_commit": "bc6b011",
+  "source_identity": "Uncommitted SDK source at build time; exact delivered files are pinned by the source manifest, not HEAD alone.",
+  "delivery": {
+    "name": "OrTTS-Rust-Apple-SDK-20261113-r2",
+    "zip_bytes": 164546781,
+    "zip_sha256": "45996e01bae5879d6b01a00dde84e29f7cc850664312e700208acbfc7e4999a6",
+    "source_archive_sha256": "7f2a0f1311999df30b048055f7fdf41c7a6fc8e13beef9a17baad9bea4db585e",
+    "source_manifest_sha256": "fa5b857d915da64c82ab0486ea3a0374378b4c5bf7deb175c9c81cea3997f396",
+    "sha256sums_sha256": "913337cb7d0c49e93228f4407c66273a4729f00e0c9d15a6b884d836c7f0b176",
+    "verified_delivery_files": 129,
+    "verified_source_files": 11856,
+    "models_included": false,
+    "private_signing_material_included": false,
+    "note": "Immutable local delivery, not a published release. Its source snapshot predates the product app version bump and this Git preparation receipt. Do not regenerate it silently under the same SHA."
+  },
+  "patches": {
+    "lock": "vendor/cancellation.lock.json",
+    "audio_patch_sha256": "d049757995b2dc02e2add106a1797341a8a55de1683f042eb1cad15c1f7147d2",
+    "mtmd_patch_sha256": "9242820bf296549a074ddaa818c5abc7097b6e64dfad4190168256e6d7929cbb"
+  },
+  "toolchain": {
+    "rustc": "1.94.1 (e408947bf 2026-03-25)",
+    "xcode": "27.2 (27B52)",
+    "ios_deployment_target": "16.3",
+    "older_ios_versions": "Deployment-compatible, not individually runtime-tested by this acceptance."
+  },
+  "model": {
+    "variant": "Q4/P3, fixed voice",
+    "manifest_sha256": "26cf9f79991fa38eb766541ee34a964c4521cb5130fd61034dad3302bebd0017",
+    "trusted_dequant_sha256": "78954b071cabd84e126a9a5e27ad5903cd10e574ae0509da5d7254e5023e2fd4",
+    "host_pack_verification": "passed"
+  },
+  "targets": {
+    "macos": {
+      "status": "passed",
+      "rust_target": "aarch64-apple-darwin",
+      "os": "27.2",
+      "native_sha256": "1ab23d330263b1155c376765da4a68b0e9bd8d0f1948a644bba0aedba918a78d",
+      "rust_rlib_sha256": "c03d49e4a9a084209ed12ccd3a83f32f3ca1b6cb8029c23396dc6159f8288f27",
+      "loading_mode": "Cooperative",
+      "synthesis_mode": "Cooperative"
+    },
+    "ios_device": {
+      "status": "passed",
+      "rust_target": "aarch64-apple-ios",
+      "device": "iPhone 17 / iPhone18,3",
+      "os": "27.0.1 (24A446)",
+      "native_sha256": "7b869c05eddcb669f491bde84fa0fa4215615bfdd68c2cebda14d845993a5ba9",
+      "rust_rlib_sha256": "bb46c50a8e3a05efd092dbca9bba825a2b0acbfa113964c84e6b784fe1bcafe9",
+      "raw_report_sha256": "5dd8315e5b7b483858a8d253000c406284cb4fddb76594c5fed3ab2fa73f2940",
+      "launch_log_sha256": "21fd3cd3af64198014cb9345df1fb547baf390f73c03bcb0ae8438a8e0419b80",
+      "loading_mode": "Cooperative",
+      "synthesis_mode": "Cooperative",
+      "load_cancel_latency_ms_observed": 3.48,
+      "synthesis_cancel_latency_ms_observed": [1.92, 1.886, 1.924, 1.714, 3.123, 1.752],
+      "exit_status": 0
+    },
+    "ios_simulator": {
+      "status": "passed",
+      "rust_target": "aarch64-apple-ios-sim",
+      "os": "26.5 (23F77)",
+      "native_sha256": "3043366f29b08367bdc6d49786603d1fd79503b788b80f0d621b2d407010e680",
+      "rust_rlib_sha256": "ed7bf4e92b53b8e78d34207ac6e9d9c482a7225c3d9dbd67ee1bbb3f03b9ac88",
+      "raw_report_sha256": "ba9722f371f2c4e7cc2d67d51ee4d371304f098883634ab468bbe00667fc9cc3",
+      "launch_log_sha256": "03aeacf5430f59378061b49656a49fd6329918c58390334c3cd801b67f8d78d8",
+      "loading_mode": "Cooperative",
+      "synthesis_mode": "Cooperative",
+      "exit_status": 0
+    }
+  },
+  "coverage": [
+    "loading cancellation returns structured Cancelled",
+    "six offline/streaming cancellations; same engine recovery PCM equals baseline",
+    "stale handles remain inactive during later tasks and engine drop",
+    "completion/cancel linearization and token request/free serialization",
+    "native execution gate still rejects competing load with BUSY",
+    "callback cancellation and panic isolation with recovery"
+  ],
+  "compatibility": {
+    "v1": {"status": "passed", "loading": "Cooperative", "synthesis": "DiscardAfterReturn"},
+    "pre_token": {"status": "passed", "loading": "DiscardAfterReturn", "synthesis": "DiscardAfterReturn"},
+    "android_cpu_auto_cancellation": "UNSUPPORTED: rejected in both preparation orders, source identity, and CMake"
+  },
+  "tests": {
+    "rust_per_library": {"unit": 7, "integration": 4, "compile_fail_docs": 2, "status": "passed"},
+    "source_and_android_boundary": {"passed": 8},
+    "desktop": {"total": 55, "passed": 54, "linux_only_skipped": 1},
+    "clippy": "Historical r2 delivery: normal run completed with three speech.rs warnings; -D warnings failed. See post_delivery_validation for the subsequent source fix."
+  },
+  "post_delivery_validation": {
+    "scope": "Source-only speech.rs lint cleanup after the frozen r2 delivery; no binary or ZIP replacement.",
+    "changes": "Private option-pair type alias and equivalent inclusive channel checks; no lint suppression. Added two option ownership/NUL regression tests.",
+    "strict_clippy_command": "cargo clippy --offline --locked --manifest-path runtime/rust/Cargo.toml --all-targets [--target TARGET] -- -D warnings",
+    "strict_clippy_targets": {
+      "aarch64-apple-darwin": "passed",
+      "aarch64-apple-ios": "passed: cross-target lint/check, not another device execution",
+      "aarch64-apple-ios-sim": "passed: cross-target lint/check, not another simulator execution"
+    },
+    "rust_tests_per_library": {"unit": 9, "integration": 4, "compile_fail_docs": 2, "status": "passed on macOS with matched, v1 and pre-token libraries"},
+    "observational_regression_data": "benchmarks/rust-cancellation-apple-20261113.json",
+    "controlled_performance_baseline_updated": false
+  },
+  "history": [
+    "Initial device launches blocked by lock screen; original delivery remains unchanged.",
+    "After unlock, UIKit trapped NoSceneLifecycleAdoption on iOS 27.0.1 before a report was produced.",
+    "Only the isolated probe adopted Scene lifecycle; device and simulator reruns passed."
+  ],
+  "product_install": {
+    "bundle_id": "com.orient.ortts.prototype",
+    "version": "0.4.1",
+    "build": "2026111301",
+    "status": "installed_and_launched",
+    "host": "Existing Objective-C host links the validated native C ABI slice; not migrated to Rust Task API.",
+    "icon": "Existing selected three-color brand assets compiled with actool; launcher not visually captured.",
+    "smoke": "Q4 synthesis/playback produced 4.88 seconds of 24kHz mono Float32 PCM; stop-generation smoke passed.",
+    "data_preservation": "No uninstall; Documents listing unchanged by install; original output CAF restored and SHA checked."
+  },
+  "not_claimed": [
+    "hard cancellation deadline",
+    "all older iOS versions runtime-tested",
+    "Android cancellation device validation",
+    "all speech backends",
+    "subjective audio quality",
+    "Miri/TSan or long-duration leak proof",
+    "public artifact upload"
+  ]
+}

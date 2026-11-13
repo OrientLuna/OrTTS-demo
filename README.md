@@ -32,7 +32,7 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 
 ### macOS 快速开始
 
-自行构建后打开 `OrTTS.app`，或通过 DMG 拖入“应用程序”。选择模型版本，导入完整模型目录，或确认联网后下载；校验通过后即可输入文字、合成、播放或保存 WAV。
+自行构建后打开 `OrTTS.app`，或通过 DMG 拖入“应用程序”。选择模型版本，导入完整模型目录或下载模型后，即可输入文字、合成、播放或保存 WAV。
 
 当前桌面版默认 **0.6B Q4 / P3**。下载需用户确认，支持取消、断点继续和已校验文件复用，不在启动时自动下载。macOS 仍为合成后播放，暂不提供第三方 TTS / ASR。构建、安装和签名边界见[桌面版说明](desktop/README.md)。
 
@@ -52,7 +52,7 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 
 音色按模型包实际资源提供，包含女声1 / 女声2 / 男声1 / 男声2；历史包可能只有部分音色。模型与变体不能任意混用。
 
-模型仓库：[0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B) · [1.7B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-1.7B)。下载量、文件组成和校验规则见[模型资产](docs/MODEL_ASSETS.md)与[模型目录](docs/OWN_MODEL_CATALOG.md)，不将某个版本的下载量当作所有模型的统一要求。
+模型仓库：[0.6B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B) · [1.7B](https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-1.7B)。模型准备与版本选择见[模型资产](docs/MODEL_ASSETS.md)和[模型目录](docs/OWN_MODEL_CATALOG.md)。
 
 ### 其他 TTS / ASR 后端
 
@@ -89,7 +89,7 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 - [模型准备](docs/MODEL_ASSETS.md)
 - [解码器兼容](docs/DECODERS.md)
 - [CPU 构建档位](docs/CPU_PROFILES.md)与[性能记录](docs/BENCHMARKS.md)
-- [C ABI／Rust集成](runtime/README.md)
+- [C ABI 集成](runtime/README.md) · [Rust SDK 与任务级取消](runtime/rust/README.md)
 - [完整文档索引](docs/README.md)
 
 ## 致谢与许可
