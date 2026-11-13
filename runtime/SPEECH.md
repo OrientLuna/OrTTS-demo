@@ -1,6 +1,6 @@
 # 多模型语音 SDK（可选 CPU 构建）
 
-这是已接线的 OrTTS 后端，不是调研 CLI 的别名。原 `ortts_engine.h` ABI1/P3/P5 保留；新增 `ortts_speech.h` ABI1 和 Rust `speech` 模块。新旧接口在同一个 `libortts`/`OrTTS.framework` 中，共用一份 audio.cpp/ggml 和执行互斥。未引入 ONNX Runtime、whisper.cpp 或第二份 ggml。
+这是已接线的 OrTTS 后端，不是调研 CLI 的别名。原 `ortts_engine.h` ABI1/P3/P5 保留；新增 `ortts_speech.h` ABI1 和 Rust `speech` 模块。新旧接口在同一个 `libortts`/`OrTTS.framework` 中，共用一份 audio.cpp/ggml 和执行互斥。默认构建未引入 ONNX Runtime、whisper.cpp 或第二份 ggml；新的可选[轻量中英候选](ASR_RECIPES.md)使用额外 Sherpa/ONNX Runtime 执行器，沿用 ASR 接口，尚未通过低配手机验收。
 
 ## 能力边界
 

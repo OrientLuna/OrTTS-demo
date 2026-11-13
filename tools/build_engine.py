@@ -23,7 +23,7 @@ def main():
     p.add_argument('--profile',required=True)
     p.add_argument('--source',type=Path,required=True)
     p.add_argument('--out',type=Path,required=True)
-    p.add_argument('--cmake',default='cmake');p.add_argument('--ninja',type=Path)
+    p.add_argument('--sherpa-asr-prefix',type=Path,help='Optional local pinned Sherpa 1.13.8 compatibility SDK (requires --speech)');p.add_argument('--cmake',default='cmake');p.add_argument('--ninja',type=Path)
     p.add_argument('--ndk',type=Path);p.add_argument('--toolchain',type=Path)
     p.add_argument('--rebuild',action='store_true',help='Incrementally rebuild an existing matching completed/failed receipt');p.add_argument('--speech',action='store_true');p.add_argument('--liquidcodec',action='store_true');p.add_argument('--jobs',type=int,default=4);p.add_argument('--dry-run',action='store_true')
     a=p.parse_args()
@@ -37,6 +37,17 @@ def main():
          '-DFETCHCONTENT_FULLY_DISCONNECTED=ON']
     if a.speech:cmd+=['-DORTTS_ENABLE_SPEECH=ON']
     if a.liquidcodec:cmd+=['-DORTTS_ENABLE_LIQUIDCODEC=ON']
+    sherpa=None
+    if a.sherpa_asr_prefix:
+        if not a.speech:p.error('--sherpa-asr-prefix requires --speech')
+        prefix=a.sherpa_asr_prefix.resolve();header=prefix/'include/sherpa-onnx/c-api/c-api.h'
+        if not header.is_file() or hashlib.sha256(header.read_bytes()).hexdigest()!='2a1b95084be8fd1deb3228fcad2fd3f7f0258b64582f7402281ec174c7b7f4ce':raise ValueError('Pinned Sherpa v1.13.8 header missing/mismatched')
+        binaries=[f for f in (prefix/'lib').glob('*') if f.is_file() and (f.suffix=='.dylib' or '.so' in f.name)]
+        binaries += [f/f.stem for f in (prefix/'Frameworks').glob('*.framework') if (f/f.stem).is_file()]
+        if not binaries:raise ValueError('Missing Sherpa compatibility libraries')
+        sherpa={'version':'1.13.8','source_commit':('793c2405ada0e9ee55a55037fa2d56111b8e7206' if a.target.startswith('ios') else '11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf'),'header_sha256':hashlib.sha256(header.read_bytes()).hexdigest(),'libraries':[{'name':str(f.relative_to(prefix)),'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'bytes':f.stat().st_size} for f in sorted(binaries)]}
+        cmd+=['-DORTTS_ENABLE_SHERPA_ASR=ON','-DORTTS_SHERPA_PREFIX='+str(prefix)]
+    else:cmd+=['-DORTTS_ENABLE_SHERPA_ASR=OFF']
     if 'cpu_dispatch' in lock:
         ur=json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text())
         cmd+=['-DORTTS_LLAMA_SOURCE_DIR='+ur['llama_source_read_only']]
@@ -72,7 +83,7 @@ def main():
              'source_commit':lock['base_commit'],'integration_patch_sha256':lock['patch_sha256'],
              'additional_patches':lock.get('additional_patches',[]),'release_compat':lock.get('release_compat'),
              'plugin_source_sha256':{str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(files)},
-             'argv':commands,'speech':lock.get('speech'),'models_included':False,'liquidcodec':a.liquidcodec,
+             'argv':commands,'speech':lock.get('speech'),'models_included':False,'liquidcodec':a.liquidcodec,'sherpa_asr':sherpa,
              'unified_source_receipt':json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text()) if a.liquidcodec else None}
     if 'cpu_dispatch' in lock:receipt['cpu_dispatch']=lock['cpu_dispatch']
     if 'cancellation' in lock:receipt['cancellation']=lock['cancellation']

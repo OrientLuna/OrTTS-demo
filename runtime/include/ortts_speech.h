@@ -91,7 +91,7 @@ typedef struct ortts_asr_stream_event {
  int32_t endpoint; /* 0=partial; otherwise final. Partials replace the whole hypothesis. */
  uint64_t segment_id, start_frame, end_frame, revision; /* 16kHz input timeline */
  const char *text; /* Borrowed UTF-8; valid only during callback. */
- const char *language; /* "en" */
+ const char *language; /* "en" for Moonshine; "und" for bilingual recipe (no language-ID claim). */
 } ortts_asr_stream_event;
 typedef struct ortts_asr_stream_stats {
  uint32_t struct_size;
@@ -105,7 +105,11 @@ typedef struct ortts_asr_stream_stats {
 typedef int (*ortts_asr_stream_callback)(void*,const ortts_asr_stream_event*);
 ORTTS_API uint32_t ortts_asr_stream_abi_version(void); /* 0 if --speech disabled */
 /* NULL stream config uses 400/1000/15000ms, 800ms silence, RMS 0.003.
- * Base config must select moonshine_asr, streaming=1, threads=1..8.
+ * Base config normally selects moonshine_asr, streaming=1, threads=1..8.
+ * Optional Sherpa builds also accept internal family zipformer_bilingual for the
+ * pinned Chinese/English recipe; set silence_ms=0 (explicit/limit endpoints).
+ * For this compatibility path UINT64_MAX cache/buffer counts mean unavailable,
+ * not zero memory usage; unobservable encoder/decoder timings are NaN; this does not imply low-end-device certification.
  * No session_options/eSpeak/max_input_frames: use typed stream settings. */
 ORTTS_API ortts_status ortts_asr_stream_create(const ortts_speech_config*,const ortts_asr_stream_config*,ortts_asr_stream**);
 /* Finite 16kHz mono F32; each call 1..32000 frames. No implicit resampling.

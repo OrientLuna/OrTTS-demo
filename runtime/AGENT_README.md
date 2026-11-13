@@ -75,3 +75,7 @@ Prefer Rust `Task` / `CancelHandle` for safe token ownership. Detailed invariant
 tests, source locks and delivery records are in [rust/AGENT_README.md](rust/AGENT_README.md).
 The optional speech SDK has model-specific formats and bounded ASR input/finish/reset
 semantics; it is not a general ONNX importer. See [SPEECH.md](SPEECH.md).
+
+## Optional bilingual ASR compatibility prototype
+
+`--sherpa-asr-prefix` / `ORTTS_ENABLE_SHERPA_ASR` adds a pinned Sherpa 1.13.8 / ORT 1.28.2 executor behind the existing incremental ASR ABI. Default builds do not link these dependencies. This is interface unification, not a shared ggml tensor executor. See `ASR_RECIPES.md`, recipe identities and device acceptance policy; no physical low-end device is currently approved. Unknown cache counters are UINT64_MAX and unobservable split timings are NaN, not zero usage. Do not promote desktop accelerated smoke tests or manufactured reference transcripts into mobile quality/RTF evidence.

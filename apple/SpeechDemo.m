@@ -1,6 +1,11 @@
 #import "DownloadChannels.h"
 #import "ModelDownloadUI.h"
 #import "SpeechDemo.h"
+#import <mach/mach.h>
+#import <sys/sysctl.h>
+#if ORTTS_ASR_NATIVE_BENCHMARK
+extern int ortts_asr_lite_native_test(int argc,char**argv);
+#endif
 #import "StreamPlayback.h"
 #import "WorkQueue.h"
 #import "ortts_speech.h"
@@ -29,6 +34,7 @@ static BOOL SpeechValid(NSURL *file,NSDictionary *asset,BOOL(^cancel)(void)) {
     ortts_tts *_tts;ortts_asr *_asr;ortts_asr_stream *_incremental;
     dispatch_semaphore_t _captureSlots;
     NSString *_ttsCacheKey;NSUInteger _ttsEpoch;BOOL _reusedTts;BOOL _benchmarkNoPlayback;NSUInteger _smokeRemaining;NSMutableArray *_smokeRuns;double _lastApiMs,_lastAudioSeconds;
+    double _asrLoadMs,_asrApiMs;uint64_t _asrPeakBytes;NSUInteger _asrMetricEpoch;dispatch_source_t _asrSampler;
     NSUInteger _frames;NSMutableDictionary<NSNumber*,NSString*> *_finals;
 }
 @property UISegmentedControl *task;
@@ -128,20 +134,45 @@ static int DemoSpeechText(void *user,const ortts_asr_stream_event*event){@autore
     if([self.selected[@"family"] isEqual:@"pocket_tts"])[text appendString:@"\n音色音频已转换为模型嵌入；模型由Kyutai提供。"];
     UIAlertController*alert=[UIAlertController alertControllerWithTitle:@"模型与音色来源" message:text preferredStyle:UIAlertControllerStyleAlert];[alert addAction:[UIAlertAction actionWithTitle:@"关闭" style:UIAlertActionStyleCancel handler:nil]];[alert addAction:[UIAlertAction actionWithTitle:@"打开模型来源" style:UIAlertActionStyleDefault handler:^(UIAlertAction*a){[UIApplication.sharedApplication openURL:[NSURL URLWithString:self.selected[@"license_review"][@"source"]] options:@{} completionHandler:nil];}]];[self presentViewController:alert animated:YES completion:nil];
 }
+- (void)sampleASRMemory {
+    task_vm_info_data_t info={0};mach_msg_type_number_t count=TASK_VM_INFO_COUNT;
+    if(task_info(mach_task_self(),TASK_VM_INFO,(task_info_t)&info,&count)==KERN_SUCCESS)_asrPeakBytes=MAX(_asrPeakBytes,(uint64_t)info.phys_footprint);
+}
+- (void)startASRMetrics {
+    if(![NSProcessInfo.processInfo.arguments containsObject:@"--speech-smoke"])return;
+    @synchronized(self){_asrLoadMs=0;_asrApiMs=0;_asrPeakBytes=0;[self sampleASRMemory];NSUInteger token=++_asrMetricEpoch;
+    _asrSampler=dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,0,0,dispatch_get_global_queue(QOS_CLASS_UTILITY,0));dispatch_source_set_timer(_asrSampler,DISPATCH_TIME_NOW,20*NSEC_PER_MSEC,5*NSEC_PER_MSEC);__weak SpeechDemo*weak=self;
+    dispatch_source_set_event_handler(_asrSampler,^{SpeechDemo*owner=weak;if(!owner)return;@synchronized(owner){if(owner->_asrSampler&&owner->_asrMetricEpoch==token)[owner sampleASRMemory];}});dispatch_resume(_asrSampler);}
+}
+- (void)stopASRMetrics {dispatch_source_t timer;@synchronized(self){timer=_asrSampler;if(timer)[self sampleASRMemory];_asrSampler=nil;++_asrMetricEpoch;}if(timer)dispatch_source_cancel(timer);}
 - (void)cleanup {
+    [self stopASRMetrics];
     ++_ttsEpoch;_ttsCacheKey=nil;[_nativeLock lock];ortts_tts_free(_tts);_tts=NULL;ortts_asr_free(_asr);_asr=NULL;ortts_asr_stream_free(_incremental);_incremental=NULL;[_nativeLock unlock];self.converter=nil;
 }
 - (void)done:(NSString*)message {dispatch_async(dispatch_get_main_queue(),^{[self working:NO];self.status.text=message ?: @"完成";NSLog(@"SpeechDemo done: %@",self.status.text);
-    if([NSProcessInfo.processInfo.arguments containsObject:@"--speech-smoke"]){NSDictionary*report=@{@"run_id":[self argument:@"--speech-run-id" fallback:@"smoke"],@"ok":@([message hasPrefix:@"完成"]||[message hasPrefix:@"识别完成"]||[message hasPrefix:@"模型已就绪"]),@"status":self.status.text,@"text":self.result.text ?: @"",@"model":self.selected[@"id"] ?: @"",@"input_frames":@(self->_frames)};NSMutableDictionary*details=[report mutableCopy];details[@"engine_reused"]=@(self->_reusedTts);details[@"api_ms"]=@(self->_lastApiMs);details[@"audio_s"]=@(self->_lastAudioSeconds);if(self->_smokeRuns){[self->_smokeRuns addObject:details];NSString*scenario=[self argument:@"--speech-scenario" fallback:@""];if(([report[@"ok"] boolValue]||[scenario isEqual:@"cancel"])&&self->_smokeRemaining>1){--self->_smokeRemaining;
+    if([NSProcessInfo.processInfo.arguments containsObject:@"--speech-smoke"]){NSDictionary*report=@{@"run_id":[self argument:@"--speech-run-id" fallback:@"smoke"],@"ok":@([message hasPrefix:@"完成"]||[message hasPrefix:@"识别完成"]||[message hasPrefix:@"模型已就绪"]),@"status":self.status.text,@"text":self.result.text ?: @"",@"model":self.selected[@"id"] ?: @"",@"input_frames":@(self->_frames)};NSMutableDictionary*details=[report mutableCopy];details[@"engine_reused"]=@(self->_reusedTts);details[@"api_ms"]=@(self->_lastApiMs);details[@"audio_s"]=@(self->_lastAudioSeconds);if([[self argument:@"--speech-smoke" fallback:@""]isEqual:@"asr"]){details[@"asr_load_ms"]=@(self->_asrLoadMs);details[@"native_api_ms"]=@(self->_asrApiMs);details[@"audio_s"]=@(self->_frames/16000.0);details[@"api_ms"]=@(self->_asrApiMs);details[@"rtf"]=self->_frames?@(self->_asrApiMs/1000/(self->_frames/16000.0)):(id)NSNull.null;details[@"peak_phys_footprint_bytes"]=@(self->_asrPeakBytes);details[@"memory_sampling_ms"]=@20;details[@"threads"]=@2;details[@"timing_scope"]=@"accelerated-file-input; load includes SHA verification; API excludes loading/conversion";details[@"hardware"]=({char h[128]={0};size_t n=sizeof(h);sysctlbyname("hw.machine",h,&n,NULL,0);[NSString stringWithUTF8String:h]?:@"unknown";});details[@"ram_bytes"]=@(NSProcessInfo.processInfo.physicalMemory);details[@"os_version"]=UIDevice.currentDevice.systemVersion;NSURL*identity=[NSBundle.mainBundle URLForResource:@"ASRBenchmarkIdentity" withExtension:@"json"];NSData*bytes=identity?[NSData dataWithContentsOfURL:identity]:nil;details[@"runtime_identity"]=bytes?[NSJSONSerialization JSONObjectWithData:bytes options:0 error:nil]:@{};}if(self->_smokeRuns){[self->_smokeRuns addObject:details];NSString*scenario=[self argument:@"--speech-scenario" fallback:@""];if(([report[@"ok"] boolValue]||[scenario isEqual:@"cancel"])&&self->_smokeRemaining>1){--self->_smokeRemaining;
 if(([scenario isEqual:@"switch"]||[scenario isEqual:@"rate"])){NSString*target=self->_smokeRuns.count==1?([scenario isEqual:@"rate"]?@"piper-lessac-medium":@"pocket-english-q8"):@"kokoro-82m-q8";for(NSDictionary*m in self.catalog)if([m[@"id"] isEqual:target]){self.selected=m;[self updateModel];break;}self.voice=[target isEqual:@"pocket-english-q8"]?@"alba":@"af_heart";}
 if([scenario isEqual:@"voice"])self.voice=self->_smokeRuns.count==1?@"am_adam":@"af_heart";
 if([scenario isEqual:@"cancel"]&&self->_smokeRuns.count==1)dispatch_after(dispatch_time(DISPATCH_TIME_NOW,100*NSEC_PER_MSEC),dispatch_get_main_queue(),^{[self cancel];});
-if([scenario isEqual:@"ttl"])dispatch_after(dispatch_time(DISPATCH_TIME_NOW,31*NSEC_PER_SEC),dispatch_get_main_queue(),^{[self synthesize];});else[self synthesize];return;}}details=[details mutableCopy];details[@"runs"]=[self->_smokeRuns copy] ?: @[];NSData*data=[NSJSONSerialization dataWithJSONObject:details options:NSJSONWritingPrettyPrinted error:nil];UIApplication.sharedApplication.idleTimerDisabled=NO;[data writeToURL:[[NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject URLByAppendingPathComponent:@"speech-smoke-result.json"] atomically:YES];}
+if([scenario isEqual:@"ttl"])dispatch_after(dispatch_time(DISPATCH_TIME_NOW,31*NSEC_PER_SEC),dispatch_get_main_queue(),^{[self synthesize];});else[self synthesize];return;}}details=[details mutableCopy];details[@"runs"]=[self->_smokeRuns copy] ?: @[];NSData*data=[NSJSONSerialization dataWithJSONObject:details options:NSJSONWritingPrettyPrinted error:nil];UIApplication.sharedApplication.idleTimerDisabled=[NSProcessInfo.processInfo.arguments containsObject:@"--speech-keep-awake"];[data writeToURL:[[NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject URLByAppendingPathComponent:@"speech-smoke-result.json"] atomically:YES];}
 });}
 - (NSString*)argument:(NSString*)name fallback:(NSString*)fallback{NSArray*a=NSProcessInfo.processInfo.arguments;NSUInteger i=[a indexOfObject:name];return i!=NSNotFound&&i+1<a.count?a[i+1]:fallback;}
+#if ORTTS_ASR_NATIVE_BENCHMARK
+- (void)nativeASRBenchmark {
+    self.task.selectedSegmentIndex=1;[self changeTask];[self message:@"轻量中英候选 · 原生取消/恢复测试"];[self working:YES];UIApplication.sharedApplication.idleTimerDisabled=YES;
+    dispatch_async(OrTTSDemoQueue(),^{[self cleanup];[self startASRMetrics];NSURL*documents=[NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
+        NSString*root=[documents URLByAppendingPathComponent:@"asr-lite-assets"].path,*input=[documents URLByAppendingPathComponent:@"asr-native-input.f32"].path,*text=[documents URLByAppendingPathComponent:@"asr-native-text.txt"].path,*report=[documents URLByAppendingPathComponent:@"asr-native-metrics.json"].path;
+        [NSFileManager.defaultManager removeItemAtPath:report error:nil];char*argv[]={(char*)"asr-native-test",(char*)root.UTF8String,(char*)input.UTF8String,(char*)text.UTF8String,(char*)report.UTF8String};int status=ortts_asr_lite_native_test(5,argv);[self stopASRMetrics];
+        NSData*data=[NSData dataWithContentsOfFile:report];NSMutableDictionary*r=data?[[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil]mutableCopy]:[NSMutableDictionary new];r[@"ok"]=@(status==0);r[@"run_id"]=[self argument:@"--speech-run-id" fallback:@"native-asr"];r[@"native_exit"]=@(status);r[@"scope"]=@"iPhone native C ABI functional/recovery; accelerated public mixed sample, not low-end/corpus certification";r[@"peak_phys_footprint_bytes"]=@(self->_asrPeakBytes);r[@"memory_sampling_ms"]=@20;r[@"ram_bytes"]=@(NSProcessInfo.processInfo.physicalMemory);char h[128]={0};size_t n=sizeof(h);sysctlbyname("hw.machine",h,&n,NULL,0);r[@"hardware"]=[NSString stringWithUTF8String:h]?:@"unknown";r[@"os_version"]=UIDevice.currentDevice.systemVersion;NSURL*identity=[NSBundle.mainBundle URLForResource:@"ASRBenchmarkIdentity" withExtension:@"json"];NSData*b=identity?[NSData dataWithContentsOfURL:identity]:nil;r[@"runtime_identity"]=b?[NSJSONSerialization JSONObjectWithData:b options:0 error:nil]:@{};
+        [[NSJSONSerialization dataWithJSONObject:r options:NSJSONWritingPrettyPrinted error:nil]writeToURL:[documents URLByAppendingPathComponent:@"asr-native-report.json"]atomically:YES];[self done:status?@"ASR原生验收未通过":@"完成 · ASR原生验收"];});
+}
+#endif
 - (void)smoke {
+#if ORTTS_ASR_NATIVE_BENCHMARK
+ if([NSProcessInfo.processInfo.arguments containsObject:@"--asr-native-benchmark"]){[self nativeASRBenchmark];return;}
+#endif
     NSString*mode=[self argument:@"--speech-smoke" fallback:@"tts"],*identifier=[self argument:@"--speech-model" fallback:[mode isEqual:@"asr"]?@"moonshine-tiny-q8":@"pocket-english-q8"];
-    self.task.selectedSegmentIndex=([mode isEqual:@"asr"]||[mode isEqual:@"last"])?1:0;[self changeTask];for(NSDictionary*m in self.catalog)if([m[@"id"] isEqual:identifier]&&[m[@"demo_enabled"] boolValue]){self.selected=m;[self updateModel];break;}
+    self.task.selectedSegmentIndex=([mode isEqual:@"asr"]||[mode isEqual:@"last"])?1:0;[self changeTask];BOOL found=NO;for(NSDictionary*m in self.catalog)if([m[@"id"] isEqual:identifier]&&[m[@"demo_enabled"] boolValue]){self.selected=m;[self updateModel];found=YES;break;}if(!found){[self done:[NSString stringWithFormat:@"失败 · 未知测试模型 %@",identifier]];return;}
     if([mode isEqual:@"last"]){[self recognizeLast];return;}
     if([mode isEqual:@"download"]){[self downloadModel];return;}
     if([mode isEqual:@"asr"]){NSString*name=[self argument:@"--speech-audio" fallback:@"speech-test.wav"];NSURL*url=[[NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject URLByAppendingPathComponent:name];[self importURL:url];return;}
@@ -203,16 +234,16 @@ if([scenario isEqual:@"ttl"])dispatch_after(dispatch_time(DISPATCH_TIME_NOW,31*N
     });});
 }
 - (BOOL)openASR:(NSDictionary*)model error:(NSError**)error {
-    [self cleanup];
-    if(![self verify:model error:error])return NO;ortts_speech_config c={0};c.struct_size=sizeof(c);c.family=[model[@"family"] UTF8String];c.model_path=SpeechAsset(model[@"model_path"]).path.UTF8String;c.threads=4;BOOL incremental=[model[@"family"] isEqual:@"moonshine_asr"];c.streaming=incremental;
-    ortts_asr*offline=NULL;ortts_asr_stream*stream=NULL;BOOL ok=SpeechCheck(incremental?ortts_asr_stream_create(&c,NULL,&stream):ortts_asr_create(&c,&offline),error);if(!ok)return NO;
+    [self cleanup];[self startASRMetrics];double loadStart=NSProcessInfo.processInfo.systemUptime;
+    if(![self verify:model error:error]){[self stopASRMetrics];return NO;}ortts_speech_config c={0};c.struct_size=sizeof(c);c.family=[model[@"family"] UTF8String];c.model_path=SpeechAsset(model[@"model_path"]).path.UTF8String;c.threads=[NSProcessInfo.processInfo.arguments containsObject:@"--speech-smoke"]?2:4;BOOL incremental=[model[@"family"] isEqual:@"moonshine_asr"];c.streaming=incremental;
+    ortts_asr*offline=NULL;ortts_asr_stream*stream=NULL;BOOL ok=SpeechCheck(incremental?ortts_asr_stream_create(&c,NULL,&stream):ortts_asr_create(&c,&offline),error);_asrLoadMs=(NSProcessInfo.processInfo.systemUptime-loadStart)*1000;if(!ok){[self stopASRMetrics];return NO;}
     [_nativeLock lock];_asr=offline;_incremental=stream;[_nativeLock unlock];_frames=0;[_finals removeAllObjects];dispatch_async(dispatch_get_main_queue(),^{self.result.text=@"";});return YES;
 }
 - (int)receiveText:(const ortts_asr_stream_event*)event {
     if(self.cancelled)return 1;NSString*text=[NSString stringWithUTF8String:event->text] ?: @"";if(event->endpoint&&text.length)_finals[@(event->segment_id)]=text;NSMutableArray*lines=[NSMutableArray new];for(NSNumber*key in [[_finals allKeys] sortedArrayUsingSelector:@selector(compare:)])[lines addObject:_finals[key]];if(!event->endpoint&&text.length)[lines addObject:[@"识别中：" stringByAppendingString:text]];NSString*value=[lines componentsJoinedByString:@"\n"];dispatch_async(dispatch_get_main_queue(),^{self.result.text=value;});return self.cancelled;
 }
 - (BOOL)acceptPCM:(const float*)pcm count:(NSUInteger)n error:(NSError**)error {
-    n=MIN(n,960000-_frames);for(NSUInteger at=0;at<n;at+=1600){NSUInteger take=MIN((NSUInteger)1600,n-at);if(self.cancelled){if(error)*error=SpeechError(@"已停止");return NO;}if(!SpeechCheck(_incremental?ortts_asr_stream_accept(_incremental,pcm+at,take,DemoSpeechText,(__bridge void*)self):ortts_asr_accept(_asr,pcm+at,take),error))return NO;_frames+=take;}return YES;
+    n=MIN(n,960000-_frames);for(NSUInteger at=0;at<n;at+=1600){NSUInteger take=MIN((NSUInteger)1600,n-at);if(self.cancelled){if(error)*error=SpeechError(@"已停止");return NO;}double apiStart=NSProcessInfo.processInfo.systemUptime;ortts_status status=_incremental?ortts_asr_stream_accept(_incremental,pcm+at,take,DemoSpeechText,(__bridge void*)self):ortts_asr_accept(_asr,pcm+at,take);_asrApiMs+=(NSProcessInfo.processInfo.systemUptime-apiStart)*1000;if(!SpeechCheck(status,error))return NO;_frames+=take;}return YES;
 }
 - (BOOL)convert:(AVAudioPCMBuffer*)buffer ending:(BOOL)ending error:(NSError**)error {
     if(!self.converter)return YES;AVAudioFormat*target=self.converter.outputFormat;AVAudioFrameCount capacity=buffer?(AVAudioFrameCount)ceil(buffer.frameLength*16000.0/buffer.format.sampleRate)+128:512;AVAudioPCMBuffer*output=[[AVAudioPCMBuffer alloc]initWithPCMFormat:target frameCapacity:capacity];__block BOOL consumed=NO;
@@ -220,7 +251,7 @@ if([scenario isEqual:@"ttl"])dispatch_after(dispatch_time(DISPATCH_TIME_NOW,31*N
     if(status==AVAudioConverterOutputStatus_Error)return NO;return output.frameLength?[self acceptPCM:output.floatChannelData[0] count:output.frameLength error:error]:YES;
 }
 - (void)finishASR {
-    NSError*error=nil;if(!self.cancelled&&_frames){[self convert:nil ending:YES error:&error];if(!error){if(_incremental)SpeechCheck(ortts_asr_stream_finish(_incremental,DemoSpeechText,(__bridge void*)self),&error);else{ortts_transcript*result=NULL;if(SpeechCheck(ortts_asr_finish(_asr,NULL,&result),&error)){ortts_asr_stream_event e={sizeof(e),ORTTS_ASR_FLUSH,0,0,_frames,1,ortts_transcript_text(result),"auto"};[self receiveText:&e];ortts_transcript_free(result);}}}}
+    NSError*error=nil;if(!self.cancelled&&_frames){[self convert:nil ending:YES error:&error];if(!error){double finishStart=NSProcessInfo.processInfo.systemUptime;if(_incremental)SpeechCheck(ortts_asr_stream_finish(_incremental,DemoSpeechText,(__bridge void*)self),&error);else{ortts_transcript*result=NULL;if(SpeechCheck(ortts_asr_finish(_asr,NULL,&result),&error)){ortts_asr_stream_event e={sizeof(e),ORTTS_ASR_FLUSH,0,0,_frames,1,ortts_transcript_text(result),"auto"};[self receiveText:&e];ortts_transcript_free(result);}}_asrApiMs+=(NSProcessInfo.processInfo.systemUptime-finishStart)*1000;}}
     NSString*message=self.cancelled?@"已取消":(error.localizedDescription ?: (_frames?[NSString stringWithFormat:@"识别完成 · 输入 %.2fs",_frames/16000.0]:@"未录到有效音频"));[self cleanup];dispatch_async(dispatch_get_main_queue(),^{[AVAudioSession.sharedInstance setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];});[self done:message];
 }
 - (void)startRecording {

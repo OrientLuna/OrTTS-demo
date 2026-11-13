@@ -53,3 +53,7 @@ The model catalog is a compatibility/verification example, not a cleared distrib
 - SenseVoice uses the linked FunASR model agreement, not Apache-2.0 for its weights. Attribution, model-name and other agreement terms apply.
 
 The integration code's Apache-2.0 license is unchanged. A host combining GPL-covered components must evaluate the resulting distribution and provide the corresponding source/build material where required; using dynamic loading is not an automatic exemption. No complete binary distribution compliance certification is asserted by this notice.
+
+## Optional bilingual ASR compatibility executor
+
+The default build does not include this executor. When explicitly enabled, OrTTS links Sherpa-ONNX v1.13.8 (Apache-2.0) and ONNX Runtime v1.28.2 (MIT); license texts are in `licenses/sherpa-onnx-1.13.8.txt` and `licenses/onnxruntime-1.28.2.txt`. Model/fixture rights remain separate. Fixed asset/model-card identities and capability limits are in `runtime/models/asr-recipes.json`; no physical low-end device certification is implied.

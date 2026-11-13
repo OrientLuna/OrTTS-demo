@@ -1,0 +1,43 @@
+{
+  "schema": "ortts-asr-acceptance-policy-v1",
+  "protocol": "ortts-asr-low-end-v1",
+  "minimum_human_reference_samples_per_language": 20,
+  "languages": [
+    "zh",
+    "en",
+    "mixed"
+  ],
+  "gates": {
+    "warm_rtf_p95_exclusive_max": 1.0,
+    "zh_cer_max": 0.15,
+    "en_wer_max": 0.2,
+    "mixed_mer_max": 0.25,
+    "mixed_english_wer_max": 0.3,
+    "cold_load_ms_p95_max": 3000,
+    "final_latency_ms_p95_max": 1500,
+    "cancel_ms_p95_max": 1000,
+    "peak_app_memory_mib_max_by_ram": {
+      "2048": 700,
+      "3072": 900,
+      "4096": 1000
+    },
+    "cancel_cases_required": [
+      "callback",
+      "cross-thread",
+      "sticky-until-reset",
+      "next-request-matches-fresh"
+    ],
+    "stability_minutes_min": 10
+  },
+  "requires": [
+    "physical-device",
+    "native-target-library-sha",
+    "model-assets-verified",
+    "human-reviewed-zh-en-mixed-references",
+    "same-protocol-same-fixtures",
+    "actual-rtf-no-sleep-in-numerator",
+    "real-time-input-pacing",
+    "low-memory-tts-asr-task-switch-exercised"
+  ],
+  "note": "Proposed acceptance thresholds fixed before target trials, not claims of results."
+}

@@ -1,0 +1,195 @@
+{
+  "schema": "ortts-asr-ios-smoke-v1",
+  "physical_low_end_certified": false,
+  "quality_scored": false,
+  "scope": "accelerated public 10s mixed sample; three fresh processes; C ABI functional/cancel/reset only",
+  "model_identity": "3be7c3d185508af33d6429f6295a165ffbe6528018f614d494152fe9802ee700",
+  "source_base_commit": "4c276b29c31c2d9d7cce09f134a63d6ad7ebc61d",
+  "runtime_sources_sha256": {
+    "runtime/src/zipformer_stream.h": "913ebb067fa7acfac12784af0e428adf7e995c96f1451bb46a4463bad2006daa",
+    "runtime/src/ortts_speech.cpp": "8dd27b056e241a88d39cff56e4b5616dbbe11cffab1d6cbf527eb238677b1489",
+    "tests/asr_lite_integration.cpp": "bd3363bbf03bbd2bc045494b20c21b69dbceb40cb0902fae39e44b0ee56afc05"
+  },
+  "trials": [
+    {
+      "ram_bytes": 8045641728,
+      "peak_phys_footprint_bytes": 147294096,
+      "audio_s": 10.0531,
+      "runtime_identity": {
+        "cpu_profile": "arm64-baseline",
+        "kind": "asr-compatibility-prototype",
+        "framework_sha256": {
+          "espeak-ng.framework": "178727a70718bb489eb8c7f6b9f052221db5b654efa54fcccb9ac5abe993e215",
+          "SherpaOnnxC.framework": "863c36e30efba63fe02ee132f0c3853a968961484827a71c5393cd11a82d10b1",
+          "OrTTS.framework": "167264dedc8ba60eda225c77a1675c6093c7ee1a806003248eb85ea9649bc526"
+        },
+        "speech_demo_sha256": "3bd684874a1ad5eb6101a68134f5d5e66f181695a3ce0273caa0ed6f2837ccce",
+        "sherpa_sdk_archive_sha256": "e259a7d3b38ad7dec49bb078252a30bb42ede8355e2bb130cf8c1c78ed131f75",
+        "source_base_commit": "4c276b29c31c2d9d7cce09f134a63d6ad7ebc61d"
+      },
+      "warm_api_ms": 156.407,
+      "finals": 1,
+      "warm_rtf": 0.015558,
+      "cancel_request_to_return_ms_upper_bound": 3.01783,
+      "ok": 1,
+      "scope": "iPhone native C ABI functional/recovery; accelerated public mixed sample, not low-end/corpus certification",
+      "hardware": "iPhone18,3",
+      "cross_thread_cancel_operation_ms": 9.32179,
+      "native_exit": 0,
+      "memory_sampling_ms": 20,
+      "cold_load_ms": 488.363,
+      "run_id": "asr-lite-native-iphone17-20261113-1",
+      "os_version": "27.0.1",
+      "first_rtf": 0.016707,
+      "first_api_ms": 167.958,
+      "partials": 12,
+      "peak_rss_native_units": 202915840
+    },
+    {
+      "ram_bytes": 8045641728,
+      "peak_phys_footprint_bytes": 150734784,
+      "audio_s": 10.0531,
+      "runtime_identity": {
+        "cpu_profile": "arm64-baseline",
+        "kind": "asr-compatibility-prototype",
+        "framework_sha256": {
+          "espeak-ng.framework": "178727a70718bb489eb8c7f6b9f052221db5b654efa54fcccb9ac5abe993e215",
+          "SherpaOnnxC.framework": "863c36e30efba63fe02ee132f0c3853a968961484827a71c5393cd11a82d10b1",
+          "OrTTS.framework": "167264dedc8ba60eda225c77a1675c6093c7ee1a806003248eb85ea9649bc526"
+        },
+        "speech_demo_sha256": "3bd684874a1ad5eb6101a68134f5d5e66f181695a3ce0273caa0ed6f2837ccce",
+        "sherpa_sdk_archive_sha256": "e259a7d3b38ad7dec49bb078252a30bb42ede8355e2bb130cf8c1c78ed131f75",
+        "source_base_commit": "4c276b29c31c2d9d7cce09f134a63d6ad7ebc61d"
+      },
+      "warm_api_ms": 148.115,
+      "finals": 1,
+      "warm_rtf": 0.0147333,
+      "cancel_request_to_return_ms_upper_bound": 2.50958,
+      "ok": 1,
+      "scope": "iPhone native C ABI functional/recovery; accelerated public mixed sample, not low-end/corpus certification",
+      "hardware": "iPhone18,3",
+      "cross_thread_cancel_operation_ms": 8.82946,
+      "native_exit": 0,
+      "memory_sampling_ms": 20,
+      "cold_load_ms": 474.644,
+      "run_id": "asr-lite-native-iphone17-20261113-2",
+      "os_version": "27.0.1",
+      "first_rtf": 0.0148843,
+      "first_api_ms": 149.633,
+      "partials": 12,
+      "peak_rss_native_units": 202539008
+    },
+    {
+      "ram_bytes": 8045641728,
+      "peak_phys_footprint_bytes": 146982824,
+      "audio_s": 10.0531,
+      "runtime_identity": {
+        "cpu_profile": "arm64-baseline",
+        "kind": "asr-compatibility-prototype",
+        "framework_sha256": {
+          "espeak-ng.framework": "178727a70718bb489eb8c7f6b9f052221db5b654efa54fcccb9ac5abe993e215",
+          "SherpaOnnxC.framework": "863c36e30efba63fe02ee132f0c3853a968961484827a71c5393cd11a82d10b1",
+          "OrTTS.framework": "167264dedc8ba60eda225c77a1675c6093c7ee1a806003248eb85ea9649bc526"
+        },
+        "speech_demo_sha256": "3bd684874a1ad5eb6101a68134f5d5e66f181695a3ce0273caa0ed6f2837ccce",
+        "sherpa_sdk_archive_sha256": "e259a7d3b38ad7dec49bb078252a30bb42ede8355e2bb130cf8c1c78ed131f75",
+        "source_base_commit": "4c276b29c31c2d9d7cce09f134a63d6ad7ebc61d"
+      },
+      "warm_api_ms": 151.78,
+      "finals": 1,
+      "warm_rtf": 0.0150978,
+      "cancel_request_to_return_ms_upper_bound": 2.9765,
+      "ok": 1,
+      "scope": "iPhone native C ABI functional/recovery; accelerated public mixed sample, not low-end/corpus certification",
+      "hardware": "iPhone18,3",
+      "cross_thread_cancel_operation_ms": 8.41733,
+      "native_exit": 0,
+      "memory_sampling_ms": 20,
+      "cold_load_ms": 465.571,
+      "run_id": "asr-lite-native-iphone17-20261113-3",
+      "os_version": "27.0.1",
+      "first_rtf": 0.0155472,
+      "first_api_ms": 156.298,
+      "partials": 12,
+      "peak_rss_native_units": 202047488
+    }
+  ],
+  "existing_ggml_baselines": [
+    {
+      "ram_bytes": 8045641728,
+      "status": "识别完成 · 输入 5.58s",
+      "input_frames": 89200,
+      "api_ms": 533.6854991037399,
+      "peak_phys_footprint_bytes": 303974552,
+      "audio_s": 5.575,
+      "runtime_identity": {
+        "cpu_profile": "arm64-baseline",
+        "kind": "asr-compatibility-prototype",
+        "framework_sha256": {
+          "espeak-ng.framework": "178727a70718bb489eb8c7f6b9f052221db5b654efa54fcccb9ac5abe993e215",
+          "SherpaOnnxC.framework": "863c36e30efba63fe02ee132f0c3853a968961484827a71c5393cd11a82d10b1",
+          "OrTTS.framework": "167264dedc8ba60eda225c77a1675c6093c7ee1a806003248eb85ea9649bc526"
+        },
+        "speech_demo_sha256": "3bd684874a1ad5eb6101a68134f5d5e66f181695a3ce0273caa0ed6f2837ccce",
+        "sherpa_sdk_archive_sha256": "e259a7d3b38ad7dec49bb078252a30bb42ede8355e2bb130cf8c1c78ed131f75",
+        "source_base_commit": "4c276b29c31c2d9d7cce09f134a63d6ad7ebc61d"
+      },
+      "native_api_ms": 533.6854991037399,
+      "asr_load_ms": 225.24324990808964,
+      "ok": 1,
+      "threads": 2,
+      "hardware": "iPhone18,3",
+      "memory_sampling_ms": 20,
+      "os_version": "27.0.1",
+      "timing_scope": "accelerated-file-input; load includes SHA verification; API excludes loading/conversion",
+      "run_id": "asr-sense-iphone17-timed-20261113",
+      "text": "今天上午9点半，请检查车票和随身行李。谢。",
+      "model": "sensevoice-small-q8",
+      "engine_reused": false,
+      "runs": [],
+      "rtf": 0.09572834064641074
+    },
+    {
+      "ram_bytes": 8045641728,
+      "status": "识别完成 · 输入 3.69s",
+      "input_frames": 59072,
+      "api_ms": 231.31245910190046,
+      "peak_phys_footprint_bytes": 128616600,
+      "audio_s": 3.692,
+      "runtime_identity": {
+        "cpu_profile": "arm64-baseline",
+        "kind": "asr-compatibility-prototype",
+        "framework_sha256": {
+          "espeak-ng.framework": "178727a70718bb489eb8c7f6b9f052221db5b654efa54fcccb9ac5abe993e215",
+          "SherpaOnnxC.framework": "863c36e30efba63fe02ee132f0c3853a968961484827a71c5393cd11a82d10b1",
+          "OrTTS.framework": "167264dedc8ba60eda225c77a1675c6093c7ee1a806003248eb85ea9649bc526"
+        },
+        "speech_demo_sha256": "3bd684874a1ad5eb6101a68134f5d5e66f181695a3ce0273caa0ed6f2837ccce",
+        "sherpa_sdk_archive_sha256": "e259a7d3b38ad7dec49bb078252a30bb42ede8355e2bb130cf8c1c78ed131f75",
+        "source_base_commit": "4c276b29c31c2d9d7cce09f134a63d6ad7ebc61d"
+      },
+      "native_api_ms": 231.31245910190046,
+      "asr_load_ms": 177.59199999272823,
+      "ok": 1,
+      "threads": 2,
+      "hardware": "iPhone18,3",
+      "memory_sampling_ms": 20,
+      "os_version": "27.0.1",
+      "timing_scope": "accelerated-file-input; load includes SHA verification; API excludes loading/conversion",
+      "run_id": "asr-moonshine-iphone17-verified-20261113",
+      "text": "At 9:30, please check the train ticket and call the station.",
+      "model": "moonshine-tiny-q8",
+      "engine_reused": false,
+      "runs": [],
+      "rtf": 0.06265234536887877
+    }
+  ],
+  "limitations": [
+    "No A53/A55 or old iPhone evidence",
+    "No realtime microphone pacing or 10min stability test",
+    "Single sample performance is not corpus quality acceptance",
+    "Sampled 20ms footprint may miss brief peaks",
+    "No loading cancellation",
+    "Sherpa is an additional tensor backend"
+  ]
+}

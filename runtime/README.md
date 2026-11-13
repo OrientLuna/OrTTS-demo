@@ -6,6 +6,10 @@ The runtime supports loading, offline/streaming synthesis and cancellation. It r
 
 For other TTS and ASR models, see the optional [speech API](SPEECH.md).
 
+## Optional low-memory bilingual ASR candidate
+
+A pinned bilingual streaming recipe can optionally use a Sherpa/ONNX Runtime compatibility executor inside OrTTS. The default build remains ggml-only. This is a unified host API with an additional tensor backend, not ggml execution of ONNX. Model identities, license metadata, conservative device selection and pending physical acceptance are documented in [ASR recipes](ASR_RECIPES.md). No low-end default or device whitelist is certified yet.
+
 ## Build
 
 Prepare the native sources using the [build guide](../docs/BUILD.md), then build the

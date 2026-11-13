@@ -1,0 +1,7 @@
+{
+  "schema": "ortts-asr-device-whitelist-v1",
+  "updated_at": "2026-11-13",
+  "approved": [],
+  "rejected": [],
+  "note": "No physical low-end target has been accepted. Do not infer support from RAM, ISA, simulator or desktop speed."
+}

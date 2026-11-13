@@ -1,0 +1,224 @@
+{
+  "schema": "ortts-asr-recipes-v1",
+  "updated_at": "2026-11-13",
+  "selection": {
+    "user_selects": "capability-profile-not-technical-executor",
+    "low_end_default": null,
+    "proposed_low_end_default": null,
+    "on_unverified_device": "no-automatic-model-download-or-English-fallback; report unverified",
+    "whitelist": "asr-device-whitelist.json"
+  },
+  "profiles": [
+    {
+      "id": "asr-lite-zh-en-v1",
+      "name": "轻量中英",
+      "role": "experimental-not-default",
+      "status": "rejected-quality-screen",
+      "default_enabled": false,
+      "family": "zipformer_bilingual",
+      "executor": {
+        "kind": "sherpa-onnx",
+        "version": "1.13.8",
+        "source_commit": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+        "header_sha256": "2a1b95084be8fd1deb3228fcad2fd3f7f0258b64582f7402281ec174c7b7f4ce",
+        "tensor_runtime": "onnxruntime",
+        "shares_ggml_tensor_backend": false,
+        "optional_build_flag": "ORTTS_ENABLE_SHERPA_ASR",
+        "onnxruntime_version": "1.28.2",
+        "source_commit_by_platform": {
+          "macos-arm64": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+          "ios-arm64": "793c2405ada0e9ee55a55037fa2d56111b8e7206"
+        }
+      },
+      "model": {
+        "repo": "csukuangfj/k2fsa-zipformer-bilingual-zh-en-t",
+        "revision": "e2382758de9a0219b4efe682b95af30b399db3b8",
+        "recipe": "chunk32-int8-encoder-fp32-decoder-int8-joiner",
+        "assets": [
+          {
+            "path": "exp/32/encoder-epoch-99-avg-1.int8.onnx",
+            "bytes": 42980793,
+            "sha256": "db6f51551762e40e549166fe041ea3e45464370b595e9ad23f06478ec3794fbb",
+            "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/exp/32/encoder-epoch-99-avg-1.int8.onnx"
+          },
+          {
+            "path": "exp/32/decoder-epoch-99-avg-1.onnx",
+            "bytes": 13877276,
+            "sha256": "89be509a83175261695bdef5fd1c7b9ab1129a663d1284e7ba9f8507b21e0906",
+            "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/exp/32/decoder-epoch-99-avg-1.onnx"
+          },
+          {
+            "path": "exp/32/joiner-epoch-99-avg-1.int8.onnx",
+            "bytes": 3228485,
+            "sha256": "bdda356d6f9b8c2d7cee9ee0e26075fa537490f7fd06520be408d287073667b9",
+            "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/exp/32/joiner-epoch-99-avg-1.int8.onnx"
+          },
+          {
+            "path": "data/lang_char_bpe/tokens.txt",
+            "bytes": 56317,
+            "sha256": "a8e0e4ec53810e433789b54a5c0134a7eaa2ffca595a6334d54c00da858841d3",
+            "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/data/lang_char_bpe/tokens.txt"
+          },
+          {
+            "path": "data/lang_char_bpe/bpe.model",
+            "bytes": 244836,
+            "sha256": "bcae393dbc5611be5ffa4c7ae0841558978a5a4f484008cb9dff3a2cc97ebe01",
+            "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/data/lang_char_bpe/bpe.model"
+          }
+        ],
+        "total_bytes": 60387707
+      },
+      "license": {
+        "code": "Apache-2.0",
+        "onnxruntime": "MIT",
+        "weights_declared": "Apache-2.0",
+        "model_card": {
+          "path": "README.md",
+          "bytes": 4115,
+          "sha256": "037edf8e561cff512493746532af04f5c40cb6fbc55d3e360a399215b6b0b915",
+          "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/README.md"
+        },
+        "checked_at": "2026-11-13",
+        "scope": "fixed checkpoint; model-card declaration, not training-data audit",
+        "training_data_public": false,
+        "redistribution_status": "retain-license-model-card-attribution-and-review-training-provenance",
+        "license_texts": [
+          {
+            "component": "sherpa-LICENSE",
+            "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "bytes": 11358
+          },
+          {
+            "component": "onnxruntime-LICENSE",
+            "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.28.2/LICENSE",
+            "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+            "bytes": 1073
+          }
+        ]
+      },
+      "capabilities": {
+        "declared_languages": [
+          "zh",
+          "en"
+        ],
+        "code_switching": true,
+        "code_switching_status": "upstream-example-and-local-smoke-not-corpus-accepted",
+        "input": {
+          "sample_rate": 16000,
+          "channels": 1,
+          "format": "f32"
+        },
+        "streaming": true,
+        "partial": "revisable",
+        "endpoints": [
+          "explicit-flush",
+          "segment-limit"
+        ],
+        "automatic_vad": false,
+        "punctuation": false,
+        "hotwords": false,
+        "timestamps_exposed": false,
+        "language_forcing": false,
+        "cancel": "sticky-between-decode-chunks-reset-required",
+        "cancel_during_model_load": false,
+        "max_input_frames_per_call": 32000,
+        "max_segment_ms": 15000,
+        "unobservable_cache_stats": "UINT64_MAX",
+        "unobservable_timings": "NaN for unobservable encoder/decoder milliseconds",
+        "output_language_tag": "und; no automatic language-ID claim"
+      },
+      "settings": {
+        "threads": 2,
+        "max_segment_ms": 15000,
+        "silence_ms": 0,
+        "decoder": "greedy_search"
+      },
+      "residency": {
+        "low_memory_policy": "exclusive-asr-or-tts; unload on task switch after worker joins",
+        "reuse_model_after_cancel": true
+      },
+      "physical_device_whitelist": [],
+      "identity_sha256": "3be7c3d185508af33d6429f6295a165ffbe6528018f614d494152fe9802ee700",
+      "quality_evidence": {
+        "report": "benchmarks/asr-lite-quality-screen-20261113.json",
+        "reason": "English WER and mixed MER/English WER exceed predeclared thresholds"
+      },
+      "platform_validation": {
+        "macos-arm64": "native-c-abi-smoke-and-cancel-recovery",
+        "android-arm64": "not-built-or-device-tested",
+        "ios-arm64": "native-c-abi-smoke-cancel-reset-three-process-runs; high-end-reference-only"
+      }
+    },
+    {
+      "id": "asr-multilingual-v1",
+      "name": "多语言",
+      "role": "preserved-expansion-profile",
+      "family": "sense_asr",
+      "source_catalog_id": "sensevoice-small-q8",
+      "default_enabled": false,
+      "assets": [
+        {
+          "repo": "FunAudioLLM/SenseVoiceSmall-GGUF-audiocpp",
+          "revision": "5c3fcfe748a8714216bc135476d5863084fddb72",
+          "path": "sensevoice-small-q8-audiocpp-v1.gguf",
+          "bytes": 254211200,
+          "sha256": "4dedf169f625437fb336f2959674f399819729a765e184128c0e25a6e16ff0ec",
+          "url": "https://huggingface.co/FunAudioLLM/SenseVoiceSmall-GGUF-audiocpp/resolve/5c3fcfe748a8714216bc135476d5863084fddb72/sensevoice-small-q8-audiocpp-v1.gguf",
+          "download_urls": [
+            "https://huggingface.co/FunAudioLLM/SenseVoiceSmall-GGUF-audiocpp/resolve/5c3fcfe748a8714216bc135476d5863084fddb72/sensevoice-small-q8-audiocpp-v1.gguf",
+            "https://hf-mirror.com/FunAudioLLM/SenseVoiceSmall-GGUF-audiocpp/resolve/5c3fcfe748a8714216bc135476d5863084fddb72/sensevoice-small-q8-audiocpp-v1.gguf"
+          ]
+        }
+      ],
+      "validated_languages": [
+        "zh",
+        "en"
+      ],
+      "license": {
+        "checked_at": "2026-11-07",
+        "weights_license": "FunASR Model Open Source License v1.1",
+        "source": "https://github.com/modelscope/FunASR/blob/main/MODEL_LICENSE",
+        "status": "custom_terms_review",
+        "distribution_cleared": false,
+        "notes": "Not the Apache-2.0 code license; preserve source, authors and model names; review custom terms."
+      },
+      "notes": "Original SDK/model route preserved; not low-end-device certification."
+    },
+    {
+      "id": "asr-english-v1",
+      "name": "英语轻量",
+      "role": "preserved-expansion-profile",
+      "family": "moonshine_asr",
+      "source_catalog_id": "moonshine-tiny-q8",
+      "default_enabled": false,
+      "assets": [
+        {
+          "repo": "audio-cpp/audio.cpp-gguf",
+          "revision": "57de533382ad47d5527e7562d1f80c41f769553b",
+          "path": "Moonshine-Streaming-GGUF/moonshine-streaming-tiny-q8_0.gguf",
+          "bytes": 60409088,
+          "sha256": "0f795f14924dbfe40d2ee0e220382c9b23cd9e89064c6ffb97e236d81f1d7020",
+          "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/Moonshine-Streaming-GGUF/moonshine-streaming-tiny-q8_0.gguf",
+          "download_urls": [
+            "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/Moonshine-Streaming-GGUF/moonshine-streaming-tiny-q8_0.gguf",
+            "https://hf-mirror.com/audio-cpp/audio.cpp-gguf/resolve/57de533382ad47d5527e7562d1f80c41f769553b/Moonshine-Streaming-GGUF/moonshine-streaming-tiny-q8_0.gguf",
+            "https://modelscope.cn/models/audio-cpp/audio.cpp-gguf/resolve/832872aa357b176f78451a388bfe6df91ec4909e/Moonshine-Streaming-GGUF/moonshine-streaming-tiny-q8_0.gguf"
+          ]
+        }
+      ],
+      "validated_languages": [
+        "en"
+      ],
+      "license": {
+        "checked_at": "2026-11-07",
+        "weights_license": "MIT",
+        "source": "https://huggingface.co/moonshine-ai/moonshine-streaming-tiny",
+        "status": "retain_model_notices",
+        "distribution_cleared": false,
+        "notes": "Model card declaration; retain MIT copyright/license in distributed model packages."
+      },
+      "notes": "Original SDK/model route preserved; not low-end-device certification."
+    }
+  ]
+}

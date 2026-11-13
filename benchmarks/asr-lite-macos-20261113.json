@@ -1,0 +1,251 @@
+{
+  "source_base_commit": "4c276b29c31c2d9d7cce09f134a63d6ad7ebc61d",
+  "runtime_sources_sha256": {
+    "CMakeLists.txt": "8b17a64631e66d03a55d4d402996d378c66d7974df97faf7ab56df48b3266feb",
+    "runtime/examples/stream.c": "0dfbd1cc635787cbff21881c0530de97858e4412fff189d53fb91d571ea2d86e",
+    "runtime/exports.android-app.map": "1ceaf733ef3a760d05bd64dc297e72a1827eecd521b344b9c3bea77ee2e9a2ec",
+    "runtime/exports.apple": "b622cca88928ae1721c403d792177b245367e06543709048fa8688c64867e4b2",
+    "runtime/exports.map": "1d061be08021ef6acbee56120cd8792e0f63c2dbaacaa0867094cf3a8cbbbb90",
+    "runtime/include/ortts_engine.h": "8bfadcd3d1ad11f5f5e3eea4e8e7553d289dbcfeb566d26eba084d7e78057854",
+    "runtime/include/ortts_speech.h": "efc8a3664f3c8cc2e7ecf35a0dddb447d3c5e1b6fe77610c9039e8b56d75d877",
+    "runtime/module.modulemap.in": "b036e14e400c88e988f7489ce1858e2c0e99b1173ad2d5defd99b9d109826263",
+    "runtime/rust/Cargo.toml": "bedefdb337fd3d09b7dde929ffedd791a7ccc28bc0746110f730e091d8b83947",
+    "runtime/rust/build.rs": "90597886477c311b047d2e2344f355acde97b6bb4d9b7b3b000b9e588e4329ee",
+    "runtime/rust/examples/asr_stream.rs": "2715e83cfa3999158042167b2acde6226bf835de955d386bd2f6beaf1dc7d0b7",
+    "runtime/rust/examples/cancellation.rs": "41ab058f9004f582dd82bf6f81f16296f8740a2eafca97d9283823d5db7e77be",
+    "runtime/rust/examples/speech.rs": "489d8df12d6c719f431904109e8b2c3607f3e77e5bf8910fa9ba0453c8e2547d",
+    "runtime/rust/examples/synthesize.rs": "66c7926330e5a844231b4d9cfb77a23a843b209d9707e91262e60306d72a9316",
+    "runtime/rust/examples/tts_cache.rs": "78e2960be026fd069d20c4c3fbf8e452556766fc62fe7315dc902da96609fb65",
+    "runtime/rust/src/cancellation.rs": "1a1d8d0e9e953e22aed539fb724b32a20eeeed8f92c3c652a85f4425c1e79cdc",
+    "runtime/rust/src/lib.rs": "ba61d38759b144aa2f2607b901bf3e4487f5548cb0572fab4ccc233c338782c8",
+    "runtime/rust/src/speech/cache.rs": "621546daaaf584556afd6378a13412fec9454ec0a072394f0e7a3989e48e930c",
+    "runtime/rust/src/speech/streaming.rs": "185482f0decae60598870a7f794c1a9bdd670348aead4cfde15b856121e92e06",
+    "runtime/rust/src/speech.rs": "987bc888980c56ae036adc0b00c9ed67540c604c72fa2865448617ad0934b86a",
+    "runtime/rust/tests/task_cancel.rs": "93fc483017d3831636ed6b2cad1ea2c03032c740285cf93afcd38e428063fa39",
+    "runtime/src/file_sha256.h": "b3e487fe7be03292841f227311e55d0f08e0fc0a1d5fd60850766677c035c8c0",
+    "runtime/src/inference_defaults.h": "d91a1a576343f0b061b4b3e248fa33351d18fb2baedd6006c224c28ed3f12d16",
+    "runtime/src/model_pack.h": "8d099172d1f03e3e8df9f17adcc8a4d6606f99bb349e081dad1e5b29f31827c1",
+    "runtime/src/ortts_engine.cpp": "8895262d0a09cde0645eb84445e20704078a0d4d78669aa7b7fe66c50210ffe2",
+    "runtime/src/ortts_speech.cpp": "8dd27b056e241a88d39cff56e4b5616dbbe11cffab1d6cbf527eb238677b1489",
+    "runtime/src/ptq_lazy_policy.h": "36510c9b980181c2450f8f09c8dd33b97d281cadbe193411b3565ed834545e46",
+    "runtime/src/runtime_internal.h": "060597cec0359d716c7121729cdfe7e103d6dc526b32da3ca48454923fc4a71a",
+    "runtime/src/zipformer_assets.h": "e3cc20b331cfd674000f02a97d5bcd9ac7648b29520d408cb72e2e0f06cc1973",
+    "runtime/src/zipformer_stream.h": "913ebb067fa7acfac12784af0e428adf7e995c96f1451bb46a4463bad2006daa",
+    "tools/build_engine.py": "ab8d1651f7d6a5a7ea6f06f82f5552631993d79bd9b4ddd75ef82621a1c023a7"
+  },
+  "source_state": "uncommitted-ASR-prototype-on-base-commit",
+  "schema": "ortts-asr-desktop-smoke-v1",
+  "date": "2026-11-13",
+  "scope": "macos-accelerated-functional-and-recovery-only",
+  "physical_low_end_certified": false,
+  "quality_scored": false,
+  "host": {
+    "os": "Darwin",
+    "arch": "arm64",
+    "os_version": "27.2",
+    "cpu": "Apple M5",
+    "ram_bytes": 25769803776,
+    "hardware": "Mac17,3"
+  },
+  "runtime_sha256": "62542c0d7c26e1720e26821646ae3df60c56be4c8ac62a64bb5fd5f1380e758b",
+  "model_identity": "3be7c3d185508af33d6429f6295a165ffbe6528018f614d494152fe9802ee700",
+  "test_source_sha256": "bd3363bbf03bbd2bc045494b20c21b69dbceb40cb0902fae39e44b0ee56afc05",
+  "model_assets": [
+    {
+      "path": "exp/32/encoder-epoch-99-avg-1.int8.onnx",
+      "sha256": "db6f51551762e40e549166fe041ea3e45464370b595e9ad23f06478ec3794fbb"
+    },
+    {
+      "path": "exp/32/decoder-epoch-99-avg-1.onnx",
+      "sha256": "89be509a83175261695bdef5fd1c7b9ab1129a663d1284e7ba9f8507b21e0906"
+    },
+    {
+      "path": "exp/32/joiner-epoch-99-avg-1.int8.onnx",
+      "sha256": "bdda356d6f9b8c2d7cee9ee0e26075fa537490f7fd06520be408d287073667b9"
+    },
+    {
+      "path": "data/lang_char_bpe/tokens.txt",
+      "sha256": "a8e0e4ec53810e433789b54a5c0134a7eaa2ffca595a6334d54c00da858841d3"
+    },
+    {
+      "path": "data/lang_char_bpe/bpe.model",
+      "sha256": "bcae393dbc5611be5ffa4c7ae0841558978a5a4f484008cb9dff3a2cc97ebe01"
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "libonnxruntime.dylib",
+      "bytes": 29006384,
+      "sha256": "b0613d0ae53199a83b05fa48e169211498e9d40d54beaa372068ebe5ec5b0929"
+    },
+    {
+      "name": "libortts.dylib",
+      "bytes": 9342400,
+      "sha256": "62542c0d7c26e1720e26821646ae3df60c56be4c8ac62a64bb5fd5f1380e758b"
+    },
+    {
+      "name": "libsherpa-onnx-c-api.dylib",
+      "bytes": 4178984,
+      "sha256": "579e3d8765b27eea31a6bf55018a7735e32f1f69734b35bf239c8cd332ae59ed"
+    }
+  ],
+  "cold_load_scope": "new-process-with-possibly-warm-OS-file-cache; includes asset hashes and recognizer load",
+  "trials": [
+    {
+      "fixture": "test_wavs/0.wav",
+      "input_sha256": "7d93384ca14702cc584a7a33fe2fed92e89e708549161cb12ea38c916882103b",
+      "repeat": 0,
+      "hypothesis": "昨天是 MONDAY TODAY IS THEY AFTER TOMORROW是星期三",
+      "reference": null,
+      "human_reference_verified": false,
+      "ok": true,
+      "cold_load_ms": 931.687,
+      "first_api_ms": 319.121,
+      "audio_s": 10.0531,
+      "first_rtf": 0.0317435,
+      "warm_api_ms": 282.581,
+      "warm_rtf": 0.0281088,
+      "partials": 13,
+      "finals": 1,
+      "cross_thread_cancel_operation_ms": 9.10092,
+      "cancel_request_to_return_ms_upper_bound": 3.71813,
+      "peak_rss_mib": 175.890625
+    },
+    {
+      "fixture": "test_wavs/0.wav",
+      "input_sha256": "7d93384ca14702cc584a7a33fe2fed92e89e708549161cb12ea38c916882103b",
+      "repeat": 1,
+      "hypothesis": "昨天是 MONDAY TODAY IS THEY AFTER TOMORROW是星期三",
+      "reference": null,
+      "human_reference_verified": false,
+      "ok": true,
+      "cold_load_ms": 957.026,
+      "first_api_ms": 236.954,
+      "audio_s": 10.0531,
+      "first_rtf": 0.0235702,
+      "warm_api_ms": 217.425,
+      "warm_rtf": 0.0216276,
+      "partials": 13,
+      "finals": 1,
+      "cross_thread_cancel_operation_ms": 6.72725,
+      "cancel_request_to_return_ms_upper_bound": 1.02504,
+      "peak_rss_mib": 175.671875
+    },
+    {
+      "fixture": "test_wavs/0.wav",
+      "input_sha256": "7d93384ca14702cc584a7a33fe2fed92e89e708549161cb12ea38c916882103b",
+      "repeat": 2,
+      "hypothesis": "昨天是 MONDAY TODAY IS THEY AFTER TOMORROW是星期三",
+      "reference": null,
+      "human_reference_verified": false,
+      "ok": true,
+      "cold_load_ms": 904.887,
+      "first_api_ms": 217.301,
+      "audio_s": 10.0531,
+      "first_rtf": 0.0216153,
+      "warm_api_ms": 210.646,
+      "warm_rtf": 0.0209533,
+      "partials": 13,
+      "finals": 1,
+      "cross_thread_cancel_operation_ms": 6.44113,
+      "cancel_request_to_return_ms_upper_bound": 1.20362,
+      "peak_rss_mib": 174.515625
+    },
+    {
+      "fixture": "test_wavs/1.wav",
+      "input_sha256": "8bfb42c963e623ebab31b81ff4404867d07d3102507c87ac14577c4c61663b8c",
+      "repeat": 0,
+      "hypothesis": "这是第一种第二种叫呃与 ALWAYS什么意思啊",
+      "reference": null,
+      "human_reference_verified": false,
+      "ok": true,
+      "cold_load_ms": 923.408,
+      "first_api_ms": 115.076,
+      "audio_s": 5.1,
+      "first_rtf": 0.0225639,
+      "warm_api_ms": 114.361,
+      "warm_rtf": 0.0224238,
+      "partials": 9,
+      "finals": 1,
+      "cross_thread_cancel_operation_ms": 6.88842,
+      "cancel_request_to_return_ms_upper_bound": 0.907583,
+      "peak_rss_mib": 173.84375
+    },
+    {
+      "fixture": "test_wavs/2.wav",
+      "input_sha256": "20805bcc696b9b65f3357a2508a419d4f33b81006d47e1312e219b0fad934d1d",
+      "repeat": 0,
+      "hypothesis": "这是频繁的啊不认识记下来 FREQUENTLY平凡的",
+      "reference": null,
+      "human_reference_verified": false,
+      "ok": true,
+      "cold_load_ms": 909.074,
+      "first_api_ms": 120.645,
+      "audio_s": 4.69,
+      "first_rtf": 0.0257238,
+      "warm_api_ms": 105.798,
+      "warm_rtf": 0.0225583,
+      "partials": 10,
+      "finals": 1,
+      "cross_thread_cancel_operation_ms": 6.50754,
+      "cancel_request_to_return_ms_upper_bound": 0.222,
+      "peak_rss_mib": 173.5625
+    },
+    {
+      "fixture": "test_wavs/3.wav",
+      "input_sha256": "5851e31f3e8e5f741635da9466e19fccfbabd117ebcdc92db242c92483aee064",
+      "repeat": 0,
+      "hypothesis": "第一句是个什么时态加了 ES是一般现在时对后面它时态上",
+      "reference": null,
+      "human_reference_verified": false,
+      "ok": true,
+      "cold_load_ms": 908.847,
+      "first_api_ms": 253.352,
+      "audio_s": 8.83,
+      "first_rtf": 0.0286922,
+      "warm_api_ms": 265.667,
+      "warm_rtf": 0.0300869,
+      "partials": 13,
+      "finals": 1,
+      "cross_thread_cancel_operation_ms": 6.66279,
+      "cancel_request_to_return_ms_upper_bound": 0.356959,
+      "peak_rss_mib": 175.421875
+    },
+    {
+      "fixture": "test_wavs/4.wav",
+      "input_sha256": "e8b949e985e799ed1723943aa8ff2a782cd6ae841424f77f96799e42c28626cd",
+      "repeat": 0,
+      "hypothesis": "嗯 ON TIME比较准时 IN TIME是及时叫他总是准时教他的作业那用一般现在时是没有什么感情色彩的陈述一个事实下一句话为什么要用现在进行时它的意思并不 就说说他现在正在教他的",
+      "reference": null,
+      "human_reference_verified": false,
+      "ok": true,
+      "cold_load_ms": 937.08,
+      "first_api_ms": 421.278,
+      "audio_s": 17.64,
+      "first_rtf": 0.023882,
+      "warm_api_ms": 487.178,
+      "warm_rtf": 0.0276178,
+      "partials": 39,
+      "finals": 2,
+      "cross_thread_cancel_operation_ms": 8.89113,
+      "cancel_request_to_return_ms_upper_bound": 3.34354,
+      "peak_rss_mib": 177.171875
+    }
+  ],
+  "summary": {
+    "process_cold_load_ms": [
+      931.687,
+      957.026,
+      904.887
+    ],
+    "warm_rtf_median": 0.0225583,
+    "peak_rss_mib_max": 177.171875
+  },
+  "limitations": [
+    "No A53/A55/old-iPhone physical evidence",
+    "No manually checked reference corpus; no accuracy claim",
+    "RSS of standalone macOS process is not Android PSS or iOS physical footprint",
+    "Accelerated input is not realtime microphone latency or thermal evidence",
+    "ORT compatibility is an additional tensor backend, not ggml unification"
+  ]
+}
