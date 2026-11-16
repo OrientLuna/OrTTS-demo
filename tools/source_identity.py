@@ -85,6 +85,12 @@ def identity(source,liquidcodec=False,speech=False):
    if item['base_sha256'] is not None and item['path'] in expected and expected[item['path']]!=item['base_sha256']:raise ValueError('Cancellation patch ordering mismatch: '+item['path'])
    expected[item['path']]=item['sha256']
   lock={**lock,'cancellation':cl}
+ eo=source/'ORTTS_EXPLICIT_OPTIONS_RECEIPT.json'
+ if eo.exists():
+  el=json.loads((ROOT/'vendor/explicit-options/lock.json').read_text())
+  if json.loads(eo.read_text())!=el or hashlib.sha256((ROOT/el['patch']).read_bytes()).hexdigest()!=el['patch_sha256']:raise ValueError('Explicit-options source receipt mismatch')
+  expected.update({x['path']:x['sha256'] for x in el['files']})
+  lock={**lock,'explicit_options':el}
  for rel,digest in expected.items():
   if hashlib.sha256((source/rel).read_bytes()).hexdigest()!=digest:raise ValueError('Prepared source modified: '+rel)
  return lock

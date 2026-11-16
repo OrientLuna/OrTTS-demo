@@ -47,6 +47,14 @@ typedef struct ortts_tts_request {
  * Never reenter/free any engine from callback. Return nonzero to cancel. */
 typedef int (*ortts_speech_pcm_callback)(void*,const float*,size_t,int32_t,int32_t);
 ORTTS_API uint32_t ortts_speech_abi_version(void); /* 0 when speech build disabled. */
+/* Additive capability. 1: Sherpa online ASR can execute concurrently with the
+ * ggml domain (own/other TTS, SenseVoice, Moonshine). Each domain remains
+ * serialized; concurrent same-domain calls return BUSY. 0: original global gate.
+ * Older libraries may omit this symbol; detect before calling dynamically.
+ * Create handles synchronously, retain both, then call each from its own worker.
+ * This is not permission to reenter callbacks or to free active handles, and
+ * does not provide OS background execution, audio routing, or echo cancellation. */
+ORTTS_API uint32_t ortts_parallel_inference_version(void);
 ORTTS_API const char *ortts_speech_catalog_json(void); /* Static; declarations, not device certification. */
 ORTTS_API ortts_status ortts_tts_create(const ortts_speech_config*,ortts_tts**);
 ORTTS_API ortts_status ortts_tts_synthesize(ortts_tts*,const ortts_tts_request*,ortts_speech_pcm_callback,void*,ortts_speech_audio**);
@@ -128,7 +136,8 @@ ORTTS_API void ortts_asr_stream_cancel(ortts_asr_stream*);
 ORTTS_API ortts_status ortts_asr_stream_get_stats(ortts_asr_stream*,ortts_asr_stream_stats*);
 ORTTS_API void ortts_asr_stream_free(ortts_asr_stream*);
 /* All errors use ortts_last_error(), borrowed thread-local. Same-process inference
- * including legacy OrTTS is serialized (BUSY). No internal download/cache/playback.
+ * is serialized within its executor domain (BUSY). Inspect parallel capability
+ * before using separate workers. No internal download/cache/playback.
  * Model handles own sessions; host owns eviction and must free them explicitly. */
 #ifdef __cplusplus
 }

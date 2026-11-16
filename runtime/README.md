@@ -41,8 +41,10 @@ Read `ortts_last_error()` on the calling thread when an operation fails.
 - Return nonzero from the callback to stop generation.
 - Cooperative builds support cancellable loading and synthesis with a fresh token per operation.
   Older libraries may only stop at boundaries or discard the result after compute returns.
-- Keep engines on a dedicated worker. Competing native operations return `ORTTS_BUSY`;
-  do not free an engine during a call or from its callback.
+- Keep engines on a dedicated worker. Competing native operations return `ORTTS_BUSY`
+  within an executor domain; speech builds with Sherpa online ASR can run that ASR
+  concurrently with ggml work (detect `ortts_parallel_inference_version()`).
+  Do not free an engine during a call or from its callback.
 
 For token ownership and older-library capability checks, see [maintainer notes](AGENT_README.md).
 

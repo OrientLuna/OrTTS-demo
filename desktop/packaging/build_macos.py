@@ -67,6 +67,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--engine-build", type=Path, default=ROOT / "build/pc-engine-macos")
     parser.add_argument("--dist-dir", type=Path, default=ROOT / "dist/macos-arm64")
+    parser.add_argument("--espeak-prefix", type=Path, default=Path("/opt/homebrew"))
     args = parser.parse_args()
     if sys.platform != "darwin" or platform.machine() != "arm64":
         raise SystemExit("This recipe must run on an Apple Silicon Mac")
@@ -77,16 +78,32 @@ def main():
     receipt = json.loads((engine_build / "ENGINE_BUILD_RECEIPT.json").read_text())
     if receipt["target"] != "macos-arm64" or receipt["cpu_profile"] != "arm64-baseline" or receipt["status"] not in ("BUILT_NOT_TARGET_TESTED", "TARGET_TESTED"):
         raise SystemExit("Build the macos-arm64 baseline runtime first")
+    native_libraries = [library]
+    if receipt.get("sherpa_asr"):
+        native_libraries += [library.parent / name for name in ("libsherpa-onnx-c-api.dylib", "libonnxruntime.dylib")]
+    allowed = {"@rpath/" + p.name for p in native_libraries}
     deps = subprocess.check_output(["otool", "-L", str(library)], text=True)
     for line in deps.splitlines()[1:]:
         path = line.strip().split(" (", 1)[0]
-        if not path.startswith(("/usr/lib/", "/System/Library/", "@rpath/libortts.dylib")):
+        if not path.startswith(("/usr/lib/", "/System/Library/")) and path not in allowed:
             raise SystemExit(f"Unbundled native dependency: {path}")
     license_dir, host_components = host_licenses()
+    espeak = args.espeak_prefix / "lib/libespeak-ng.dylib"
+    espeak_data = args.espeak_prefix / "share/espeak-ng-data"
+    if not espeak.is_file() or not espeak_data.is_dir():
+        raise SystemExit("Provide local eSpeak NG library/data using --espeak-prefix")
+    pcaudio = args.espeak_prefix / "opt/pcaudiolib/COPYING"
+    if pcaudio.exists():
+        shutil.copyfile(pcaudio, license_dir / "pcaudiolib-COPYING")
+    binary_args = []
+    for binary in [*native_libraries, espeak]:
+        binary_args += ["--add-binary", f"{binary}:native"]
     subprocess.run([sys.executable, "-m", "PyInstaller", "--noconfirm", "--onedir", "--windowed",
                     "--name", "OrTTS", "--osx-bundle-identifier", "com.orient.ortts.desktop",
                     "--target-architecture", "arm64", "--icon", str(ROOT / "assets/brand/ortts.icns"),
-                    "--paths", str(ROOT), "--add-binary", f"{library}:native",
+                    "--paths", str(ROOT), *binary_args,
+                    "--add-data", f"{ROOT / 'runtime/models'}:runtime/models",
+                    "--add-data", f"{espeak_data}:espeak-ng-data",
                     "--add-data", f"{ROOT / 'assets/brand/ortts-icon.png'}:assets/brand",
                     "--add-data", f"{ROOT / 'LICENSE'}:licenses",
                     "--add-data", f"{ROOT / 'NOTICE.md'}:licenses",

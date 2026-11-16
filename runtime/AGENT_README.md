@@ -47,7 +47,12 @@ callback; copy/enqueue and return promptly. `api_ms` includes callback time,
 `generation_ms` excludes it, and `first_pcm_ms` is not acoustic onset. Successful finite
 PCM does not prove EOS, pronunciation or subjective quality.
 
-The native execution gate rejects concurrent load/synthesis with `ORTTS_BUSY`.
+The native execution gate rejects concurrent load/synthesis within each executor
+domain with `ORTTS_BUSY`. Sherpa online ASR (`streaming_paraformer`,
+`zipformer_bilingual`) forms its own domain with its own ONNX Runtime sessions and
+can run concurrently with the ggml domain; probe
+`ortts_parallel_inference_version()` (1 = domain-parallel available). Model
+residency stays caller-owned, and this is not OS background execution.
 Calls temporarily alter process environment and restore it on return. Do not combine
 direct audio.cpp sessions or a second independently loaded runtime with these operations,
 reenter from callbacks, or free handles concurrently. This is not a multi-model server.

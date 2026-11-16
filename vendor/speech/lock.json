@@ -2,14 +2,19 @@
   "schema": 1,
   "files": [
     {
-      "path": "src/models/kokoro_tts/plbert.cpp",
-      "base_sha256": "eff7b3326896e366717bccf1150d5452632683d12dc9eb2a70e9a191fa0dc777",
-      "sha256": "50eb73ee91a7caecebe93689f4c4517231f3d82f18fed054e441ddc552ca7826"
+      "path": "include/engine/models/kokoro_tts/frontend.h",
+      "base_sha256": "cdda9ee6c09115af12c96b3ffa26632fdb0761fd29a55b8088e5900e71d9d7ea",
+      "sha256": "8fac6be2f88007a88bd612075e8b7477b3101cee8bb8f9a6bb51b4310ea46371"
     },
     {
-      "path": "src/community_models/sense_asr/session.cpp",
-      "base_sha256": "681a9815280d0e6d209ba6d243879912e6d4784348a090c7f4915119282969a8",
-      "sha256": "b7f2bd212035da6fdac48beee0701e6d9488fa70941c5aa8086f905efb73b07d"
+      "path": "include/engine/models/kokoro_tts/g2p_multilingual.h",
+      "base_sha256": "72a2d96821b0bd13007e2f384d3640032825ba14ef783f397d280fbafb9a2e59",
+      "sha256": "93128965153dba95347a4504ee0dc3af760de27309261c8783b3965603fc6a82"
+    },
+    {
+      "path": "include/engine/models/kokoro_tts/session.h",
+      "base_sha256": "29ffd3723aa4af3e1e328a092fdb303181ba03d91d1a4c670bb24fe646142eb2",
+      "sha256": "1192a1e20db251119a454943d0d158489999fa38ac8b3f0a7d182d0284f6afba"
     },
     {
       "path": "include/engine/models/moonshine_asr/runtime.h",
@@ -17,10 +22,35 @@
       "sha256": "f9d1f14133c00b33e49a1082b505d5f24b0d89c4de2f15560640e6439794a791"
     },
     {
+      "path": "src/community_models/sense_asr/session.cpp",
+      "base_sha256": "681a9815280d0e6d209ba6d243879912e6d4784348a090c7f4915119282969a8",
+      "sha256": "b7f2bd212035da6fdac48beee0701e6d9488fa70941c5aa8086f905efb73b07d"
+    },
+    {
+      "path": "src/models/kokoro_tts/frontend.cpp",
+      "base_sha256": "f87b9268ece889d34fa37129932d325c7bf65f01f3c48cec2dfa69dfb2b2b3cb",
+      "sha256": "7ca6bbc6264681e041757e4cc2fe7db8245a1f0adf3766c66ccd117730239864"
+    },
+    {
+      "path": "src/models/kokoro_tts/g2p_multilingual.cpp",
+      "base_sha256": "ea27a10898082fc51037c1a7559269b5b9112fbda2afd98c20f0c73c9a9834dc",
+      "sha256": "37b3e830351b2f51f8538f8db51b390d00510fcbc49723dbf4bcae072b6191ec"
+    },
+    {
+      "path": "src/models/kokoro_tts/plbert.cpp",
+      "base_sha256": "eff7b3326896e366717bccf1150d5452632683d12dc9eb2a70e9a191fa0dc777",
+      "sha256": "50eb73ee91a7caecebe93689f4c4517231f3d82f18fed054e441ddc552ca7826"
+    },
+    {
+      "path": "src/models/kokoro_tts/session.cpp",
+      "base_sha256": "af70928c4b7d845c9c3b441a8cf2048dad98cf86dd7a2694193d90f7a77260ea",
+      "sha256": "bfee2d5ea7a90640268b79c90b9ecb5435014052be213d5581ad031489f850c8"
+    },
+    {
       "path": "src/models/moonshine_asr/runtime.cpp",
       "base_sha256": "5916c7d6a939655a4c0bbac84cce4b13c016c8a5ad964d6529c7b1de488f5184",
       "sha256": "8410925092f361abb9ddc562f718659043ec2a688d8df679575c48d825bea3d3"
     }
   ],
-  "patch_sha256": "a4a520aa2ecdbaf2aec3ef9c0027a590c547cc643dd41e99eced43c5147e5c63"
+  "patch_sha256": "8725a22009944208a60170eb4da7ac4c9019fc8f9b2071c53bacbc6bfb7b7ac7"
 }

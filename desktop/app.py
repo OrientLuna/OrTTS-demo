@@ -63,15 +63,29 @@ class App:
         self.action = None
         self.cancelling = False
         self.download_parent = config.get("download_parent", "")
-        self.transfer = tk.StringVar(value="模型仅在你确认后下载；推理在本机完成。")
+        self.transfer = tk.StringVar(value="")
         self.model_status = tk.StringVar(value="尚未加载模型")
         family = configure(root)
-        root.title("OrTTS 语音合成")
+        root.title("OrTTS · 本地语音")
         root.geometry("1000x820")
         root.minsize(900, 760)
         root.protocol("WM_DELETE_WINDOW", self.close)
-        frame = ttk.Frame(root, padding=24)
-        frame.pack(fill="both", expand=True)
+        self.speech_panels = []
+        self.notebook = ttk.Notebook(root) if sys.platform == "darwin" else None
+        if self.notebook:
+            self.notebook.pack(fill="both", expand=True)
+        frame = ttk.Frame(self.notebook or root, padding=24)
+        if self.notebook:
+            self.notebook.add(frame, text="OrTTS 合成")
+            from desktop.speech_panel import SpeechPanel
+            for task, title in (("tts", "其他语音合成"), ("asr", "语音识别")):
+                panel = SpeechPanel(self.notebook, task, self.home, library)
+                self.speech_panels.append(panel)
+                self.notebook.add(panel, text=title)
+            self.active_tab = str(frame)
+            self.notebook.bind("<<NotebookTabChanged>>", self.change_page)
+        else:
+            frame.pack(fill="both", expand=True)
         frame.columnconfigure(0, weight=1)
         frame.rowconfigure(2, weight=1)
         header = ttk.Frame(frame)
@@ -82,7 +96,7 @@ class App:
         heading = ttk.Frame(header)
         heading.pack(side="left")
         ttk.Label(heading, text="OrTTS 语音合成", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(heading, text="本地 CPU 推理 · " + ("边合成边播放" if self.streaming else "合成后播放"), style="Muted.TLabel").pack(anchor="w", pady=(3, 0))
+        ttk.Label(heading, text="输入文字，合成语音。", style="Muted.TLabel").pack(anchor="w", pady=(3, 0))
         model = ttk.Frame(frame, padding=18, style="Card.TFrame")
         model.grid(row=1, column=0, sticky="ew", pady=(0, 14))
         model.columnconfigure(1, weight=1)
@@ -112,7 +126,6 @@ class App:
         self.channel_box.pack(side="left", padx=(0, 8))
         self.download_button = ttk.Button(downloads, text="下载 / 继续…", command=self.download)
         self.download_button.pack(side="left")
-        ttk.Label(downloads, text="固定版本 · SHA256 校验 · 可取消", style="CardMuted.TLabel").pack(side="left", padx=12)
         options = ttk.Frame(model, style="Card.TFrame")
         options.grid(row=4, column=0, columnspan=4, sticky="ew", pady=(14, 0))
         ttk.Label(options, text="推理版本", style="Card.TLabel").pack(side="left")
@@ -150,7 +163,7 @@ class App:
         self.text.insert("1.0", "你好，欢迎使用 OrTTS 本地语音合成。")
         self.text.bind("<<Modified>>", self.update_text_count)
         self.update_text_count()
-        ttk.Label(editor, text="支持中英文，建议先输入一至三句。音频完全在本机生成。", style="CardMuted.TLabel").grid(row=2, column=0, sticky="w", pady=(8, 0))
+        ttk.Label(editor, text="支持中文和英文", style="CardMuted.TLabel").grid(row=2, column=0, sticky="w", pady=(8, 0))
         buttons = ttk.Frame(frame)
         buttons.grid(row=3, column=0, sticky="ew", pady=14)
         self.synth_button = ttk.Button(buttons, text="合成语音", style="Primary.TButton", command=self.synthesize)
@@ -177,6 +190,18 @@ class App:
 
     def package_key(self):
         return next(k for k, v in PACKAGES.items() if v[0] == self.package.get())
+
+    def change_page(self, event=None):
+        selected = self.notebook.select()
+        if selected == self.active_tab:
+            return
+        if self.busy or any(panel.busy for panel in self.speech_panels):
+            self.notebook.select(self.active_tab)
+            return
+        self.player.stop()
+        for panel in self.speech_panels:
+            panel.player.stop()
+        self.active_tab = selected
 
     def resize(self, event):
         if event.widget is self.root:
@@ -344,6 +369,8 @@ class App:
         if self.closing:
             return
         self.closing = True
+        for panel in self.speech_panels:
+            panel.close()
         self.player.stop()
         self.status.set("正在安全退出，等待运行时释放…")
         self._buttons()
@@ -355,7 +382,7 @@ class App:
                 event, value = self.worker.events.get_nowait()
                 if event == "closed":
                     self.worker.thread.join()
-                    self.root.destroy()
+                    self.finish_close()
                     return
                 if self.closing:
                     continue
@@ -424,6 +451,12 @@ class App:
             self._buttons()
         self.root.after(80, self.poll)
 
+    def finish_close(self):
+        if any(panel.busy for panel in self.speech_panels):
+            self.root.after(80, self.finish_close)
+        else:
+            self.root.destroy()
+
 
 def main():
     parser = argparse.ArgumentParser(description="OrTTS 最小桌面 Demo")
@@ -431,9 +464,16 @@ def main():
     parser.add_argument("--state-dir", type=Path, help="独立测试用用户数据目录")
     parser.add_argument("--smoke", type=Path, metavar="MODEL", help="无窗口执行运行时验收并退出")
     parser.add_argument("--ui-smoke", type=Path, metavar="MODEL", help="真实窗口自动验收后退出")
+    parser.add_argument("--speech-ui-smoke", type=Path, metavar="ASSETS", help="第三方语音页面离线验收后退出")
+    parser.add_argument("--speech-extra-assets", type=Path, help="Paraformer 本地模型目录")
+    parser.add_argument("--speech-fixture", type=Path, help="语音识别验收音频")
     parser.add_argument("--package", choices=PACKAGES, default="Q4")
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
+    if args.speech_ui_smoke and (not args.speech_extra_assets or not args.speech_fixture):
+        parser.error("--speech-ui-smoke requires --speech-extra-assets and --speech-fixture")
+    if args.speech_ui_smoke and args.ui_smoke:
+        parser.error("Run the two GUI suites separately")
     if args.smoke:
         from desktop.smoke import run
         run(args)
@@ -443,6 +483,9 @@ def main():
     report = None
     if args.ui_smoke:
         from desktop.smoke import ui_run
+        report = ui_run(app, args)
+    elif args.speech_ui_smoke:
+        from desktop.speech_smoke import ui_run
         report = ui_run(app, args)
     root.mainloop()
     if report is not None and report["status"] != "passed":

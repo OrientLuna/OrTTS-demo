@@ -1,5 +1,24 @@
 # Apple Demo maintenance notes
 
+## Paraformer App integration (2026-11-16)
+
+- Apple builds with `SherpaOnnxC.framework` include an additional Paraformer model
+  catalog derived from the locked experimental model entry. Builds without that
+  dependency do not expose the entry. Android-only Qwen entries are not included.
+- `SpeechDemo` uses the existing model menu, asset SHA validation/download/import,
+  audio conversion, partial/final display and cancellation paths. Paraformer routes
+  to `ortts_asr_stream_*` with `silence_ms=0`, explicit finish and a 15-second segment
+  limit; Moonshine retains its default endpoint configuration.
+- App-level acceptance uses `tools/test_mobile_speech_demo.py --case paraformer-mixed`.
+  Seed the pinned model under `Documents/speech-models/paraformer-streaming-zh-en-int8`
+  and a 16 kHz fixture as `Documents/speech-test-mixed.wav`. The iPhone 17/iOS 27.0.1
+  App import/recognition path passed with nonempty final text. This is distinct from
+  the earlier isolated native lifecycle probes; it does not certify microphone capture,
+  CDN downloads, or recognition quality. English/mixed quality remains experimental.
+- Local App acceptance records: `local/app-paraformer-device-r2/`; build outputs:
+  `build/app-ios-arm64/` and `build/app-ios-simulator-arm64/`. Runtime source is
+  branch commit `444fd10`; App integration includes the subsequent working-tree edits.
+
 Keep [README.md](README.md) focused on installation and app operation. Model manifest
 rules, deployment evidence and test launch arguments belong here and in linked guides.
 
@@ -68,3 +87,20 @@ historical, not evidence that the current Q4 build has the same performance.
 Uncovered areas include all older iOS releases, every file-picker interaction, audio
 interruptions, long-text EOS/completeness and subjective listening quality. Do not
 expand a smoke success into blanket platform or quality certification.
+
+## TTS/ASR concurrency QA (2026-11-16 worktree)
+
+`tests/tts_asr_concurrency.cpp` + `ORTTS_INTERACTION_QA` adds `--tts-asr-concurrency`:
+it runs resident Q4 TTS and Paraformer ASR concurrently and writes
+`Documents/concurrency-result.json`. Requires seeded
+`Documents/concurrency-input.f32` (16kHz mono F32 fixture) and both model packages.
+Passed on iPhone 17 (`local/ios-concurrency/result.json`) and macOS
+(`local/concurrency-macos/result.json`): cross-domain inference returns OK during the
+other domain's callback, same-domain stays BUSY, outputs match sequential runs, and
+each domain cancels independently. `--speech-lifecycle-qa` records
+`interaction-*.json` phase files and auto-retries ASR after returning to the
+foreground; the background-cancel path itself is unverified on device.
+
+Parallelism is cross-executor-domain only (Sherpa online ASR vs ggml). Detect
+`ortts_parallel_inference_version()` before assuming it; the new symbol must stay in
+`runtime/exports.apple` or iOS device builds silently lose it.

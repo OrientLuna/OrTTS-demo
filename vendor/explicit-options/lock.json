@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "patch": "vendor/explicit-options/audio.patch",
+  "patch_sha256": "805a3de4bfe61343ea3cd26c610edb0b5cbc5bac792a1dd00b6ac8ffb1ede2db",
+  "files": [
+    {
+      "path": "include/engine/framework/modules/transformers/causal_decoder.h",
+      "base_sha256": "a81cfe3b91fb97d2717d2fed56fab1a8894c17df1d5b614ffecf82035dff35a3",
+      "sha256": "69771476d4cd0bcb0f7856455cccfadbac05bd283ad14cd6b5ed211c4a9293a8"
+    },
+    {
+      "path": "include/engine/framework/runtime/kv_cache.h",
+      "base_sha256": "056ffd4fb9abe5c02718580c35a671519e92e7635781963a27790478d80c683f",
+      "sha256": "04ee1298fe4fe8ff843af5b11302d298b11f96b4ec4a12f0945662bd89d9d7c9"
+    },
+    {
+      "path": "include/engine/models/qwen3_tts/assets.h",
+      "base_sha256": "aa3658975f615d378a1bc3da61a01803274f08b7d076c2826626a4c00fe5212d",
+      "sha256": "c0c05232e4d3441a9327c322952f1b86fac1659149609e8dcfb865c7958dcc8a"
+    },
+    {
+      "path": "include/engine/models/qwen3_tts/talker.h",
+      "base_sha256": "645672aa3c901e2a9839f2317f58bf00f979fdc35c86cdc9d2207f528d2f922a",
+      "sha256": "73c77d8167360856040ac4c2a83b51e53d12402e4e79a6e27e69c7ff66f39e0b"
+    },
+    {
+      "path": "src/framework/modules/transformers/causal_decoder.cpp",
+      "base_sha256": "a328a83ae753bd25c064bb1c9b94ae7bd750bd575140bdb487de26f5dfc41b2f",
+      "sha256": "de3228aa0010f896dbdacee4652d87b530c56cde75d43cd49af9c1b4795b7ca6"
+    },
+    {
+      "path": "src/framework/runtime/kv_cache.cpp",
+      "base_sha256": "713b08fcd1a012f796c97b2a68c7d22e03c1def41ec9706d5b4f9311c1efdebc",
+      "sha256": "42f3e677aca07abdfa8e542c4dc4551886c10f239df3bacac04be8fdd9570573"
+    },
+    {
+      "path": "src/models/qwen3_tts/assets.cpp",
+      "base_sha256": "2254d002e370e55f9c01765ac1408e55615d12916a832d6d38edf8ad938a4ca4",
+      "sha256": "e1aa0aa8cd3abf1706f90f944ee5a02d3b184556f0e7b40f1adf79eef8d15ace"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/binding_checks.h",
+      "base_sha256": "7ebe0769a16cdc0883ddb9bb36762c943e183af156296e31a5a8412e93f9c46f",
+      "sha256": "271a80428d5a047250f13f5e662fd06669d3e7da9100f7574d15e473c78dd16c"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/lc_client.h",
+      "base_sha256": "29276d081eff8ba375011a4aedd402dd2fd17391437b9d7284d8ce38a2d07a23",
+      "sha256": "6aa4e211fd1213fae81321d1b161e4242029ea70428b2a7726fabbc5023b38b6"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/liquidcodec_inprocess.cpp",
+      "base_sha256": "fffbbd97b58c7d1865f5083f50922d51e70405442e63d191d0f5ae5b64b56220",
+      "sha256": "a82351d9f763725050ed536db3ddc0c0041082695e562691df4bab2f817bf180"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/private_adapter.cpp",
+      "base_sha256": "86981608e059267dc2b5b7b2284cc3f25b1527c1abf19277c73736dec3846497",
+      "sha256": "0061acaeaa5335325ffdb46c222ca4cd5da41efc0c8f48aac99a20776bad40e0"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/private_adapter.h",
+      "base_sha256": "cc179e7ce4e234c629665ff7c83e8a69b1c169c20a75174f339aa6bc205bfc8d",
+      "sha256": "97ce151d92d204a374a60069eabf6173540feb19591e4c2862512aefa0895bc0"
+    },
+    {
+      "path": "src/models/qwen3_tts/ortts_joint/session_private.cpp",
+      "base_sha256": "3481f15f281ed0377858544a6c96b894e18687bbd9f615b07e58402a7b0a6869",
+      "sha256": "17ea5e6c85dcfe57e8e2ddc97ec2c650df1bf301ceaa57116bf2f8d14caa61e2"
+    },
+    {
+      "path": "src/models/qwen3_tts/talker.cpp",
+      "base_sha256": "054e4356b5817dd656c09459987ce8c6f746d9974d193652a650ee85ec02cf71",
+      "sha256": "a040f27d7ee0246e5c736b1066ed5e6f943a59c418a9a11bccd984f6b7d3b88d"
+    }
+  ]
+}

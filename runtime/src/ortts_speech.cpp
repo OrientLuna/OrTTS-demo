@@ -39,7 +39,15 @@ bool present(const char*s){return s&&*s;}
 void require(bool ok,const char*why){if(!ok)throw std::invalid_argument(why);}
 void check(audiocpp_status s){if(s!=AUDIOCPP_OK)throw std::runtime_error(audiocpp_last_error());}
 ortts_status failure(){try{throw;}catch(const std::invalid_argument&x){error=x.what();return ORTTS_INVALID;}catch(const std::exception&x){error=x.what();return ORTTS_RUNTIME_ERROR;}catch(...){error="Unknown speech runtime failure";return ORTTS_RUNTIME_ERROR;}}
-std::unique_lock<std::mutex> gate(){error.clear();return std::unique_lock<std::mutex>(execution_gate,std::try_to_lock);}
+// Sherpa online recognizers own their ONNX sessions and never call audiocpp,
+// ggml, or the eSpeak environment adapter. Keep that executor isolated while
+// preserving serialization WITHIN each domain (including create/free).
+std::mutex compatibility_execution_gate;
+std::unique_lock<std::mutex> gate(std::mutex&mutex=execution_gate){error.clear();return std::unique_lock<std::mutex>(mutex,std::try_to_lock);}
+bool compatibility_family(const ortts_speech_config*c){
+ return ORTTS_WITH_SHERPA_ASR&&c&&c->struct_size==sizeof(*c)&&c->family&&
+  (std::string(c->family)=="zipformer_bilingual"||std::string(c->family)=="streaming_paraformer");
+}
 ortts_status busy(){error="Another OrTTS operation is active";return ORTTS_BUSY;}
 struct Options {audiocpp_options*p=audiocpp_options_create();~Options(){audiocpp_options_free(p);} Options(){if(!p)throw std::bad_alloc();}};
 struct Request {audiocpp_request*p=audiocpp_request_create();~Request(){audiocpp_request_free(p);} Request(){if(!p)throw std::bad_alloc();}};
@@ -51,14 +59,8 @@ struct Handle {
  audiocpp_registry*registry=nullptr;audiocpp_model*model=nullptr;audiocpp_session*session=nullptr;
  std::vector<std::string> languages;
  bool streaming=false,use_vad=false;std::atomic<bool>running{false},cancelled{false};
+ std::mutex execution;
  ~Handle(){audiocpp_session_free(session);audiocpp_model_free(model);audiocpp_registry_free(registry);}
-};
-struct Env {
- struct Old{std::string key,value;bool exists;};std::vector<Old>old;
- void set(const char*k,const std::string&v){if(v.empty())return;const char*p=std::getenv(k);old.push_back({k,p?p:"",p!=nullptr});if(setenv(k,v.c_str(),1))throw std::runtime_error("Cannot set eSpeak environment");}
- explicit Env(const Handle&h){try{set("AUDIOCPP_ESPEAK_LIBRARY",h.library);set("AUDIOCPP_ESPEAK_DATA",h.data);}catch(...){restore();throw;}}
- void restore()noexcept{for(auto i=old.rbegin();i!=old.rend();++i){if(i->exists)setenv(i->key.c_str(),i->value.c_str(),1);else unsetenv(i->key.c_str());}old.clear();}
- ~Env(){restore();}
 };
 struct Running{Handle&h;explicit Running(Handle&v):h(v){h.cancelled=false;h.running=true;}~Running(){h.running=false;}};
 bool is_asr(const std::string&f){return f=="sense_asr"||f=="moonshine_asr";}
@@ -90,16 +92,15 @@ void init(Handle&h,const ortts_speech_config*c,bool asr){
  h.library=c->espeak_library?c->espeak_library:"";h.data=c->espeak_data?c->espeak_data:"";
  if(!h.library.empty())require(std::filesystem::path(h.library).is_absolute()&&std::filesystem::is_regular_file(h.library),"eSpeak library must be an existing absolute file");
  if(!h.data.empty())require(std::filesystem::path(h.data).is_absolute()&&std::filesystem::is_directory(h.data),"eSpeak data must be an existing absolute directory");
- Env env(h);check(audiocpp_registry_create(nullptr,&h.registry));audiocpp_model_config mc{c->family,nullptr,nullptr,nullptr};check(audiocpp_model_load(h.registry,c->model_path,&mc,nullptr,&h.model));
+ check(audiocpp_registry_create(nullptr,&h.registry));audiocpp_model_config mc{c->family,nullptr,nullptr,nullptr};check(audiocpp_model_load(h.registry,c->model_path,&mc,nullptr,&h.model));
  require(audiocpp_model_supports(h.model,h.task.c_str(),h.streaming?"streaming":"offline"),"Model does not support selected task/mode");
  for(size_t i=0;i<audiocpp_model_language_count(h.model);++i){const char*v=nullptr;check(audiocpp_model_language(h.model,i,&v));if(v)h.languages.emplace_back(v);}
  Options options;for(size_t i=0;i<c->session_option_count;++i){
   check(audiocpp_options_set(options.p,c->session_options[i].key,c->session_options[i].value));
   if(h.family=="sense_asr"&&std::string(c->session_options[i].key)=="sense_asr.vad_model_path")h.use_vad=true;
  }
- // Piper/Kitten construct their frontend from session options, bypassing the
- // environment fallback used by Kokoro. Typed paths must reach both routes.
- if(h.family=="piper_tts"||h.family=="kitten_tts"){
+ // Pass typed eSpeak paths via session options so no process-wide env mutation is needed.
+ if(h.family=="kokoro_tts"||h.family=="piper_tts"||h.family=="kitten_tts"){
   if(!h.library.empty())check(audiocpp_options_set(options.p,(h.family+".espeak_library_path").c_str(),h.library.c_str()));
   if(!h.data.empty())check(audiocpp_options_set(options.p,(h.family+".espeak_data_path").c_str(),h.data.c_str()));
  }
@@ -115,6 +116,9 @@ struct ortts_asr{Handle h;size_t limit=16000*60;std::vector<float>pending;
 struct ortts_speech_audio{std::vector<float>samples;int rate=0,channels=0;ortts_metrics metrics{};};
 struct ortts_transcript{std::string text,language;double api_ms=0;};
 struct ortts_asr_stream {
+ // Immutable after publication; caller must still join before free.
+ std::mutex own_execution;
+ std::mutex* execution=&own_execution;
  std::atomic<bool> cancelled{false};
  bool faulted=false;
 #if ORTTS_WITH_SHERPA_ASR
@@ -125,6 +129,7 @@ struct ortts_asr_stream {
 #endif
 };
 namespace {
+std::mutex&stream_gate(ortts_asr_stream*e){return e?*e->execution:execution_gate;}
 struct Capture{Handle&h;ortts_speech_pcm_callback cb;void*user;Clock::time_point start;ortts_metrics metrics{0,0,0,-1,0};size_t frames=0;int rate=0,channels=0;bool failed=false;};
 int capture(const audiocpp_event*event,void*user)noexcept{
  auto&c=*static_cast<Capture*>(user);if(c.h.cancelled)return 1;
@@ -133,7 +138,7 @@ int capture(const audiocpp_event*event,void*user)noexcept{
  }catch(...){c.failed=true;return 1;}
 }
 ortts_status recognize(ortts_asr&e,const float*p,size_t n,const char*lang,ortts_transcript**out){
- pcm(p,n,16000,1);require(n<=e.limit,"ASR input exceeds configured limit");Env env(e.h);Running running(e.h);auto start=Clock::now();Request q;check(audiocpp_request_set_audio(q.p,p,n,16000,1));language(e.h,q.p,lang);
+ pcm(p,n,16000,1);require(n<=e.limit,"ASR input exceeds configured limit");Running running(e.h);auto start=Clock::now();Request q;check(audiocpp_request_set_audio(q.p,p,n,16000,1));language(e.h,q.p,lang);
  // No implicit VAD file discovery. Host explicitly opts into verified Silero assets.
  // Exact digital silence is deterministic even when VAD is disabled (not a VAD).
  auto text=std::make_unique<ortts_transcript>();bool silent=std::all_of(p,p+n,[](float v){return v==0;});
@@ -147,7 +152,8 @@ ortts_status recognize(ortts_asr&e,const float*p,size_t n,const char*lang,ortts_
 }
 }
 extern "C" {
-uint32_t ortts_speech_abi_version(void){return ORTTS_WITH_SPEECH?ORTTS_SPEECH_ABI_VERSION:0;}
+ORTTS_API uint32_t ortts_speech_abi_version(void){return ORTTS_WITH_SPEECH?ORTTS_SPEECH_ABI_VERSION:0;}
+ORTTS_API uint32_t ortts_parallel_inference_version(void){return ORTTS_WITH_SPEECH&&ORTTS_WITH_SHERPA_ASR?1u:0u;}
 const char*ortts_speech_catalog_json(void){
 #if ORTTS_WITH_SPEECH
   std::string base=R"({"schema":1,"executor":"audio.cpp/ggml-cpu","shared_ggml":true,"tts":["kokoro_tts","piper_tts","kitten_tts","pocket_tts","zipvoice","moss_tts_nano"],"asr":["sense_asr","moonshine_asr"],"tts_stream_kind":{"kokoro_tts":"text-chunks","pocket_tts":"codec-chunks","zipvoice":"text-chunks","moss_tts_nano":"codec-chunks-stereo","piper_tts":"offline-only","kitten_tts":"offline-only"},"reference_required":["zipvoice","moss_tts_nano"],"output_channels":{"moss_tts_nano":2},"asr_input":"16000Hz-mono-f32","asr_stream":"bounded-buffer-final","partial":false,"automatic_endpoint":false,"incremental_asr":{"abi":1,"api":"ortts_asr_stream_*","families":["moonshine_asr"],"languages":["en"],"partial":"revisable","encoder":"bounded-overlap-f16","decoder":"hypothesis-redecode","endpoint":["explicit","energy-silence","segment-limit"],"max_segment_ms":30000,"cancellation":"ticks-encode-boundaries-decoder-tokens","per_layer_kv_cache":false},"cancellation":"callback-boundary-or-discard-after-compute","scheduler":"process-serialized-busy","excluded":["f5_tts","whisper","arbitrary-onnx"]})";
@@ -165,20 +171,25 @@ const char*ortts_speech_catalog_json(void){
   base.replace(base.find(disabled_paraformer),disabled_paraformer.size(),"\"streaming_paraformer\":{\"available\":true");
   const std::string compat_families="\"families\":[\"zipformer_bilingual\"]";
   base.replace(base.find(compat_families),compat_families.size(),"\"families\":[\"zipformer_bilingual\",\"streaming_paraformer\"]");
+  const std::string old_scheduler="\"scheduler\":\"process-serialized-busy\"";
+  base.replace(base.find(old_scheduler),old_scheduler.size(),"\"scheduler\":\"executor-domains-busy\"");
+  const std::string old_scheduling="one-active-inference; ORTTS_BUSY; caller-owned residency";
+  base.replace(base.find(old_scheduling),old_scheduling.size(),"one-active-per-executor-domain; cross-domain-parallel; caller-owned residency");
+  base.insert(base.size()-1,R"(,"parallel_inference":{"abi":1,"domains":[{"id":"ggml","members":["OrTTS","all-speech-tts","sense_asr","moonshine_asr","qwen3_asr"]},{"id":"sherpa-online","members":["streaming_paraformer","zipformer_bilingual"]}],"cross_domain":true,"same_domain":"ORTTS_BUSY","model_residency":"caller-owned-until-free","os_background_execution":false})");
 #endif
   static const std::string catalog=std::move(base);return catalog.c_str();
 #else
  return R"({"schema":1,"tts":[],"asr":[],"disabled":true})";
 #endif
 }
-ortts_status ortts_tts_create(const ortts_speech_config*c,ortts_tts**out){if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{require(out,"Missing TTS output pointer");auto e=std::make_unique<ortts_tts>();init(e->h,c,false);*out=e.release();return ORTTS_OK;}catch(...){return failure();}}
+ortts_status ortts_tts_create(const ortts_speech_config*c,ortts_tts**out){if(out)*out=nullptr;error.clear();try{require(out,"Missing TTS output pointer");auto e=std::make_unique<ortts_tts>();init(e->h,c,false);*out=e.release();return ORTTS_OK;}catch(...){return failure();}}
 ortts_status ortts_tts_synthesize(ortts_tts*e,const ortts_tts_request*r,ortts_speech_pcm_callback cb,void*user,ortts_speech_audio**out){
- if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{
- require(e&&r&&out&&r->struct_size==sizeof(*r)&&present(r->text)&&(r->seed_set==0||r->seed_set==1),"Invalid TTS request");require(!cb||e->h.streaming,"Callbacks require a streaming TTS handle");pairs(r->options,r->option_count);
+ if(out)*out=nullptr;if(!e){error="Invalid TTS handle";return ORTTS_INVALID;}auto lock=gate(e->h.execution);if(!lock.owns_lock())return busy();try{
+ require(r&&out&&r->struct_size==sizeof(*r)&&present(r->text)&&(r->seed_set==0||r->seed_set==1),"Invalid TTS request");require(!cb||e->h.streaming,"Callbacks require a streaming TTS handle");pairs(r->options,r->option_count);
   // MOSS Nano loader advertises only Auto; its pinned family spec explicitly
   // includes Chinese. Do not mistake Auto for an English-only package.
   if(contains_han(r->text)){bool chinese=e->h.family=="moss_tts_nano";for(const auto&v:e->h.languages)if(language_base(v)=="zh")chinese=true;require(chinese,"Han text is unsupported by this language package");}
- Env env(e->h);Running running(e->h);auto start=Clock::now();Request q;check(audiocpp_request_set_text(q.p,r->text,nullptr));language(e->h,q.p,r->language);if(present(r->voice_id)){require(e->h.family!="piper_tts"&&e->h.family!="zipvoice","This adapter has no named presets for this family");check(audiocpp_request_set_voice_id(q.p,r->voice_id));}if(r->seed_set)check(audiocpp_request_set_option(q.p,"seed",std::to_string(r->seed).c_str()));
+ Running running(e->h);auto start=Clock::now();Request q;check(audiocpp_request_set_text(q.p,r->text,nullptr));language(e->h,q.p,r->language);if(present(r->voice_id)){require(e->h.family!="piper_tts"&&e->h.family!="zipvoice","This adapter has no named presets for this family");check(audiocpp_request_set_voice_id(q.p,r->voice_id));}if(r->seed_set)check(audiocpp_request_set_option(q.p,"seed",std::to_string(r->seed).c_str()));
  for(size_t i=0;i<r->option_count;++i){std::string k=r->options[i].key;require(k!="language"&&k!="voice_id"&&k!="seed","Use typed language/voice/seed fields");check(audiocpp_request_set_option(q.p,k.c_str(),r->options[i].value));}
   if(e->h.family=="zipvoice"||e->h.family=="moss_tts_nano")require(r->reference_pcm&&r->reference_frames&&present(r->reference_text),"Clone family requires reference PCM and matching transcript");
  require(!present(r->reference_text)||r->reference_pcm,"Reference transcript without PCM");
@@ -203,14 +214,14 @@ ortts_status ortts_tts_synthesize(ortts_tts*e,const ortts_tts_request*r,ortts_sp
  }catch(...){auto status=failure();if(e){(void)audiocpp_stream_set_callback(e->h.session,nullptr,nullptr);(void)audiocpp_stream_reset(e->h.session);}return status;}
 }
 void ortts_tts_cancel(ortts_tts*e){if(e&&e->h.running)e->h.cancelled=true;}
-void ortts_tts_free(ortts_tts*e){if(e){std::lock_guard<std::mutex>l(execution_gate);delete e;}}
+void ortts_tts_free(ortts_tts*e){if(e){{std::lock_guard<std::mutex>l(e->h.execution);}delete e;}}
 const float*ortts_speech_audio_samples(const ortts_speech_audio*a){return a?a->samples.data():nullptr;}
 size_t ortts_speech_audio_frames(const ortts_speech_audio*a){return a?a->samples.size()/a->channels:0;}
 int32_t ortts_speech_audio_sample_rate(const ortts_speech_audio*a){return a?a->rate:0;}
 int32_t ortts_speech_audio_channels(const ortts_speech_audio*a){return a?a->channels:0;}
 ortts_status ortts_speech_audio_metrics(const ortts_speech_audio*a,ortts_metrics*out){if(!a||!out){error="Invalid speech audio/metrics";return ORTTS_INVALID;}*out=a->metrics;return ORTTS_OK;}
 void ortts_speech_audio_free(ortts_speech_audio*a){delete a;}
-ortts_status ortts_asr_create(const ortts_speech_config*c,ortts_asr**out){if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{require(out,"Missing ASR output pointer");auto e=std::make_unique<ortts_asr>();
+ortts_status ortts_asr_create(const ortts_speech_config*c,ortts_asr**out){if(out)*out=nullptr;error.clear();try{require(out,"Missing ASR output pointer");auto e=std::make_unique<ortts_asr>();
 #if ORTTS_WITH_QWEN_ASR
  if(c&&c->struct_size==sizeof(*c)&&present(c->family)&&std::string(c->family)=="qwen3_asr"){
   require(ORTTS_WITH_SPEECH&&present(c->model_path)&&c->threads==2&&!c->streaming&&!present(c->espeak_library)&&!present(c->espeak_data),"Qwen ASR requires offline CPU2, no eSpeak");
@@ -220,19 +231,19 @@ ortts_status ortts_asr_create(const ortts_speech_config*c,ortts_asr**out){if(out
  }else
 #endif
  init(e->h,c,true);if(c->max_input_frames)e->limit=c->max_input_frames;require(e->limit>0&&e->limit<=16000*120,"ASR limit must be at most 120s");*out=e.release();return ORTTS_OK;}catch(...){return failure();}}
-ortts_status ortts_asr_run(ortts_asr*e,const float*p,size_t n,const char*lang,ortts_transcript**out){if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{require(e&&out,"Invalid ASR handle/output");require(e->pending.empty(),"ASR buffered input pending; finish/reset first");return recognize(*e,p,n,lang,out);}catch(...){return failure();}}
-ortts_status ortts_asr_accept(ortts_asr*e,const float*p,size_t n){auto lock=gate();if(!lock.owns_lock())return busy();try{require(e,"Missing ASR handle");pcm(p,n,16000,1);require(n<=e->limit-e->pending.size(),"ASR buffer limit exceeded; reset or finish");e->pending.insert(e->pending.end(),p,p+n);return ORTTS_OK;}catch(...){return failure();}}
-ortts_status ortts_asr_finish(ortts_asr*e,const char*lang,ortts_transcript**out){if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{require(e&&out&&!e->pending.empty(),"No buffered ASR audio");auto input=std::move(e->pending);e->pending.clear();return recognize(*e,input.data(),input.size(),lang,out);}catch(...){return failure();}}
-ortts_status ortts_asr_reset(ortts_asr*e){auto lock=gate();if(!lock.owns_lock())return busy();if(!e){error="Missing ASR handle";return ORTTS_INVALID;}std::vector<float>().swap(e->pending);return ORTTS_OK;}
+ortts_status ortts_asr_run(ortts_asr*e,const float*p,size_t n,const char*lang,ortts_transcript**out){if(out)*out=nullptr;if(!e){error="Invalid ASR handle/output";return ORTTS_INVALID;}auto lock=gate(e->h.execution);if(!lock.owns_lock())return busy();try{require(out,"Invalid ASR handle/output");require(e->pending.empty(),"ASR buffered input pending; finish/reset first");return recognize(*e,p,n,lang,out);}catch(...){return failure();}}
+ortts_status ortts_asr_accept(ortts_asr*e,const float*p,size_t n){if(!e){error="Missing ASR handle";return ORTTS_INVALID;}auto lock=gate(e->h.execution);if(!lock.owns_lock())return busy();try{pcm(p,n,16000,1);require(n<=e->limit-e->pending.size(),"ASR buffer limit exceeded; reset or finish");e->pending.insert(e->pending.end(),p,p+n);return ORTTS_OK;}catch(...){return failure();}}
+ortts_status ortts_asr_finish(ortts_asr*e,const char*lang,ortts_transcript**out){if(out)*out=nullptr;if(!e){error="Invalid ASR handle";return ORTTS_INVALID;}auto lock=gate(e->h.execution);if(!lock.owns_lock())return busy();try{require(out&&!e->pending.empty(),"No buffered ASR audio");auto input=std::move(e->pending);e->pending.clear();return recognize(*e,input.data(),input.size(),lang,out);}catch(...){return failure();}}
+ortts_status ortts_asr_reset(ortts_asr*e){if(!e){error="Missing ASR handle";return ORTTS_INVALID;}auto lock=gate(e->h.execution);if(!lock.owns_lock())return busy();std::vector<float>().swap(e->pending);return ORTTS_OK;}
 void ortts_asr_cancel(ortts_asr*e){if(e&&e->h.running)e->h.cancelled=true;}
-void ortts_asr_free(ortts_asr*e){if(e){std::lock_guard<std::mutex>l(execution_gate);delete e;}}
+void ortts_asr_free(ortts_asr*e){if(e){{std::lock_guard<std::mutex>l(e->h.execution);}delete e;}}
 const char*ortts_transcript_text(const ortts_transcript*t){return t?t->text.c_str():nullptr;}
 const char*ortts_transcript_language(const ortts_transcript*t){return t?t->language.c_str():nullptr;}
 double ortts_transcript_api_ms(const ortts_transcript*t){return t?t->api_ms:0;}
 void ortts_transcript_free(ortts_transcript*t){delete t;}
 uint32_t ortts_asr_stream_abi_version(void){return ORTTS_WITH_SPEECH?ORTTS_ASR_STREAM_ABI_VERSION:0;}
 ortts_status ortts_asr_stream_create(const ortts_speech_config*c,const ortts_asr_stream_config*s,ortts_asr_stream**out){
- if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{
+ if(out)*out=nullptr;const bool compat=compatibility_family(c);std::unique_lock<std::mutex> lock;if(compat){lock=gate(compatibility_execution_gate);if(!lock.owns_lock())return busy();}else error.clear();try{
  require(ORTTS_WITH_SPEECH,"Speech feature disabled; rebuild with --speech");
   require(out&&c&&c->struct_size==sizeof(*c)&&present(c->family)&&(std::string(c->family)=="moonshine_asr"||(ORTTS_WITH_SHERPA_ASR&&(std::string(c->family)=="zipformer_bilingual"||std::string(c->family)=="streaming_paraformer")))&&present(c->model_path)&&c->threads>=1&&c->threads<=8&&c->streaming==1,"Incremental ASR family unavailable or invalid configuration");
  require(!c->session_option_count&&!present(c->espeak_library)&&!present(c->espeak_data)&&!c->max_input_frames,"Use typed incremental ASR settings, not offline/session options");
@@ -244,7 +255,7 @@ ortts_status ortts_asr_stream_create(const ortts_speech_config*c,const ortts_asr
  require(v.max_segment_ms>=1000&&v.max_segment_ms<=30000&&v.max_segment_ms%20==0&&v.max_segment_ms>=v.min_partial_ms,"Invalid segment limit");
  require(v.silence_ms==0||(v.silence_ms>=200&&v.silence_ms<=3000&&v.silence_ms%20==0),"Invalid silence endpoint duration");
  require(std::isfinite(v.energy_threshold)&&v.energy_threshold>0&&v.energy_threshold<1,"Invalid RMS energy threshold");
- auto e=std::make_unique<ortts_asr_stream>();
+ auto e=std::make_unique<ortts_asr_stream>();e->execution=compat?&compatibility_execution_gate:&e->own_execution;
 #if ORTTS_WITH_SHERPA_ASR
   if(std::string(c->family)=="zipformer_bilingual"||std::string(c->family)=="streaming_paraformer"){
   require(v.silence_ms==0,"Bilingual compatibility recipe currently supports explicit/limit endpoints only");
@@ -263,7 +274,7 @@ ortts_status ortts_asr_stream_create(const ortts_speech_config*c,const ortts_asr
 }
 namespace {
 ortts_status incremental_operation(ortts_asr_stream*e,const float*p,size_t n,bool finish,ortts_asr_stream_callback cb,void*user){
- auto lock=gate();if(!lock.owns_lock())return busy();bool started=false;
+ auto lock=gate(stream_gate(e));if(!lock.owns_lock())return busy();bool started=false;
  try{
  require(ORTTS_WITH_SPEECH&&e&&cb,"Invalid incremental ASR handle/callback");
  if(e->cancelled){error="ASR stream cancelled; reset before reuse";return ORTTS_CANCELLED;}
@@ -292,7 +303,7 @@ ortts_status incremental_operation(ortts_asr_stream*e,const float*p,size_t n,boo
 extern "C" {
 ortts_status ortts_asr_stream_accept(ortts_asr_stream*e,const float*p,size_t n,ortts_asr_stream_callback cb,void*u){return incremental_operation(e,p,n,false,cb,u);}
 ortts_status ortts_asr_stream_finish(ortts_asr_stream*e,ortts_asr_stream_callback cb,void*u){return incremental_operation(e,nullptr,0,true,cb,u);}
-ortts_status ortts_asr_stream_reset(ortts_asr_stream*e){auto lock=gate();if(!lock.owns_lock())return busy();try{require(ORTTS_WITH_SPEECH&&e,"Invalid incremental ASR handle");
+ortts_status ortts_asr_stream_reset(ortts_asr_stream*e){auto lock=gate(stream_gate(e));if(!lock.owns_lock())return busy();try{require(ORTTS_WITH_SPEECH&&e,"Invalid incremental ASR handle");
 #if ORTTS_WITH_SHERPA_ASR
  if(e->zipformer){e->zipformer->reset();e->faulted=false;e->cancelled=false;return ORTTS_OK;}
 #endif
@@ -301,7 +312,7 @@ ortts_status ortts_asr_stream_reset(ortts_asr_stream*e){auto lock=gate();if(!loc
 #endif
  return ORTTS_OK;}catch(...){return failure();}}
 void ortts_asr_stream_cancel(ortts_asr_stream*e){if(e)e->cancelled=true;}
-ortts_status ortts_asr_stream_get_stats(ortts_asr_stream*e,ortts_asr_stream_stats*out){auto lock=gate();if(!lock.owns_lock())return busy();try{require(ORTTS_WITH_SPEECH&&e&&out&&out->struct_size==sizeof(*out),"Invalid ASR stream stats");
+ortts_status ortts_asr_stream_get_stats(ortts_asr_stream*e,ortts_asr_stream_stats*out){auto lock=gate(stream_gate(e));if(!lock.owns_lock())return busy();try{require(ORTTS_WITH_SPEECH&&e&&out&&out->struct_size==sizeof(*out),"Invalid ASR stream stats");
 #if ORTTS_WITH_SHERPA_ASR
  if(e->zipformer){e->zipformer->stats(out);return ORTTS_OK;}
 #endif
@@ -309,5 +320,5 @@ ortts_status ortts_asr_stream_get_stats(ortts_asr_stream*e,ortts_asr_stream_stat
  auto s=e->native->stats();*out={sizeof(*out),s.received,s.processed,s.encoded,s.updates,s.buffered,s.cached_frames,s.segment_samples,s.peak_buffered,s.peak_cached_frames,s.encoder_ms,s.decoder_ms};
 #endif
  return ORTTS_OK;}catch(...){return failure();}}
-void ortts_asr_stream_free(ortts_asr_stream*e){if(e){std::lock_guard<std::mutex>l(execution_gate);delete e;}}
+void ortts_asr_stream_free(ortts_asr_stream*e){if(e){{std::lock_guard<std::mutex>l(stream_gate(e));}delete e;}}
 }

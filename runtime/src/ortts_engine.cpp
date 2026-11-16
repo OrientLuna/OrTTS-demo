@@ -49,25 +49,6 @@ double elapsed(Clock::time_point start) {
 void check(audiocpp_status s) {
  if(s!=AUDIOCPP_OK) throw std::runtime_error(audiocpp_last_error());
 }
-// The old runtime reads process environment. Serialize our instances and restore
-// caller state after every operation; unrelated direct audio.cpp users must not
-// run concurrently in this process until upstream uses per-session selectors.
-struct Environment {
- struct Entry { std::string key, value; bool existed; };
- std::vector<Entry> saved;
- void set(const std::string& key, const char* value) {
-  const char* old=std::getenv(key.c_str());
-  saved.push_back({key,old?old:"",old!=nullptr});
-  if((value ? setenv(key.c_str(),value,1) : unsetenv(key.c_str()))!=0)
-   throw std::runtime_error("Cannot set engine environment");
- }
- ~Environment() {
-  for(auto i=saved.rbegin();i!=saved.rend();++i) {
-   if(i->existed) setenv(i->key.c_str(),i->value.c_str(),1);
-   else unsetenv(i->key.c_str());
-  }
- }
-};
 std::string child(const std::string& root,const char* path) {
  return (std::filesystem::path(root)/path).string();
 }
@@ -97,22 +78,8 @@ struct ortts_engine {
  audiocpp_registry* registry=nullptr;
  audiocpp_model* model=nullptr;
  audiocpp_session* session=nullptr;
+ std::mutex execution;
  std::atomic<bool> running{false}, cancelled{false};
- void environment(Environment& e) const {
-  e.set("ORTTS_LAZY_IMPORT_SCRATCH",ptq.lazy?"1":nullptr);
-  const auto expected=std::to_string(ptq.type);
-  e.set("ORTTS_QA_EXPECT_TALKER_TYPE",ptq.present?expected.c_str():nullptr);
-  ortts::pack::environment(decoder,[&](const char*k,const char*v){e.set(k,v);});
-  for(auto key:{"ORTTS_GROUPED_PREDICTOR_GGUF","ORTTS_GROUPED_PREDICTOR_PACKED",
-      "ORTTS_P3_PREDICTOR_SOURCE","ORTTS_P3_NATIVE_SHA256","ORTTS_PRIVATE_NATIVE_BODY_Q4","ORTTS_PREDICTOR_CPU_REPACK",
-      "ORTTS_B0_STREAM_PREFIX_REFERENCE","ORTTS_B0_DISABLE_REPACK","ORTTS_EXPORT_GENERATED_CODES_DIR"}) e.set(key,nullptr);
-  if(variant=="P3") {auto path=child(root,"P3/predictor");e.set("ORTTS_P3_PREDICTOR_SOURCE",path.c_str());}
-  if(!predictor_sha.empty()) e.set("ORTTS_P3_NATIVE_SHA256",predictor_sha.c_str());
-  for(auto kv:ortts::inference::environment_defaults) e.set(kv.first,kv.second);
-  auto base=child(root,"native/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf");
-  e.set("ORTTS_PRIVATE_BASE_DETOK_GGUF",decoder.dequant_bundle.empty()?base.c_str():"");
-  e.set("ORTTS_PRIVATE_BRIDGE_MANIFEST_SHA256",(decoder.dequant_bundle.empty()?manifest:decoder.dequant_sha).c_str());
- }
  ~ortts_engine() {
   audiocpp_session_free(session);
   audiocpp_model_free(model);
@@ -179,12 +146,9 @@ ortts_status ortts_engine_create_cancellable(const ortts_config* cfg,ortts_cance
  if(!cfg||!out||cfg->struct_size!=sizeof(*cfg)||!cfg->asset_root||!cfg->variant||
     !cfg->bridge_manifest_sha256||cfg->threads<1||cfg->threads>8||
     (cfg->streaming!=0&&cfg->streaming!=1)) {error="Invalid engine configuration";return ORTTS_INVALID;}
- std::unique_lock<std::mutex> lock(execution_gate,std::try_to_lock);
- if(!lock.owns_lock()){error="Another engine operation is active";return ORTTS_BUSY;}
  try {
   CancelScope cancellation(token?&token->cancelled:nullptr);
   cancellation_checkpoint(token);
-  Environment env;
   auto e=std::make_unique<ortts_engine>();
   e->root=std::filesystem::absolute(cfg->asset_root).string();e->variant=cfg->variant;
   e->speaker=cfg->speaker_f32?cfg->speaker_f32:child(e->root,"voices/female.f32");
@@ -198,7 +162,6 @@ ortts_status ortts_engine_create_cancellable(const ortts_config* cfg,ortts_cance
   ortts::pack::validate_speaker(e->speaker,ortts::pack::speaker_dimension(e->root));
   e->predictor_sha=ortts::pack::native_predictor_hash(e->root,e->variant);
   e->ptq=ortts::ptq::policy(e->root,e->variant);
-  e->environment(env);
   cancellation_checkpoint(token);
   check(audiocpp_registry_create(nullptr,&e->registry));
   audiocpp_model_config model{"qwen3_tts",nullptr,nullptr,nullptr};
@@ -208,9 +171,25 @@ ortts_status ortts_engine_create_cancellable(const ortts_config* cfg,ortts_cance
   auto opt=[&](const char* k,const std::string& v){check(audiocpp_options_set(options.p,k,v.c_str()));};
   opt("qwen3_tts.fixed_speaker_f32",e->speaker);opt("qwen3_tts.lfm_b0_bundle",e->decoder.dequant_bundle.empty()?child(e->root,"native/bridge"):e->decoder.dequant_bundle);
   if(e->decoder.dequant_bundle.empty()){
-  opt("qwen3_tts.lfm_b0_detokenizer_gguf",child(e->root,"native/tokenizer-b260k-MIXED_Q4_0.gguf"));
-  opt("qwen3_tts.lfm_b0_vocoder_gguf",child(e->root,"native/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf"));
+   opt("qwen3_tts.lfm_b0_detokenizer_gguf",child(e->root,"native/tokenizer-b260k-MIXED_Q4_0.gguf"));
+   opt("qwen3_tts.lfm_b0_vocoder_gguf",child(e->root,"native/vocoder-LFM2.5-Audio-1.5B-Q4_0.gguf"));
+   opt("qwen3_tts.lfm_b0_base_detok_gguf",child(e->root,"native/tokenizer-LFM2.5-Audio-1.5B-Q4_0.gguf"));
+   opt("qwen3_tts.lfm_b0_bridge_manifest_sha256",e->manifest);
+  }else{
+   opt("qwen3_tts.lfm_b0_base_detok_gguf","");
+   opt("qwen3_tts.lfm_b0_bridge_manifest_sha256",e->decoder.dequant_sha);
   }
+  if(e->decoder.liquid()){
+   opt("qwen3_tts.lc_variant",e->decoder.variant=="base"?"base100k":"expanded120k");
+   opt("qwen3_tts.lc_assets",e->decoder.assets);
+  }
+  if(e->variant=="P3")opt("qwen3_tts.p3_predictor_source",child(e->root,"P3/predictor"));
+  if(!e->predictor_sha.empty())opt("qwen3_tts.p3_native_sha256",e->predictor_sha);
+  opt("qwen3_tts.native_predictor_packed","0");
+  opt("qwen3_tts.private_fast_backend","cpu");
+  opt("qwen3_tts.b0_disable_repack","0");
+  opt("qwen3_tts.lazy_import_scratch",e->ptq.lazy?"1":"0");
+  if(e->ptq.present)opt("qwen3_tts.qa_expect_talker_type",std::to_string(e->ptq.type));
   for(auto kv:ortts::inference::session_defaults)opt(kv.first,kv.second);
   audiocpp_backend_config backend{"cpu",0,e->threads};
   check(audiocpp_session_create(e->model,"tts",e->streaming?"streaming":"offline",&backend,options.p,&e->session));
@@ -231,11 +210,11 @@ ortts_status ortts_engine_synthesize_cancellable(ortts_engine* e,const ortts_req
   error="Invalid synthesis request";return ORTTS_INVALID;
  }
  if(!e->streaming&&sink){error="PCM callbacks require a streaming engine";return ORTTS_INVALID;}
- std::unique_lock<std::mutex> lock(execution_gate,std::try_to_lock);
+ std::unique_lock<std::mutex> lock(e->execution,std::try_to_lock);
  if(!lock.owns_lock()){error="Another engine operation is active";return ORTTS_BUSY;}
  const auto cancelled=[&] { return e->cancelled.load() || (token && token->cancelled.load()); };
  try {
-  Environment env;e->environment(env);Running running(*e);
+  Running running(*e);
   CancelScope cancellation(&e->cancelled,token?&token->cancelled:nullptr);
   cancellation_checkpoint(token);
   RequestOwner q;if(!q.p)throw std::runtime_error("Request allocation failed");
@@ -281,7 +260,7 @@ ortts_status ortts_engine_synthesize_cancellable(ortts_engine* e,const ortts_req
  return ORTTS_RUNTIME_ERROR;
 }
 void ortts_engine_cancel(ortts_engine* e){if(e&&e->running.load())e->cancelled=true;}
-void ortts_engine_free(ortts_engine* e){if(!e)return;std::lock_guard<std::mutex> lock(execution_gate);delete e;}
+void ortts_engine_free(ortts_engine* e){if(!e)return;{std::lock_guard<std::mutex> lock(e->execution);}delete e;}
 const float* ortts_audio_samples(const ortts_audio* a){return a?a->samples.data():nullptr;}
 size_t ortts_audio_sample_count(const ortts_audio* a){return a?a->samples.size():0;}
 int32_t ortts_audio_sample_rate(const ortts_audio* a){return a?24000:0;}

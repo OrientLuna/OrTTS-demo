@@ -131,7 +131,13 @@ for event in asr.finish()? { /* flush最后一段 */ }
 
 ### 调度、缓存与内存
 
-新旧接口共用进程级try-lock，活跃操作返回BUSY；这是保留旧环境配置依赖的限制，不是已实现并行推理。不要在回调里创建其他引擎或由另一份直接audio.cpp绕过调度。需要全双工低延迟ASR时，宿主现有Sherpa路线应继续保留，不能因统一接口就删除它。
+新旧接口默认进程级try-lock，活跃操作返回BUSY；这是保留旧环境配置依赖的限制。Sherpa在线ASR
+（`streaming_paraformer`/`zipformer_bilingual`）拥有独立ONNX会话，不触碰audio.cpp全局环境或
+audio.cpp/ggml调度，可与ggml域并行执行：每个执行域内仍串行（BUSY），跨域可同进程同时推理。
+探测`ortts_parallel_inference_version()`：1=分域并行可用（需Sherpa构建），0=单全局门。并行只
+是计算层面；模型驻留由宿主显式持有，OS后台执行、音频路由和回声消除不在运行时内。不要在回调
+里创建其他引擎，也不要用另一份直接audio.cpp绕过调度。需要全双工低延迟ASR时，宿主现有Sherpa
+路线应继续保留，不能因统一接口就删除它。
 
 运行时不做无限引擎池、模型下载或自动保活。宿主以模型资产SHA、family、profile和session选项作为缓存键；同一模型换音色用请求字段，避免每音色重复持有权重。设置小型缓存/逐出策略，移动端优先只保留当前模型。Kokoro本轮仍接近GiB级RSS，省内存补丁不等于手机认证。
 

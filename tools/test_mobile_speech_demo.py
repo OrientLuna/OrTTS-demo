@@ -90,6 +90,8 @@ def main():
            ('sensevoice-zh','asr','sensevoice-small-q8','','speech-test-zh.wav',0),
            ('roundtrip','last','moonshine-tiny-q8','','',0),
            ('download-check','download','pocket-english-q8','','',0)]
+    if a.case and 'paraformer-mixed' in a.case:
+        cases.append(('paraformer-mixed','asr','paraformer-streaming-zh-en-int8','','speech-test-mixed.wav',0))
     if a.case:
         unknown=set(a.case)-{case[0] for case in cases}
         if unknown:p.error('Unknown case(s): '+', '.join(sorted(unknown)))
@@ -147,6 +149,7 @@ def main():
             if any(expected is not None and bool(run.get('engine_reused'))!=expected for run,expected in zip(runs,expected_reuse)):raise RuntimeError('Unexpected cache lifecycle: '+json.dumps(runs,ensure_ascii=False))
             if a.scenario=='cancel' and [bool(r.get('ok')) for r in runs]!=[True,False,True]:raise RuntimeError('Cancel/reset/reload failed')
         text=record.get('text','')
+        if name=='paraformer-mixed' and not text.strip():raise RuntimeError('Paraformer returned no final text')
         if (name=='moonshine-en' or (name=='roundtrip' and any(o['case']=='pocket-anna' for o in observations))) and 'station' not in text.lower():raise RuntimeError('English content missing: '+text)
         if name=='sensevoice-zh' and not ('车票' in text or '車票' in text):raise RuntimeError('Chinese content missing: '+text)
         if mode=='tts' and expected:

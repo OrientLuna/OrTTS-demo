@@ -19,8 +19,8 @@ iOS 提供 UIKit App，支持本地语音合成、流式播放和多模型 TTS /
 
 底部另外两个页面提供：
 
-- **第三方语音模型**：Kokoro、Kitten、Piper、PocketTTS。
-- **语音识别**：SenseVoice、Moonshine，支持录音、音频文件及识别上次合成结果。
+- **其他语音合成**：Kokoro、Kitten、Piper、PocketTTS，输入文字后合成播放。
+- **语音识别**：SenseVoice、Moonshine，以及启用 Sherpa 时的 Paraformer 实验档；支持录音、音频文件及识别上次合成结果。
 
 更多操作见[多模型 Demo](../docs/MOBILE_SPEECH_DEMO.md)。
 

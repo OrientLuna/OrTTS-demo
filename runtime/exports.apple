@@ -16,6 +16,7 @@ _ortts_audio_sample_rate
 _ortts_audio_metrics
 _ortts_audio_free
 _ortts_speech_abi_version
+_ortts_parallel_inference_version
 _ortts_speech_catalog_json
 _ortts_tts_create
 _ortts_tts_synthesize

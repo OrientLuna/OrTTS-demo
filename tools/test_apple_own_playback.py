@@ -9,11 +9,12 @@ from pathlib import Path
 
 def main():
  p=argparse.ArgumentParser(description=__doc__)
- p.add_argument('--target',choices=['iphone','simulator'],required=True);p.add_argument('--device',required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--pack',choices=['liquid','legacy'],default='liquid');p.add_argument('--variant',choices=['P3','P5'],default='P3');p.add_argument('--voice',choices=['female','male'],default='female');p.add_argument('--text',default='你好，欢迎使用本地语音合成。');a=p.parse_args();a.out.mkdir(parents=True,exist_ok=True)
+ p.add_argument('--target',choices=['iphone','simulator'],required=True);p.add_argument('--device',required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--pack',choices=['liquid','legacy','ptq'],default='liquid');p.add_argument('--variant',choices=['P3','P5'],default='P3');p.add_argument('--voice',choices=['female','male'],default='female');p.add_argument('--text',default='你好，欢迎使用本地语音合成。');a=p.parse_args();a.out.mkdir(parents=True,exist_ok=True)
  bundle='com.orient.ortts.prototype'
  cmd=['xcrun','devicectl','device','process','launch','--device',a.device,'--terminate-existing','--console',bundle,'--'] if a.target=='iphone' else ['xcrun','simctl','launch','--console','--terminate-running-process',a.device,bundle]
  cmd+=['--synthesis-smoke','--benchmark-text',a.text]
  if a.pack=='legacy':cmd+=['--benchmark-legacy']
+ if a.pack=='ptq':cmd+=['--benchmark-ptq']
  if a.variant=='P5':cmd+=['--benchmark-p5']
  if a.voice=='male':cmd+=['--benchmark-male']
  proc=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT);selector=selectors.DefaultSelector();selector.register(proc.stdout,selectors.EVENT_READ);data=b'';start=time.monotonic();complete=False;drained=False;error=''
