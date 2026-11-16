@@ -71,37 +71,73 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
     self.stop.enabled=working || self.player.isPlaying || self.stream.active;
     if(!working&&self.pendingCatalog){NSArray*pending=self.pendingCatalog;self.pendingCatalog=nil;[self applyOwnCatalog:pending];}
 }
+static UIView *OrTTSDemoCard(NSArray<UIView *> *views) {
+    UIView *card=[UIView new];
+    card.backgroundColor=UIColor.secondarySystemGroupedBackgroundColor;
+    card.layer.cornerRadius=16;
+    UIStackView *inner=[[UIStackView alloc] initWithArrangedSubviews:views];
+    inner.axis=UILayoutConstraintAxisVertical;
+    inner.spacing=10;
+    inner.translatesAutoresizingMaskIntoConstraints=NO;
+    [card addSubview:inner];
+    [NSLayoutConstraint activateConstraints:@[
+        [inner.topAnchor constraintEqualToAnchor:card.topAnchor constant:16],
+        [inner.bottomAnchor constraintEqualToAnchor:card.bottomAnchor constant:-16],
+        [inner.leadingAnchor constraintEqualToAnchor:card.leadingAnchor constant:16],
+        [inner.trailingAnchor constraintEqualToAnchor:card.trailingAnchor constant:-16],
+    ]];
+    return card;
+}
+static void OrTTSStyleSecondaryButton(UIButton *b, UIColor *tint) {
+    UIButtonConfiguration *cfg=UIButtonConfiguration.tintedButtonConfiguration;
+    cfg.cornerStyle=UIButtonConfigurationCornerStyleMedium;
+    cfg.baseForegroundColor=tint ?: UIColor.systemBlueColor;
+    cfg.baseBackgroundColor=tint ?: UIColor.systemBlueColor;
+    b.configuration=cfg;
+}
 - (UIButton *)button:(NSString *)title action:(SEL)action {
     UIButton *b=[UIButton buttonWithType:UIButtonTypeSystem]; [b setTitle:title forState:UIControlStateNormal];
+    OrTTSStyleSecondaryButton(b, nil);
     [b addTarget:self action:action forControlEvents:UIControlEventTouchUpInside]; [b.heightAnchor constraintGreaterThanOrEqualToConstant:44].active=YES; return b;
 }
 - (void)viewDidLoad {
     [super viewDidLoad]; _lock=[NSLock new]; self.view.backgroundColor=UIColor.systemGroupedBackgroundColor;
     UIScrollView *scroll=[UIScrollView new]; scroll.translatesAutoresizingMaskIntoConstraints=NO; scroll.keyboardDismissMode=UIScrollViewKeyboardDismissModeInteractive; [self.view addSubview:scroll];
     UITapGestureRecognizer *dismiss=[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)]; dismiss.cancelsTouchesInView=NO; dismiss.delegate=self; [self.view addGestureRecognizer:dismiss];
-    UIStackView *stack=[UIStackView new]; stack.axis=UILayoutConstraintAxisVertical; stack.spacing=16; stack.translatesAutoresizingMaskIntoConstraints=NO; [scroll addSubview:stack];
-    [NSLayoutConstraint activateConstraints:@[[scroll.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor], [scroll.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor], [scroll.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor], [scroll.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor], [stack.topAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.topAnchor constant:24], [stack.bottomAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.bottomAnchor constant:-24], [stack.leadingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.leadingAnchor constant:20], [stack.trailingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.trailingAnchor constant:-20], [stack.widthAnchor constraintEqualToAnchor:scroll.frameLayoutGuide.widthAnchor constant:-40]]];
-    UILabel *title=[UILabel new]; title.text=@"OrTTS"; title.font=[UIFont preferredFontForTextStyle:UIFontTextStyleLargeTitle]; [stack addArrangedSubview:title];
-    UILabel *subtitle=[UILabel new]; subtitle.text=@"选择模型和声音，即可离线朗读"; subtitle.textColor=UIColor.secondaryLabelColor; [stack addArrangedSubview:subtitle];
+    UIStackView *stack=[UIStackView new]; stack.axis=UILayoutConstraintAxisVertical; stack.spacing=14; stack.translatesAutoresizingMaskIntoConstraints=NO; [scroll addSubview:stack];
+    [NSLayoutConstraint activateConstraints:@[[scroll.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor], [scroll.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor], [scroll.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor], [scroll.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor], [stack.topAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.topAnchor constant:18], [stack.bottomAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.bottomAnchor constant:-24], [stack.leadingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.leadingAnchor constant:16], [stack.trailingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.trailingAnchor constant:-16], [stack.widthAnchor constraintEqualToAnchor:scroll.frameLayoutGuide.widthAnchor constant:-32]]];
+    UILabel *title=[UILabel new]; title.text=@"OrTTS"; title.font=[UIFont systemFontOfSize:30 weight:UIFontWeightBold];
+    UILabel *subtitle=[UILabel new]; subtitle.text=@"选择模型和声音，即可离线朗读"; subtitle.textColor=UIColor.secondaryLabelColor; subtitle.font=[UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
+    UIStackView *header=[[UIStackView alloc] initWithArrangedSubviews:@[title,subtitle]]; header.axis=UILayoutConstraintAxisVertical; header.spacing=4; [stack addArrangedSubview:header];
     self.ownCatalog=OrTTSMergeOwnCatalogs(@[OrTTSBuiltInOwnModels(),OrTTSLoadOwnCatalog([self catalogURL])]);self.ownModel=OrTTSOwnPackageInfo(OrTTSOwnPackagePTQ);
-    self.packageButton=[UIButton buttonWithType:UIButtonTypeSystem];self.packageButton.showsMenuAsPrimaryAction=YES;[stack addArrangedSubview:self.packageButton];
-    self.refreshCatalogButton=[self button:@"更新可下载模型" action:@selector(refreshOwnCatalog)];[stack addArrangedSubview:self.refreshCatalogButton];
-    [stack addArrangedSubview:[self button:@"查看版本详情" action:@selector(showModelDetails)]];
-    self.variant=[[UISegmentedControl alloc] initWithItems:@[@"轻量版",@"标准版"]]; self.variant.selectedSegmentIndex=0; [stack addArrangedSubview:self.variant];UILabel*modeHint=[UILabel new];modeHint.text=@"轻量版 P3：加装小预测器；标准版 P5：原生预测器。主模型共用。";modeHint.numberOfLines=0;modeHint.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];[stack addArrangedSubview:modeHint];
-    self.voice=[[UISegmentedControl alloc] initWithItems:@[@"女声",@"男声"]]; self.voice.selectedSegmentIndex=0; [stack addArrangedSubview:self.voice];
-    self.channelButton=OrTTSDownloadChannelButton(self);[stack addArrangedSubview:self.channelButton];
-    self.download=[self button:@"下载 / 检查所选模型" action:@selector(downloadModel)]; [stack addArrangedSubview:self.download];
-    self.importButton=[self button:@"导入本地模型文件夹" action:@selector(importModel)]; [stack addArrangedSubview:self.importButton];
-    self.progress=[UIProgressView new]; [stack addArrangedSubview:self.progress];
-    self.text=[UITextView new]; self.text.text=@"你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。"; self.text.font=[UIFont preferredFontForTextStyle:UIFontTextStyleBody]; self.text.layer.cornerRadius=12;
+    self.packageButton=[UIButton buttonWithType:UIButtonTypeSystem];self.packageButton.showsMenuAsPrimaryAction=YES;OrTTSStyleSecondaryButton(self.packageButton,nil);[self.packageButton.heightAnchor constraintGreaterThanOrEqualToConstant:44].active=YES;
+    self.refreshCatalogButton=[self button:@"更新可下载模型" action:@selector(refreshOwnCatalog)];
+    UIButton *detailsButton=[self button:@"查看版本详情" action:@selector(showModelDetails)];
+    UIStackView *catalogRow=[[UIStackView alloc] initWithArrangedSubviews:@[self.refreshCatalogButton,detailsButton]]; catalogRow.spacing=8; catalogRow.distribution=UIStackViewDistributionFillEqually;
+    self.variant=[[UISegmentedControl alloc] initWithItems:@[@"轻量版",@"标准版"]]; self.variant.selectedSegmentIndex=0;
+    UILabel*modeHint=[UILabel new];modeHint.text=@"轻量版 P3：加装小预测器；标准版 P5：原生预测器。主模型共用。";modeHint.numberOfLines=0;modeHint.textColor=UIColor.secondaryLabelColor;modeHint.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+    self.voice=[[UISegmentedControl alloc] initWithItems:@[@"女声",@"男声"]]; self.voice.selectedSegmentIndex=0;
+    self.channelButton=OrTTSDownloadChannelButton(self);OrTTSStyleSecondaryButton(self.channelButton,nil);[self.channelButton.heightAnchor constraintGreaterThanOrEqualToConstant:44].active=YES;
+    self.download=[self button:@"下载 / 检查所选模型" action:@selector(downloadModel)];
+    self.importButton=[self button:@"导入本地模型文件夹" action:@selector(importModel)];
+    UIStackView *transferRow=[[UIStackView alloc] initWithArrangedSubviews:@[self.download,self.importButton]]; transferRow.spacing=8; transferRow.distribution=UIStackViewDistributionFillEqually;
+    self.progress=[UIProgressView new];
+    [stack addArrangedSubview:OrTTSDemoCard(@[self.packageButton,catalogRow,self.variant,modeHint,self.voice,self.channelButton,transferRow,self.progress])];
+    self.text=[UITextView new]; self.text.text=@"你好，欢迎使用 OrTTS。本地语音合成，让交流更加自然。"; self.text.font=[UIFont preferredFontForTextStyle:UIFontTextStyleBody]; self.text.backgroundColor=UIColor.tertiarySystemGroupedBackgroundColor; self.text.layer.cornerRadius=12; self.text.textContainerInset=UIEdgeInsetsMake(12,12,12,12);
     UIToolbar *keyboardBar=[UIToolbar new]; [keyboardBar sizeToFit];
     keyboardBar.items=@[[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil], [[UIBarButtonItem alloc] initWithTitle:@"完成" style:UIBarButtonItemStyleDone target:self action:@selector(dismissKeyboard)]];
     self.text.inputAccessoryView=keyboardBar;
-     [self.text.heightAnchor constraintEqualToConstant:150].active=YES; [stack addArrangedSubview:self.text];
-    self.synthesize=[self button:@"合成并播放" action:@selector(run)]; self.synthesize.configuration=UIButtonConfiguration.filledButtonConfiguration; [self.synthesize setTitle:@"合成并播放" forState:UIControlStateNormal]; [stack addArrangedSubview:self.synthesize];
-    self.stop=[self button:@"停止" action:@selector(cancel)]; [stack addArrangedSubview:self.stop];
-    self.replay=[self button:@"重播上次音频" action:@selector(play)]; [stack addArrangedSubview:self.replay];
-    self.status=[UILabel new]; self.status.numberOfLines=0; self.status.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote]; self.status.text=@"首次使用请下载模型（约 2 GB），保持应用在前台。下载完成后可离线合成。"; [stack addArrangedSubview:self.status]; [self setWorking:NO];
+    [self.text.heightAnchor constraintEqualToConstant:150].active=YES;
+    UILabel *editorLabel=[UILabel new]; editorLabel.text=@"合成文本"; editorLabel.font=[UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
+    [stack addArrangedSubview:OrTTSDemoCard(@[editorLabel,self.text])];
+    self.synthesize=[self button:@"合成并播放" action:@selector(run)];
+    UIButtonConfiguration *primaryCfg=UIButtonConfiguration.filledButtonConfiguration; primaryCfg.cornerStyle=UIButtonConfigurationCornerStyleLarge;
+    self.synthesize.configuration=primaryCfg; [self.synthesize setTitle:@"合成并播放" forState:UIControlStateNormal]; [self.synthesize.heightAnchor constraintGreaterThanOrEqualToConstant:48].active=YES; [stack addArrangedSubview:self.synthesize];
+    self.stop=[self button:@"停止" action:@selector(cancel)]; OrTTSStyleSecondaryButton(self.stop,UIColor.systemRedColor);
+    self.replay=[self button:@"重播上次音频" action:@selector(play)];
+    UIStackView *playbackRow=[[UIStackView alloc] initWithArrangedSubviews:@[self.stop,self.replay]]; playbackRow.spacing=8; playbackRow.distribution=UIStackViewDistributionFillEqually;
+    [stack addArrangedSubview:playbackRow];
+    self.status=[UILabel new]; self.status.numberOfLines=0; self.status.textColor=UIColor.secondaryLabelColor; self.status.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote]; self.status.text=@"首次使用请下载模型（约 2 GB），保持应用在前台。下载完成后可离线合成。"; [stack addArrangedSubview:self.status]; [self setWorking:NO];
     NSArray *arguments=NSProcessInfo.processInfo.arguments;
     if([arguments containsObject:@"--benchmark-q8"])self.ownModel=OrTTSOwnPackageInfo(0);if([arguments containsObject:@"--benchmark-legacy"])self.ownModel=OrTTSOwnPackageInfo(1);if([arguments containsObject:@"--benchmark-ptq"])self.ownModel=OrTTSOwnPackageInfo(2);[self updatePackageMenu];[self packageChanged];
     NSUInteger textIndex=[arguments indexOfObject:@"--benchmark-text"];

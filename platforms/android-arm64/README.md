@@ -1,7 +1,8 @@
 # Android ARM64
 
-使用tools/build.py与显式本地NDK目录；不安装SDK/ADB，也不访问设备。默认现代ARM ISA见profile.json。产物为CPU原生CLI，APK/JNI界面另行接入。
+使用 `tools/build.py` 搭配本地 Android NDK 构建 ARM64 原生运行库与 CLI；Android Demo 应用源码位于 `android/` 目录，提供与 iOS / 桌面端一致的 **OrTTS 合成 / 其他语音合成 / 语音识别** 三标签页界面。
 
-目标运行时需要可写的进程私有TMPDIR和输出目录，以及匹配NDK的libc++_shared.so。不得把shell的/data/local/tmp路径硬编码到App沙箱。不要覆盖系统库或打包个人音色/全套模型到源码仓库。
+## 运行要求
 
-当前没有执行本仓库新binary的手机验收。已有设备CPU历史数据位于benchmarks/，不代表任意机型或Android前台/后台状态都实时。
+- 运行时需要可写的私有 `TMPDIR` 与输出目录，并随包携带对应 NDK 版本的 `libc++_shared.so`。
+- 可用 CPU 构建档位见 `profile.json` 与[CPU 构建档位](../../docs/CPU_PROFILES.md)。

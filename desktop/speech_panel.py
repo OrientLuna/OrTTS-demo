@@ -2,6 +2,7 @@
 from pathlib import Path
 import queue
 import shutil
+import sys
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
@@ -9,6 +10,7 @@ from tkinter import filedialog, messagebox, ttk
 from desktop.audio import Player
 from desktop.models import Cancelled
 from desktop.speech import SpeechTask, catalog, prepare
+from desktop.theme import PALETTE
 
 
 class SpeechPanel(ttk.Frame):
@@ -30,20 +32,30 @@ class SpeechPanel(ttk.Frame):
         self.last_audio = None
         self.player = Player()
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(5, weight=1)
+        self.rowconfigure(2, weight=1)
         title = "其他语音合成" if task == "tts" else "语音识别"
         purpose = "输入文字，合成语音。" if task == "tts" else "导入音频，转换为文字。"
-        ttk.Label(self, text=title, style="Title.TLabel").grid(row=0, sticky="w")
-        ttk.Label(self, text=purpose, style="Muted.TLabel").grid(row=1, sticky="w", pady=(6, 18))
-        self.model = ttk.Combobox(self, state="readonly", values=[m["display_name"] for m in self.models])
+        header = ttk.Frame(self)
+        header.grid(row=0, sticky="ew", pady=(0, 16))
+        ttk.Label(header, text=title, style="Title.TLabel").pack(anchor="w")
+        ttk.Label(header, text=purpose, style="Muted.TLabel").pack(anchor="w", pady=(3, 0))
+
+        model_card = ttk.Frame(self, padding=18, style="Card.TFrame")
+        model_card.grid(row=1, sticky="ew", pady=(0, 14))
+        model_card.columnconfigure(0, weight=1)
+        model_head = ttk.Frame(model_card, style="CardInner.TFrame")
+        model_head.grid(row=0, sticky="ew", pady=(0, 10))
+        ttk.Label(model_head, text="模型与音色" if task == "tts" else "识别模型", style="Section.TLabel").pack(side="left")
+        ttk.Button(model_head, text="模型详情", command=self.details).pack(side="right")
+        self.model = ttk.Combobox(model_card, state="readonly", values=[m["display_name"] for m in self.models])
         if self.models:
             self.model.current(0)
-        self.model.grid(row=2, sticky="ew")
+        self.model.grid(row=1, sticky="ew")
         self.model.bind("<<ComboboxSelected>>", self.changed)
         self.info = tk.StringVar()
-        ttk.Label(self, textvariable=self.info, wraplength=850).grid(row=3, sticky="w", pady=8)
-        actions = ttk.Frame(self)
-        actions.grid(row=4, sticky="ew", pady=(0, 12))
+        ttk.Label(model_card, textvariable=self.info, style="CardMuted.TLabel", wraplength=850).grid(row=2, sticky="w", pady=(8, 12))
+        actions = ttk.Frame(model_card, style="CardInner.TFrame")
+        actions.grid(row=3, sticky="ew")
         self.download = ttk.Button(actions, text="下载 / 检查模型", command=lambda: self.start("download"))
         self.download.pack(side="left")
         self.import_button = ttk.Button(actions, text="导入模型文件夹…", command=self.import_model)
@@ -51,14 +63,31 @@ class SpeechPanel(ttk.Frame):
         self.voice = ttk.Combobox(actions, width=18, state="readonly")
         if task == "tts":
             self.voice.pack(side="right")
-        self.text = tk.Text(self, wrap="word", font=("Helvetica", 14), height=8, padx=14, pady=14)
-        self.text.grid(row=5, sticky="nsew")
+
+        editor_card = ttk.Frame(self, padding=18, style="Card.TFrame")
+        editor_card.grid(row=2, sticky="nsew")
+        editor_card.columnconfigure(0, weight=1)
+        editor_card.rowconfigure(1, weight=1)
+        ttk.Label(editor_card, text="合成文本" if task == "tts" else "识别结果", style="Section.TLabel").grid(row=0, sticky="w", pady=(0, 10))
+        text_wrap = ttk.Frame(editor_card, style="CardInner.TFrame")
+        text_wrap.grid(row=1, sticky="nsew")
+        self.text = tk.Text(
+            text_wrap, wrap="word", font=("SF Pro Text" if sys.platform == "darwin" else "TkDefaultFont", 13),
+            height=8, padx=12, pady=12, relief="flat", highlightthickness=1,
+            highlightbackground=PALETTE["border"], highlightcolor=PALETTE["accent"],
+            background=PALETTE["card"], foreground=PALETTE["text"], insertbackground=PALETTE["accent"],
+        )
+        scrollbar = ttk.Scrollbar(text_wrap, command=self.text.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.text.configure(yscrollcommand=scrollbar.set)
+        self.text.pack(fill="both", expand=True)
         if task == "tts":
             self.text.insert("1.0", "Hello, welcome to local speech synthesis.")
         else:
             self.text.configure(state="disabled")
+
         controls = ttk.Frame(self)
-        controls.grid(row=6, sticky="ew", pady=14)
+        controls.grid(row=3, sticky="ew", pady=14)
         self.run_button = ttk.Button(controls, text="合成并播放" if task == "tts" else "导入音频识别…", style="Primary.TButton", command=self.run)
         self.run_button.pack(side="left")
         self.stop_button = ttk.Button(controls, text="停止", command=self.stop)
@@ -68,8 +97,7 @@ class SpeechPanel(ttk.Frame):
         if task == "tts":
             ttk.Button(controls, text="重播", command=self.replay).pack(side="left", padx=8)
         self.status = tk.StringVar(value="选择模型，下载或导入后即可离线使用。")
-        ttk.Label(self, textvariable=self.status, wraplength=850).grid(row=7, sticky="w")
-        ttk.Button(self, text="模型详情", command=self.details).grid(row=8, sticky="w", pady=(12, 0))
+        ttk.Label(self, textvariable=self.status, style="Muted.TLabel", wraplength=850).grid(row=4, sticky="w")
         self.changed()
         self.after(80, self.poll)
 

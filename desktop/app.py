@@ -18,7 +18,7 @@ from desktop.audio import Player
 from desktop.models import PACKAGES, VOICE_NAMES
 from desktop.worker import Worker
 from desktop.download import CHANNELS
-from desktop.theme import brand, configure
+from desktop.theme import PALETTE, brand, configure
 
 
 def user_directory():
@@ -118,7 +118,7 @@ class App:
         self.revalidate_button = ttk.Button(model, text="校验此目录", command=lambda: self.import_directory(self.directory.get()))
         self.revalidate_button.grid(row=2, column=3)
         ttk.Label(model, text="在线获取", style="Card.TLabel").grid(row=3, column=0, sticky="w")
-        downloads = ttk.Frame(model, style="Card.TFrame")
+        downloads = ttk.Frame(model, style="CardInner.TFrame")
         downloads.grid(row=3, column=1, columnspan=3, sticky="ew")
         saved_channel = config.get("channel", "ModelScope")
         self.channel = tk.StringVar(value=saved_channel if isinstance(saved_channel, str) and saved_channel in CHANNELS else "ModelScope")
@@ -126,7 +126,7 @@ class App:
         self.channel_box.pack(side="left", padx=(0, 8))
         self.download_button = ttk.Button(downloads, text="下载 / 继续…", command=self.download)
         self.download_button.pack(side="left")
-        options = ttk.Frame(model, style="Card.TFrame")
+        options = ttk.Frame(model, style="CardInner.TFrame")
         options.grid(row=4, column=0, columnspan=4, sticky="ew", pady=(14, 0))
         ttk.Label(options, text="推理版本", style="Card.TLabel").pack(side="left")
         self.variant = tk.StringVar(value="P3")
@@ -146,16 +146,17 @@ class App:
         editor.grid(row=2, column=0, sticky="nsew")
         editor.columnconfigure(0, weight=1)
         editor.rowconfigure(1, weight=1)
-        title = ttk.Frame(editor, style="Card.TFrame")
+        title = ttk.Frame(editor, style="CardInner.TFrame")
         title.grid(row=0, column=0, sticky="ew", pady=(0, 10))
         ttk.Label(title, text="合成文本", style="Section.TLabel").pack(side="left")
         self.text_count = tk.StringVar(value="")
         ttk.Label(title, textvariable=self.text_count, style="CardMuted.TLabel").pack(side="right")
-        text_frame = ttk.Frame(editor, style="Card.TFrame")
+        text_frame = ttk.Frame(editor, style="CardInner.TFrame")
         text_frame.grid(row=1, column=0, sticky="nsew")
         self.text = tk.Text(text_frame, wrap="word", font=(family, 13), padx=12, pady=12, height=5, undo=True,
-                            relief="flat", highlightthickness=1, highlightbackground="#D8DEEA",
-                            background="#FFFFFF", foreground="#243047", insertbackground="#243047")
+                            relief="flat", highlightthickness=1, highlightbackground=PALETTE["border"],
+                            highlightcolor=PALETTE["accent"], background=PALETTE["card"],
+                            foreground=PALETTE["text"], insertbackground=PALETTE["accent"])
         scrollbar = ttk.Scrollbar(text_frame, command=self.text.yview)
         scrollbar.pack(side="right", fill="y")
         self.text.configure(yscrollcommand=scrollbar.set)

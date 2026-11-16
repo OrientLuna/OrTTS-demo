@@ -60,6 +60,10 @@ extern int ortts_app_concurrency_check(const char*, const char*, const char*, co
     Demo *legacy=[Demo new];legacy.tabBarItem=[[UITabBarItem alloc]initWithTitle:@"OrTTS 合成" image:[UIImage systemImageNamed:@"waveform"] tag:0];
     SpeechDemo *speech=[SpeechDemo new];speech.tabBarItem=[[UITabBarItem alloc]initWithTitle:@"其他语音合成" image:[UIImage systemImageNamed:@"speaker.wave.2"] tag:1];
     UITabBarController *tabs=[UITabBarController new];SpeechDemo *asr=[SpeechDemo new];asr.initialTask=1;asr.tabBarItem=[[UITabBarItem alloc]initWithTitle:@"语音识别" image:[UIImage systemImageNamed:@"mic"] tag:2];tabs.viewControllers=@[legacy,speech,asr];
+    tabs.tabBar.tintColor=UIColor.systemBlueColor;
+    UITabBarAppearance *tabAppearance=[UITabBarAppearance new];[tabAppearance configureWithDefaultBackground];
+    tabs.tabBar.standardAppearance=tabAppearance;
+    if(@available(iOS 15.0,*))tabs.tabBar.scrollEdgeAppearance=tabAppearance;
     NSArray*arguments=NSProcessInfo.processInfo.arguments;NSUInteger smoke=[arguments indexOfObject:@"--speech-smoke"];NSString*mode=smoke!=NSNotFound&&smoke+1<arguments.count?arguments[smoke+1]:nil;
     tabs.selectedIndex=mode?([@[@"asr",@"last"] containsObject:mode]?2:1):0;
     self.window.rootViewController=tabs; [self.window makeKeyAndVisible];

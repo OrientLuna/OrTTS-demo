@@ -1,33 +1,23 @@
-# OrTTS 桌面 Demo
+# OrTTS 桌面 Demo（macOS / Linux）
 
-在 macOS / Linux 上本地合成语音，支持模型下载、音色选择、播放和保存 WAV。
-安装包不含模型，首次使用需要下载或导入。
+在 macOS 与 Linux 上本地离线合成与识别语音，采用与 iOS 一致的分组卡片界面与三标签页结构：**OrTTS 合成**、**其他语音合成**、**语音识别**。安装包不含模型权重，首次使用可通过应用内下载或导入本地模型目录。
 
 ## 启动
 
-- **macOS Apple Silicon**：打开 `OrTTS.app`；使用 DMG 时，先将应用拖入“应用程序”。当前本机构建版尚未完成正式签名、公证。
-- **Linux**：运行文件夹包内的 `./ortts`，环境准备见 [Linux 使用说明](../linux/README.md)。
+- **macOS Apple Silicon**：打开 `OrTTS.app`（使用 DMG 时拖入“应用程序”）。
+- **Linux**：运行文件夹包内的 `./ortts`，或从源码启动（环境准备见 [Linux 使用说明](../linux/README.md)）。
 
-安装包以 [Latest Release](https://github.com/OrientLuna/OrTTS-demo/releases/latest) 的附件为准；尚无对应附件时需自行构建。
+## 功能与使用
 
-## 合成第一句语音
-
-1. 保留默认 **0.6B Q4 / P3**，或选择与你已有模型一致的版本。
-2. 点击“下载 / 继续…”获取模型；也可用“导入本地模型…”选择完整模型文件夹，而不是单个 GGUF。
-3. 校验完成后选择音色，输入文字，点击“合成语音”。
-4. 可重播、停止，或点击“保存 WAV…”另存音频。
-
-macOS 上自研 OrTTS 为合成后播放，Linux 上支持边合成边播放；Q4 只支持 P3，Q8 / 历史版可选 P3/P5。
-当随包运行时启用语音扩展时，窗口顶部提供三个标签页：**OrTTS 合成**（0.6B）、**其他语音合成**（Kokoro、PocketTTS、Piper、Kitten）与**语音识别**（SenseVoice、Moonshine，以及启用 Sherpa 时的 Paraformer 实验档）。当前桌面菜单尚未接入 1.7B。
+1. **OrTTS 合成**：默认 **0.6B Q4 / P3**（Q8 / 历史版可选 P3/P5）。点击“下载 / 继续…”获取模型，或点击“导入本地模型…”选择完整模型文件夹；校验完成后选择音色、输入文本即可合成、播放、随时停止或保存 WAV。
+2. **其他语音合成**：随包运行时启用语音扩展时，可使用 Kokoro、PocketTTS、Piper、Kitten 等开源模型合成并保存 WAV。
+3. **语音识别**：支持 SenseVoice、Moonshine（英语增量）以及 Paraformer（中英流式实验档，需启用 Sherpa 运行时），可导入音频识别并导出文本。
 
 ## 常见问题
 
-- **下载中断**：再次选择相同存放位置继续，已有文件和断点会保留。
-- **通道拒绝访问**：可切换到 ModelScope；部分版本在 Hugging Face 返回 401。
-- **模型校验失败**：确认版本与目录匹配。不要混用模型包；损坏文件会保留，可另选空目录重新下载。
-- **停止后仍在等待**：停止响应取决于随包运行时；支持协作取消的版本会在安全检查点停止，并保留已加载模型供下次合成。当前算子或文件读取仍可能需要返回后才能结束。
-- **找不到音频**：默认保存在 macOS 的 `~/Library/Application Support/OrTTS Desktop/outputs/`，或 Linux 的 `~/.local/share/ortts-desktop/outputs/`（可由 XDG 配置改变）。
+- **下载中断**：再次选择相同存放位置即可自动断点续传，已校验文件会直接复用。
+- **下载通道 401 / 限流**：可在下载下拉框中切换 **ModelScope** 或 **HF Mirror**。
+- **停止响应**：支持协作式取消的运行时会在检查点安全停止并保留已加载模型，无需重新加载即可继续下次合成。
+- **音频默认保存位置**：macOS 位于 `~/Library/Application Support/OrTTS Desktop/outputs/`，Linux 位于 `~/.local/share/ortts-desktop/outputs/`。
 
-模型文件不会因导入而搬家，请勿在运行时移动或修改它们。模型及音色的使用许可见各模型包。
-
-源码运行、app / DMG 打包和自动化验收见 [开发与代理说明](AGENT_README.md)。
+源码运行、打包与自动化验收说明见 [开发与代理说明](AGENT_README.md)。

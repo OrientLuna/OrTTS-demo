@@ -6,9 +6,9 @@ The runtime supports loading, offline/streaming synthesis and cancellation. It r
 
 For other TTS and ASR models, see the optional [speech API](SPEECH.md).
 
-## Optional low-memory bilingual ASR candidate
+## Optional streaming ASR (Sherpa / ONNX Runtime)
 
-A pinned bilingual streaming recipe can optionally use a Sherpa/ONNX Runtime compatibility executor inside OrTTS. The default build remains ggml-only. This is a unified host API with an additional tensor backend, not ggml execution of ONNX. Model identities, license metadata, conservative device selection and pending physical acceptance are documented in [ASR recipes](ASR_RECIPES.md). No low-end default or device whitelist is certified yet.
+Enable `--sherpa-asr-prefix` / `ORTTS_ENABLE_SHERPA_ASR` to include the pinned Sherpa/ONNX Runtime executor for bilingual streaming ASR (`streaming_paraformer`, `zipformer_bilingual`) under the same [`ortts_speech.h`](include/ortts_speech.h) API. Default builds remain ggml-only. See [ASR recipes](ASR_RECIPES.md) for model identities and selection rules.
 
 ## Build
 

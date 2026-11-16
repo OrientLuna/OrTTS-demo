@@ -1,56 +1,159 @@
-"""Shared desktop appearance; keep native macOS controls and use Clam on Linux."""
+"""Unified iOS-inspired desktop theme shared across macOS and Linux."""
 from pathlib import Path
 import sys
 import tkinter as tk
 from tkinter import font, ttk
 
+PALETTE = {
+    "bg": "#F2F2F7",          # iOS systemGroupedBackground
+    "card": "#FFFFFF",        # iOS secondarySystemGroupedBackground
+    "border": "#E5E5EA",      # iOS separator
+    "text": "#1C1C1E",        # iOS label
+    "muted": "#6C6C70",       # iOS secondaryLabel
+    "accent": "#007AFF",      # iOS systemBlue
+    "accent_hover": "#0062CC",
+    "accent_soft": "#E5F1FF",
+    "accent_disabled": "#C7C7CC",
+    "tab_idle": "#E5E5EA",
+    "tab_hover": "#EBEBF0",
+    "trough": "#E5E5EA",
+}
+
+
+def _pick_font(root):
+    family = font.nametofont("TkDefaultFont").actual("family")
+    available = {name.casefold(): name for name in font.families(root)}
+    if sys.platform == "darwin":
+        candidates = ("sf pro text", "pingfang sc", "helvetica neue", "helvetica")
+    else:
+        candidates = (
+            "noto sans cjk sc",
+            "source han sans sc",
+            "wenquanyi micro hei",
+            "noto sans",
+            "dejavu sans",
+            "nimbus sans l",
+            "helvetica",
+        )
+    for candidate in candidates:
+        if candidate in available:
+            family = available[candidate]
+            break
+    size = 12 if sys.platform == "darwin" else 11
+    for name in ("TkDefaultFont", "TkTextFont", "TkMenuFont", "TkHeadingFont"):
+        try:
+            font.nametofont(name).configure(family=family, size=size)
+        except tk.TclError:
+            pass
+    return family
+
 
 def configure(root):
-    family = font.nametofont("TkDefaultFont").actual("family")
-    if sys.platform.startswith("linux"):
-        available = {name.casefold(): name for name in font.families(root)}
-        for candidate in ("noto sans cjk sc", "source han sans sc", "wenquanyi micro hei",
-                          "noto sans", "dejavu sans", "nimbus sans l", "helvetica"):
-            if candidate in available:
-                family = available[candidate]
-                break
-        for name in ("TkDefaultFont", "TkTextFont", "TkMenuFont", "TkHeadingFont"):
-            try:
-                font.nametofont(name).configure(family=family, size=11)
-            except tk.TclError:
-                pass
+    family = _pick_font(root)
     style = ttk.Style(root)
-    if sys.platform.startswith("linux"):
-        style.theme_use("clam")
-    root.configure(background="#F4F6FA")
-    style.configure("TFrame", background="#F4F6FA")
-    style.configure("TLabel", background="#F4F6FA", foreground="#243047")
-    style.configure("Card.TFrame", background="#FFFFFF")
-    style.configure("Card.TLabel", background="#FFFFFF", foreground="#243047")
-    style.configure("Muted.TLabel", foreground="#647189")
-    style.configure("CardMuted.TLabel", background="#FFFFFF", foreground="#647189")
-    style.configure("Title.TLabel", font=(family, 20, "bold"))
-    style.configure("Section.TLabel", background="#FFFFFF", font=(family, 12, "bold"))
-    style.configure("TButton", padding=(14, 8))
-    style.configure("Primary.TButton", padding=(20, 9), font=(family, 11, "bold"))
-    style.configure("TCombobox", padding=6)
-    style.configure("TEntry", padding=6)
-    style.configure("TProgressbar", background="#5976C9", troughcolor="#E4E9F3", borderwidth=0)
-    if sys.platform.startswith("linux"):
-        style.configure("TNotebook", background="#F4F6FA", borderwidth=0, tabmargins=(12, 8, 12, 0))
-        style.configure("TNotebook.Tab", background="#E3E9F3", foreground="#52607A",
-                        padding=(18, 9), font=(family, 11, "bold"), borderwidth=0)
-        style.map("TNotebook.Tab",
-                  background=[("selected", "#FFFFFF"), ("active", "#EEF2F9")],
-                  foreground=[("selected", "#243047")])
-        style.configure("TCheckbutton", background="#FFFFFF", foreground="#243047")
-        style.configure("TCombobox", fieldbackground="#FFFFFF", background="#FFFFFF")
-        style.configure("TEntry", fieldbackground="#FFFFFF")
-        style.configure("TButton", background="#FFFFFF", bordercolor="#D8DEEA")
-        style.map("TButton", background=[("active", "#EAF0FF")])
-        style.configure("Primary.TButton", background="#4265BC", foreground="#FFFFFF")
-        style.map("Primary.TButton", background=[("disabled", "#DCE3EF"), ("active", "#3455A8")],
-                  foreground=[("disabled", "#8794AB"), ("!disabled", "#FFFFFF")])
+    style.theme_use("clam")
+
+    bg = PALETTE["bg"]
+    card = PALETTE["card"]
+    border = PALETTE["border"]
+    text = PALETTE["text"]
+    muted = PALETTE["muted"]
+    accent = PALETTE["accent"]
+
+    root.configure(background=bg)
+    style.configure("TFrame", background=bg)
+    style.configure("TLabel", background=bg, foreground=text)
+    style.configure("Muted.TLabel", background=bg, foreground=muted)
+    style.configure("Title.TLabel", background=bg, foreground=text, font=(family, 20, "bold"))
+
+    style.configure("Card.TFrame", background=card, relief="solid", borderwidth=1, bordercolor=border)
+    style.configure("CardInner.TFrame", background=card)
+    style.configure("Card.TLabel", background=card, foreground=text)
+    style.configure("CardMuted.TLabel", background=card, foreground=muted)
+    style.configure("Section.TLabel", background=card, foreground=text, font=(family, 13, "bold"))
+
+    style.configure(
+        "TNotebook",
+        background=bg,
+        borderwidth=0,
+        tabmargins=(16, 10, 16, 0),
+    )
+    style.configure(
+        "TNotebook.Tab",
+        background=PALETTE["tab_idle"],
+        foreground=muted,
+        padding=(18, 9),
+        font=(family, 11, "bold"),
+        borderwidth=0,
+        focuscolor=bg,
+    )
+    style.map(
+        "TNotebook.Tab",
+        background=[("selected", card), ("active", PALETTE["tab_hover"])],
+        foreground=[("selected", accent), ("active", text)],
+    )
+
+    style.configure(
+        "TButton",
+        background=card,
+        foreground=accent,
+        bordercolor=border,
+        lightcolor=card,
+        darkcolor=card,
+        relief="solid",
+        borderwidth=1,
+        padding=(14, 8),
+        font=(family, 11),
+        focuscolor=border,
+    )
+    style.map(
+        "TButton",
+        background=[("disabled", bg), ("active", PALETTE["accent_soft"])],
+        foreground=[("disabled", PALETTE["accent_disabled"]), ("active", PALETTE["accent_hover"])],
+    )
+
+    style.configure(
+        "Primary.TButton",
+        background=accent,
+        foreground="#FFFFFF",
+        bordercolor=accent,
+        lightcolor=accent,
+        darkcolor=accent,
+        relief="flat",
+        borderwidth=0,
+        padding=(22, 9),
+        font=(family, 11, "bold"),
+        focuscolor=accent,
+    )
+    style.map(
+        "Primary.TButton",
+        background=[("disabled", PALETTE["accent_disabled"]), ("active", PALETTE["accent_hover"])],
+        foreground=[("disabled", "#FFFFFF"), ("!disabled", "#FFFFFF")],
+    )
+
+    style.configure(
+        "TCombobox",
+        fieldbackground=card,
+        background=card,
+        foreground=text,
+        bordercolor=border,
+        arrowcolor=muted,
+        padding=6,
+    )
+    style.map(
+        "TCombobox",
+        fieldbackground=[("readonly", card), ("disabled", bg)],
+        foreground=[("disabled", muted)],
+    )
+    style.configure("TEntry", fieldbackground=card, foreground=text, bordercolor=border, padding=6)
+    style.configure("TCheckbutton", background=card, foreground=text)
+    style.configure(
+        "TProgressbar",
+        background=accent,
+        troughcolor=PALETTE["trough"],
+        borderwidth=0,
+        thickness=6,
+    )
     return family
 
 

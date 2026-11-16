@@ -65,8 +65,32 @@ static int DemoSpeechText(void *user,const ortts_asr_stream_event*event){@autore
 
 @implementation SpeechDemo
 - (void)viewWillAppear:(BOOL)animated{[super viewWillAppear:animated];OrTTSRefreshDownloadChannelButton(self.channelButton);}
+static UIView *OrTTSSpeechCard(NSArray<UIView *> *views) {
+    UIView *card=[UIView new];
+    card.backgroundColor=UIColor.secondarySystemGroupedBackgroundColor;
+    card.layer.cornerRadius=16;
+    UIStackView *inner=[[UIStackView alloc] initWithArrangedSubviews:views];
+    inner.axis=UILayoutConstraintAxisVertical;
+    inner.spacing=10;
+    inner.translatesAutoresizingMaskIntoConstraints=NO;
+    [card addSubview:inner];
+    [NSLayoutConstraint activateConstraints:@[
+        [inner.topAnchor constraintEqualToAnchor:card.topAnchor constant:16],
+        [inner.bottomAnchor constraintEqualToAnchor:card.bottomAnchor constant:-16],
+        [inner.leadingAnchor constraintEqualToAnchor:card.leadingAnchor constant:16],
+        [inner.trailingAnchor constraintEqualToAnchor:card.trailingAnchor constant:-16],
+    ]];
+    return card;
+}
+static void OrTTSSpeechStyleSecondary(UIButton *b, UIColor *tint) {
+    UIButtonConfiguration *cfg=UIButtonConfiguration.tintedButtonConfiguration;
+    cfg.cornerStyle=UIButtonConfigurationCornerStyleMedium;
+    cfg.baseForegroundColor=tint ?: UIColor.systemBlueColor;
+    cfg.baseBackgroundColor=tint ?: UIColor.systemBlueColor;
+    b.configuration=cfg;
+}
 - (UIButton*)button:(NSString*)title action:(SEL)selector {
-    UIButton*b=[UIButton buttonWithType:UIButtonTypeSystem];[b setTitle:title forState:UIControlStateNormal];if(selector)[b addTarget:self action:selector forControlEvents:UIControlEventTouchUpInside];NSLayoutConstraint*h=[b.heightAnchor constraintGreaterThanOrEqualToConstant:44];h.priority=999;h.active=YES;return b;
+    UIButton*b=[UIButton buttonWithType:UIButtonTypeSystem];[b setTitle:title forState:UIControlStateNormal];OrTTSSpeechStyleSecondary(b,nil);if(selector)[b addTarget:self action:selector forControlEvents:UIControlEventTouchUpInside];NSLayoutConstraint*h=[b.heightAnchor constraintGreaterThanOrEqualToConstant:44];h.priority=999;h.active=YES;return b;
 }
 - (void)message:(NSString*)value { dispatch_async(dispatch_get_main_queue(),^{self.status.text=value;NSLog(@"SpeechDemo: %@",value);}); }
 - (void)working:(BOOL)value {
@@ -83,35 +107,39 @@ static int DemoSpeechText(void *user,const ortts_asr_stream_event*event){@autore
     if(streamCatalog){NSData*streamData=[NSData dataWithContentsOfURL:streamCatalog];NSDictionary*streamDocument=streamData?[NSJSONSerialization JSONObjectWithData:streamData options:0 error:nil]:nil;if([streamDocument[@"schema"] isEqual:@"ortts-speech-catalog-v1"])self.catalog=[self.catalog arrayByAddingObjectsFromArray:streamDocument[@"models"] ?: @[]];}
     UIScrollView*scroll=[UIScrollView new];scroll.translatesAutoresizingMaskIntoConstraints=NO;scroll.keyboardDismissMode=UIScrollViewKeyboardDismissModeInteractive;[self.view addSubview:scroll];UIStackView*stack=[UIStackView new];stack.axis=UILayoutConstraintAxisVertical;stack.spacing=12;stack.translatesAutoresizingMaskIntoConstraints=NO;[scroll addSubview:stack];
     [NSLayoutConstraint activateConstraints:@[[scroll.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],[scroll.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor],[scroll.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],[scroll.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],[stack.topAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.topAnchor constant:20],[stack.bottomAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.bottomAnchor constant:-20],[stack.leadingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.leadingAnchor constant:20],[stack.trailingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.trailingAnchor constant:-20],[stack.widthAnchor constraintEqualToAnchor:scroll.frameLayoutGuide.widthAnchor constant:-40]]];
-    UILabel*title=[UILabel new];title.text=self.initialTask==1?@"语音识别":@"其他语音合成";title.font=[UIFont preferredFontForTextStyle:UIFontTextStyleTitle1];[stack addArrangedSubview:title];
+    UILabel*title=[UILabel new];title.text=self.initialTask==1?@"语音识别":@"其他语音合成";title.font=[UIFont systemFontOfSize:28 weight:UIFontWeightBold];[stack addArrangedSubview:title];
     UILabel*purpose=[UILabel new];purpose.text=self.initialTask==1?@"录音或导入音频，转换为文字。":@"输入文字，使用其他开源模型合成语音。";purpose.numberOfLines=0;purpose.textColor=UIColor.secondaryLabelColor;purpose.font=[UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
     self.task=[[UISegmentedControl alloc]initWithItems:@[@"文字转语音",@"语音转文字"]];self.task.selectedSegmentIndex=self.initialTask;self.task.hidden=YES;[self.task addTarget:self action:@selector(changeTask) forControlEvents:UIControlEventValueChanged];[stack addArrangedSubview:self.task];
     self.modelButton=[self button:@"选择模型" action:nil];self.modelButton.showsMenuAsPrimaryAction=YES;[stack addArrangedSubview:self.modelButton];
     self.voiceButton=[self button:@"选择音色" action:nil];self.voiceButton.showsMenuAsPrimaryAction=YES;[stack addArrangedSubview:self.voiceButton];
-    self.information=[UILabel new];self.information.numberOfLines=0;self.information.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];[stack addArrangedSubview:self.information];
+    self.information=[UILabel new];self.information.numberOfLines=0;self.information.textColor=UIColor.secondaryLabelColor;self.information.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];[stack addArrangedSubview:self.information];
     [stack addArrangedSubview:[self button:@"模型许可与来源" action:@selector(openLicense)]];
-    self.channelButton=OrTTSDownloadChannelButton(self);[stack addArrangedSubview:self.channelButton];
+    self.channelButton=OrTTSDownloadChannelButton(self);OrTTSSpeechStyleSecondary(self.channelButton,nil);[self.channelButton.heightAnchor constraintGreaterThanOrEqualToConstant:44].active=YES;[stack addArrangedSubview:self.channelButton];
     self.downloadButton=[self button:@"下载 / 检查所选模型" action:@selector(downloadModel)];[stack addArrangedSubview:self.downloadButton];
     self.modelImportButton=[self button:@"导入所选模型文件夹" action:@selector(importModels)];[stack addArrangedSubview:self.modelImportButton];
-    self.input=[UITextView new];self.input.text=@"Hello, welcome to local speech synthesis.";self.input.font=[UIFont preferredFontForTextStyle:UIFontTextStyleBody];NSLayoutConstraint*inputHeight=[self.input.heightAnchor constraintEqualToConstant:100];inputHeight.priority=999;inputHeight.active=YES;[stack addArrangedSubview:self.input];
+    self.input=[UITextView new];self.input.text=@"Hello, welcome to local speech synthesis.";self.input.font=[UIFont preferredFontForTextStyle:UIFontTextStyleBody];self.input.backgroundColor=UIColor.tertiarySystemGroupedBackgroundColor;self.input.layer.cornerRadius=12;self.input.textContainerInset=UIEdgeInsetsMake(12,12,12,12);NSLayoutConstraint*inputHeight=[self.input.heightAnchor constraintEqualToConstant:110];inputHeight.priority=999;inputHeight.active=YES;[stack addArrangedSubview:self.input];
     UIToolbar*bar=[UIToolbar new];[bar sizeToFit];bar.items=@[[[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil],[[UIBarButtonItem alloc]initWithTitle:@"完成" style:UIBarButtonItemStyleDone target:self action:@selector(dismissKeyboard)]];self.input.inputAccessoryView=bar;
     UITapGestureRecognizer*tap=[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(dismissKeyboard)];tap.cancelsTouchesInView=NO;tap.delegate=self;[self.view addGestureRecognizer:tap];
-    self.primaryButton=[self button:@"合成并播放" action:@selector(primary)];self.primaryButton.configuration=UIButtonConfiguration.filledButtonConfiguration;[stack addArrangedSubview:self.primaryButton];
+    self.primaryButton=[self button:@"合成并播放" action:@selector(primary)];UIButtonConfiguration*primaryCfg=UIButtonConfiguration.filledButtonConfiguration;primaryCfg.cornerStyle=UIButtonConfigurationCornerStyleLarge;self.primaryButton.configuration=primaryCfg;[self.primaryButton.heightAnchor constraintGreaterThanOrEqualToConstant:48].active=YES;[stack addArrangedSubview:self.primaryButton];
     self.importButton=[self button:@"导入音频识别（最多60秒）" action:@selector(importAudio)];[stack addArrangedSubview:self.importButton];
     self.lastAudioButton=[self button:@"识别上次合成" action:@selector(recognizeLast)];[stack addArrangedSubview:self.lastAudioButton];
-    self.stopButton=[self button:@"取消当前任务" action:@selector(cancel)];[stack addArrangedSubview:self.stopButton];[stack addArrangedSubview:[self button:@"重播上次合成" action:@selector(replay)]];
-    self.result=[UITextView new];self.result.editable=NO;self.result.font=[UIFont preferredFontForTextStyle:UIFontTextStyleBody];NSLayoutConstraint*resultHeight=[self.result.heightAnchor constraintEqualToConstant:120];resultHeight.priority=999;resultHeight.active=YES;[stack addArrangedSubview:self.result];
-    self.status=[UILabel new];self.status.numberOfLines=0;self.status.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];[stack addArrangedSubview:self.status];[self changeTask];[self working:NO];
+    self.stopButton=[self button:@"取消当前任务" action:@selector(cancel)];OrTTSSpeechStyleSecondary(self.stopButton,UIColor.systemRedColor);[stack addArrangedSubview:self.stopButton];[stack addArrangedSubview:[self button:@"重播上次合成" action:@selector(replay)]];
+    self.result=[UITextView new];self.result.editable=NO;self.result.font=[UIFont preferredFontForTextStyle:UIFontTextStyleBody];self.result.backgroundColor=UIColor.tertiarySystemGroupedBackgroundColor;self.result.layer.cornerRadius=12;self.result.textContainerInset=UIEdgeInsetsMake(12,12,12,12);NSLayoutConstraint*resultHeight=[self.result.heightAnchor constraintEqualToConstant:130];resultHeight.priority=999;resultHeight.active=YES;[stack addArrangedSubview:self.result];
+    self.status=[UILabel new];self.status.numberOfLines=0;self.status.textColor=UIColor.secondaryLabelColor;self.status.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];[stack addArrangedSubview:self.status];[self changeTask];[self working:NO];
     // Keep the action and recognition result above secondary source/settings.
     for(UIView*v in stack.arrangedSubviews.copy){[stack removeArrangedSubview:v];[v removeFromSuperview];}
-    stack.spacing=8;
+    stack.spacing=12;
+    UIStackView*header=[[UIStackView alloc]initWithArrangedSubviews:@[title,purpose]];header.axis=UILayoutConstraintAxisVertical;header.spacing=4;
     UIStackView*selection=[[UIStackView alloc]initWithArrangedSubviews:@[self.modelButton,self.voiceButton]];selection.spacing=8;selection.distribution=UIStackViewDistributionFillProportionally;
     [self.downloadButton setTitle:@"下载 / 检查模型" forState:UIControlStateNormal];[self.modelImportButton setTitle:@"导入模型" forState:UIControlStateNormal];
     UIStackView*models=[[UIStackView alloc]initWithArrangedSubviews:@[self.downloadButton,self.modelImportButton]];models.spacing=8;models.distribution=UIStackViewDistributionFillEqually;
+    UIView*modelCard=OrTTSSpeechCard(@[selection,self.information,self.channelButton,models]);
+    UIView*editorCard=OrTTSSpeechCard(@[self.initialTask==1?self.result:self.input]);
     UIStackView*audio=[[UIStackView alloc]initWithArrangedSubviews:@[self.importButton,self.lastAudioButton]];audio.spacing=8;audio.distribution=UIStackViewDistributionFillEqually;self.audioActions=audio;audio.hidden=self.task.selectedSegmentIndex==0;
     UIButton*replay=[self button:@"重播上次合成" action:@selector(replay)];replay.hidden=self.initialTask==1;
     UIStackView*playback=[[UIStackView alloc]initWithArrangedSubviews:@[self.stopButton,replay]];playback.spacing=8;playback.distribution=UIStackViewDistributionFillEqually;
-    for(UIView*v in @[title,purpose,self.task,selection,self.information,self.channelButton,models,self.input,self.primaryButton,audio,self.status,self.result,playback,[self button:@"模型许可与来源" action:@selector(openLicense)]])[stack addArrangedSubview:v];
+    UIButton*licenseButton=[self button:@"模型许可与来源" action:@selector(openLicense)];licenseButton.configuration=UIButtonConfiguration.plainButtonConfiguration;
+    for(UIView*v in @[header,self.task,modelCard,editorCard,self.primaryButton,audio,self.status,playback,licenseButton])[stack addArrangedSubview:v];
     self.status.text=@"下载或导入模型后即可开始。";
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(interrupted:) name:UIApplicationWillResignActiveNotification object:nil];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(interrupted:) name:AVAudioSessionInterruptionNotification object:nil];

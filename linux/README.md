@@ -1,39 +1,34 @@
 # OrTTS Linux 桌面 Demo
 
-本地语音合成，支持模型下载、导入、边合成边播放，以及保存 WAV。安装包不含模型。
+与 macOS 共用三标签页界面与统一主题，在 Linux 上提供本地语音合成与识别，自研 OrTTS 支持通过 ALSA 边合成边播放。安装包不含模型权重。
+
+## 环境准备
+
+需要 Python 3.10+、Tk、ALSA 播放工具与中文字体（使用语音识别加载非 16kHz 单声道 WAV 音频时还需 `ffmpeg`，使用 Kokoro / Piper / Kitten 时需系统 eSpeak NG）。Debian / Ubuntu 可执行：
+
+```sh
+sudo apt install python3-tk alsa-utils fonts-noto-cjk ffmpeg espeak-ng libespeak-ng1
+```
 
 ## 启动
 
-文件夹包中运行：
+文件夹包内直接运行：
 
 ```sh
 ./ortts
 ```
 
-需要 Python 3.10+、Tk、ALSA 播放工具和中文字体（使用语音识别加载非 16kHz 单声道 WAV 音频时还需 `ffmpeg`，使用 Kokoro/Piper/Kitten 时需系统或随包 eSpeak NG）。Debian/Ubuntu 通常安装
-`python3-tk alsa-utils fonts-noto-cjk`，原生库也需匹配你的发行版与 CPU。
-当前文件夹包不是通用 AppImage 或 `.deb`；构建机产物不保证能直接运行于旧版 Ubuntu。
-
-源码启动（仓库根目录）：
+或从仓库根目录以源码方式启动：
 
 ```sh
 python3 -m linux.app --library /path/to/libortts.so
 ```
 
-## 使用
+## 使用提示
 
-1. 默认选择 **0.6B Q4 / P3**，下载模型或导入完整模型文件夹。
-2. 校验完成后选择音色、输入文字，点击“合成语音”，默认边生成边播放。
-3. 可停止、重播或保存 WAV；“释放模型”可回收占用，下次合成会重新加载。
-4. 随包运行时启用语音扩展时，顶部会显示 **其他语音合成** 与 **语音识别** 标签页，可独立选择、停止与保存。
+1. 默认选择 **0.6B Q4 / P3**，可在线下载或导入本地完整模型目录；下载中断后选择同一目录可断点续传。
+2. 顶部可切换 **OrTTS 合成**、**其他语音合成** 与 **语音识别**（按随包 `libortts.so` 能力自动展示）。
+3. 音频设备异常时，可通过 `--audio-device DEVICE` 指定 ALSA 设备（`--audio-device null` 可用于无声环境验证）。
+4. 用户设置与输出音频默认保存在 `~/.local/share/ortts-desktop/`，也可用 `--state-dir PATH` 自定义。
 
-下载中断后选择同一位置继续。若 Hugging Face 拒绝访问，可改用 ModelScope。
-更多共用操作见[桌面使用说明](../desktop/README.md)。
-
-声音设备有问题时，可用 `--audio-device DEVICE` 指定 ALSA 设备；即使无法播放，仍可保存音频。
-`--audio-device null` 是无声测试，不会从扬声器发声。
-
-设置和音频默认保存在 `~/.local/share/ortts-desktop/`（遵循 XDG 配置），
-也可用 `--state-dir /path/to/settings` 指定位置。
-
-文件夹包构建、依赖审计和自动化测试见 [开发与代理说明](AGENT_README.md)。
+构建与自动化测试说明见 [开发与代理说明](AGENT_README.md)。
