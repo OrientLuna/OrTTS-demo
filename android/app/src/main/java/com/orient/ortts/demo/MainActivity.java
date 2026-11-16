@@ -13,10 +13,11 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MainActivity extends Activity {
- static final ExecutorService worker=Executors.newSingleThreadExecutor();static final AtomicBoolean busy=new AtomicBoolean();
- private final Handler ui=new Handler(Looper.getMainLooper());private LinearLayout box;private TextView status;private Spinner model,variant,voice;private TextView modelHint;private JSONArray catalog=new JSONArray();private boolean modelSpinnerReady,manualPack,skipModelSelection;private EditText text,url;private CheckBox streaming;private MediaPlayer replay;
- private static final class PlaybackTask {final AtomicBoolean cancelled=new AtomicBoolean();volatile StreamingPlayer player;}
+ public class MainActivity extends Activity {
+  static final ExecutorService worker=Executors.newSingleThreadExecutor();static final AtomicBoolean busy=new AtomicBoolean();
+  private final Handler ui=new Handler(Looper.getMainLooper());private LinearLayout box;private TextView status;private Spinner model,variant,voice;private TextView modelHint;private JSONArray catalog=new JSONArray();private boolean modelSpinnerReady,manualPack,skipModelSelection;private EditText text,url;private CheckBox streaming;private MediaPlayer replay;
+  private ScrollView orttsTab;private SpeechTabPanel ttsTab,asrTab;private final Button[] tabButtons=new Button[3];private int activeTab=0;private boolean tabsLocked;
+  private static final class PlaybackTask {final AtomicBoolean cancelled=new AtomicBoolean();volatile StreamingPlayer player;}
  private static final class PlaybackCancelled extends IOException {PlaybackCancelled(){super("Playback cancelled");}}
  private volatile PlaybackTask activePlayback;private Button stopPlaybackButton;
  private void stopPlayback(){PlaybackTask task=activePlayback;if(task!=null){task.cancelled.set(true);StreamingPlayer p=task.player;if(p!=null)p.requestStop();stopPlaybackButton.setEnabled(false);message("正在停止合成与播放…");}}
@@ -29,7 +30,59 @@ public class MainActivity extends Activity {
  private ArrayAdapter<String> choiceAdapter(List<String> values){return new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,values){private View label(View v,int p){if(v instanceof TextView){String id=getItem(p);String label=id.equals("P3")?"轻量版":id.equals("P5")?"标准版":id.equals("female")?"女声1":id.equals("female_2")?"女声2":id.equals("male")?"男声1":id.equals("male_2")?"男声2":id;((TextView)v).setText(label);}return v;}public View getView(int p,View v,ViewGroup parent){return label(super.getView(p,v,parent),p);}public View getDropDownView(int p,View v,ViewGroup parent){return label(super.getDropDownView(p,v,parent),p);}};}
  private Spinner select(String[] values){Spinner s=new Spinner(this);s.setAdapter(choiceAdapter(Arrays.asList(values)));box.addView(s);return s;}
  private EditText input(String hint,String value){EditText e=new EditText(this);e.setHint(hint);e.setText(value);box.addView(e);return e;}
- @Override public void onCreate(Bundle b){super.onCreate(b);ScrollView sc=new ScrollView(this);box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(28,28,28,28);sc.addView(box);setContentView(sc);TextView title=new TextView(this);title.setText("OrTTS "+BuildConfig.VERSION_NAME);title.setTextSize(28);box.addView(title);Button speechButton=new Button(this);speechButton.setText("第三方语音模型 / 语音识别 →");speechButton.setOnClickListener(v->{if(!busy.get())startActivity(new Intent(this,SpeechActivity.class));});box.addView(speechButton);TextView section=new TextView(this);section.setText("OrTTS语音合成\n选择模型和声音，即可离线朗读");section.setTextSize(20);box.addView(section);loadCatalog();String[] modelNames=new String[catalog.length()];for(int n=0;n<modelNames.length;n++)modelNames[n]=OwnModelCatalog.title(catalog.optJSONObject(n));model=select(modelNames);model.setSelection(Math.max(0,Math.min(getPreferences(0).getInt("model_index",defaultModelIndex()),modelNames.length-1)));variant=select(new String[]{"P3","P5"});voice=select(new String[]{"female","female_2","male","male_2"});text=input("输入要朗读的文字","你好，很高兴认识你。");modelHint=new TextView(this);modelHint.setText("P3 轻量版 · P5 原生预测器");box.addView(modelHint);streaming=new CheckBox(this);streaming.setText("边生成边播放");streaming.setChecked(true);box.addView(streaming);manager=new ModelManager(this,this::message);
+ private void switchTab(int index){
+  if(tabsLocked||busy.get())return;
+  if(activeTab==1&&ttsTab!=null)ttsTab.onTabDeactivated();
+  if(activeTab==2&&asrTab!=null)asrTab.onTabDeactivated();
+  activeTab=index;
+  if(orttsTab!=null)orttsTab.setVisibility(index==0?View.VISIBLE:View.GONE);
+  if(ttsTab!=null)ttsTab.root.setVisibility(index==1?View.VISIBLE:View.GONE);
+  if(asrTab!=null)asrTab.root.setVisibility(index==2?View.VISIBLE:View.GONE);
+  if(index==1&&ttsTab!=null)ttsTab.onTabActivated();
+  if(index==2&&asrTab!=null)asrTab.onTabActivated();
+  for(int i=0;i<tabButtons.length;i++){
+   if(tabButtons[i]==null)continue;
+   boolean selected=(i==index);
+   tabButtons[i].setBackgroundTintList(android.content.res.ColorStateList.valueOf(selected?0xff2365df:0xffe9edf5));
+   tabButtons[i].setTextColor(selected?android.graphics.Color.WHITE:0xff2d3748);
+  }
+ }
+ private void setTabsLocked(boolean locked){
+  tabsLocked=locked;
+  ui.post(()->{for(Button tb:tabButtons)if(tb!=null)tb.setEnabled(!locked);});
+ }
+ @Override public void onCreate(Bundle b){super.onCreate(b);
+  float density=getResources().getDisplayMetrics().density;
+  LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setFitsSystemWindows(true);setContentView(root);
+  LinearLayout header=new LinearLayout(this);header.setOrientation(LinearLayout.HORIZONTAL);header.setGravity(Gravity.CENTER_VERTICAL);
+  int hPad=(int)(16*density),vPad=(int)(10*density);header.setPadding(hPad,vPad,hPad,vPad);header.setBackgroundColor(0xfff7f9fc);
+  ImageView logo=new ImageView(this);logo.setImageResource(R.drawable.ortts_logo);logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+  int logoSize=(int)(40*density);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(logoSize,logoSize);lp.rightMargin=(int)(12*density);header.addView(logo,lp);
+  LinearLayout titleCol=new LinearLayout(this);titleCol.setOrientation(LinearLayout.VERTICAL);
+  TextView title=new TextView(this);title.setText("OrTTS "+BuildConfig.VERSION_NAME);title.setTextSize(22);title.setTextColor(0xff111827);titleCol.addView(title);
+  TextView subTitle=new TextView(this);subTitle.setText("本地离线语音合成与识别");subTitle.setTextSize(12);subTitle.setTextColor(0xff6b7280);titleCol.addView(subTitle);
+  header.addView(titleCol);root.addView(header);
+
+  LinearLayout nav=new LinearLayout(this);nav.setOrientation(LinearLayout.HORIZONTAL);nav.setBackgroundColor(0xfff7f9fc);
+  int navPad=(int)(6*density);nav.setPadding(navPad,0,navPad,navPad);
+  String[] tabLabels={"OrTTS","其他合成","语音识别"};
+  for(int i=0;i<3;i++){
+   final int tabIndex=i;
+   Button tb=new Button(this);tb.setText(tabLabels[i]);tb.setTextSize(13);
+   LinearLayout.LayoutParams tbp=new LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f);
+   tbp.leftMargin=(int)(4*density);tbp.rightMargin=(int)(4*density);
+   tb.setOnClickListener(v->switchTab(tabIndex));
+   tabButtons[i]=tb;nav.addView(tb,tbp);
+  }
+  root.addView(nav,new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT));
+
+  FrameLayout content=new FrameLayout(this);
+  root.addView(content,new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f));
+
+  orttsTab=new ScrollView(this);box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);int pad=(int)(16*density);box.setPadding(pad,pad,pad,pad);orttsTab.addView(box);
+  content.addView(orttsTab);
+
+  TextView section=new TextView(this);section.setText("OrTTS语音合成\n选择模型和声音，即可离线朗读");section.setTextSize(18);box.addView(section);loadCatalog();String[] modelNames=new String[catalog.length()];for(int n=0;n<modelNames.length;n++)modelNames[n]=OwnModelCatalog.title(catalog.optJSONObject(n));model=select(modelNames);model.setSelection(Math.max(0,Math.min(getPreferences(0).getInt("model_index",defaultModelIndex()),modelNames.length-1)));variant=select(new String[]{"P3","P5"});voice=select(new String[]{"female","female_2","male","male_2"});text=input("输入要朗读的文字","你好，很高兴认识你。");modelHint=new TextView(this);modelHint.setText("P3 轻量版 · P5 原生预测器");box.addView(modelHint);streaming=new CheckBox(this);streaming.setText("边生成边播放");streaming.setChecked(true);box.addView(streaming);manager=new ModelManager(this,this::message);
   button("合成语音",()->synthesize(variant.getSelectedItem().toString(),voice.getSelectedItem().toString(),text.getText().toString(),streaming.isChecked(),null));
   stopPlaybackButton=new Button(this);stopPlaybackButton.setText("停止合成 / 播放");stopPlaybackButton.setEnabled(false);stopPlaybackButton.setOnClickListener(v->stopPlayback());box.addView(stopPlaybackButton);
   button("播放上一条",()->{if(latest==null)throw new IOException("请先合成语音");ui.post(()->{try{if(replay!=null)replay.release();replay=new MediaPlayer();replay.setDataSource(latest.getPath());replay.prepare();replay.start();}catch(Exception e){message("播放失败："+e.getMessage());}});});
@@ -39,7 +92,14 @@ public class MainActivity extends Activity {
   Button downloadButton=new Button(this);downloadButton.setText("下载 / 检查所选模型");box.addView(downloadButton);downloadButton.setOnClickListener(v->{if(busy.get())return;DownloadNetworkPolicy.confirm(this,allowed->submit(()->DownloadNetworkPolicy.run(allowed,()->{NativeBridge.ensureLoaded();downloadSelected(variant.getSelectedItem().toString());NativeBridge.release();message("模型已准备好\n"+manager.downloadSummary());}),null));});
   button("导入本地权重 ZIP",()->ui.post(()->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,100);}));
   try{if(manager.hasBundled())button("准备内置权重",()->{manager.importBundled();NativeBridge.release();message("模型已准备好 · 解码器："+manager.decoderLabel());});}catch(Exception ignored){}
-  button("查看版本详情",()->ui.post(()->new AlertDialog.Builder(this).setTitle(OwnModelCatalog.title(selectedModel())).setMessage("模型："+selectedModel().optString("id")+"\n版本："+selectedModel().optString("revision")+"\n解码器："+selectedModel().optString("decoder","liquidcodec")).setPositiveButton("关闭",null).show()));button("释放模型",()->{NativeBridge.release();message("已释放运行内存");});status=new TextView(this);status.setTextIsSelectable(true);box.addView(status);message(manager.current()==null?"首次使用请下载所选模型，或导入本地包。共享文件只下载一次。":"模型已准备好 · 解码器："+manager.decoderLabel());model.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){}public void onItemSelected(AdapterView<?> p,View v,int position,long id){if(!modelSpinnerReady){modelSpinnerReady=true;skipModelSelection=false;updateModelHint();return;}if(skipModelSelection){skipModelSelection=false;updateModelHint();return;}if(busy.get())return;String nextKey=OwnModelCatalog.key(selectedModel());if(nextKey.equals(catalogSelectionKey)){updateModelHint();return;}catalogSelectionKey=nextKey;manualPack=false;getPreferences(0).edit().putBoolean("manual_pack",false).putInt("model_index",position).apply();url.setText(selectedModel().optString("manifest_url"));NativeBridge.release();manager.selectInstalled(selectedModel().optString("id"),selectedModel().optString("revision"));updateModelHint();message("所选模型："+selectedModel().optString("name")+" · "+manager.modelLabel());}});updateModelHint();catalogSelectionKey=OwnModelCatalog.key(selectedModel());variant.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){}public void onItemSelected(AdapterView<?> p,View v,int position,long id){updateModelHint();}});Button refresh=new Button(this);refresh.setText("更新可下载模型");refresh.setOnClickListener(v->refreshOwnCatalog());box.addView(refresh);applyInteractionText(getIntent());handleTest(getIntent());launchSpeechQA(getIntent());if(!BuildConfig.DEBUG||(!getIntent().hasExtra("qa_action")&&!getIntent().getBooleanExtra("speech_qa",false))){File cached=new File(getFilesDir(),"own-model-catalog.json");if(System.currentTimeMillis()-cached.lastModified()>6*60*60*1000L)refreshOwnCatalog();}
+  button("查看版本详情",()->ui.post(()->new AlertDialog.Builder(this).setTitle(OwnModelCatalog.title(selectedModel())).setMessage("模型："+selectedModel().optString("id")+"\n版本："+selectedModel().optString("revision")+"\n解码器："+selectedModel().optString("decoder","liquidcodec")).setPositiveButton("关闭",null).show()));button("释放模型",()->{NativeBridge.release();message("已释放运行内存");});status=new TextView(this);status.setTextIsSelectable(true);box.addView(status);message(manager.current()==null?"首次使用请下载所选模型，或导入本地包。共享文件只下载一次。":"模型已准备好 · 解码器："+manager.decoderLabel());model.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){}public void onItemSelected(AdapterView<?> p,View v,int position,long id){if(!modelSpinnerReady){modelSpinnerReady=true;skipModelSelection=false;updateModelHint();return;}if(skipModelSelection){skipModelSelection=false;updateModelHint();return;}if(busy.get())return;String nextKey=OwnModelCatalog.key(selectedModel());if(nextKey.equals(catalogSelectionKey)){updateModelHint();return;}catalogSelectionKey=nextKey;manualPack=false;getPreferences(0).edit().putBoolean("manual_pack",false).putInt("model_index",position).apply();url.setText(selectedModel().optString("manifest_url"));NativeBridge.release();manager.selectInstalled(selectedModel().optString("id"),selectedModel().optString("revision"));updateModelHint();message("所选模型："+selectedModel().optString("name")+" · "+manager.modelLabel());}});updateModelHint();catalogSelectionKey=OwnModelCatalog.key(selectedModel());variant.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){}public void onItemSelected(AdapterView<?> p,View v,int position,long id){updateModelHint();}});Button refresh=new Button(this);refresh.setText("更新可下载模型");refresh.setOnClickListener(v->refreshOwnCatalog());box.addView(refresh);
+  ttsTab=new SpeechTabPanel(this,false,spoken->{},this::setTabsLocked);
+  asrTab=new SpeechTabPanel(this,true,spoken->{switchTab(0);if(text!=null&&spoken.length()<=8192){text.setText(spoken);message("识别结果已填入，可编辑后朗读");}},this::setTabsLocked);
+  ttsTab.root.setVisibility(View.GONE);
+  asrTab.root.setVisibility(View.GONE);
+  content.addView(ttsTab.root);
+  content.addView(asrTab.root);
+  switchTab(0);applyInteractionText(getIntent());handleTest(getIntent());launchSpeechQA(getIntent());if(!BuildConfig.DEBUG||(!getIntent().hasExtra("qa_action")&&!getIntent().getBooleanExtra("speech_qa",false))){File cached=new File(getFilesDir(),"own-model-catalog.json");if(System.currentTimeMillis()-cached.lastModified()>6*60*60*1000L)refreshOwnCatalog();}
  }
  private void launchSpeechQA(Intent i){if(BuildConfig.DEBUG&&i.getBooleanExtra("speech_qa",false)){Intent speech=new Intent(this,SpeechActivity.class);speech.putExtras(i);startActivity(speech);}}
  private int defaultModelIndex(){for(int i=0;i<catalog.length();i++)if(catalog.optJSONObject(i).optBoolean("p3_only"))return i;return 0;}
@@ -57,7 +117,8 @@ public class MainActivity extends Activity {
 
  private void applyInteractionText(Intent i){String value=i.getStringExtra("interaction_text");if(value!=null&&!busy.get()&&value.length()<=8192){text.setText(value);message("识别结果已填入，可编辑后朗读");}}
  @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);applyInteractionText(i);handleTest(i);launchSpeechQA(i);}
- @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==100&&result==RESULT_OK&&data!=null){Uri uri=data.getData();submit(()->{manager.importUri(uri);manualPack=true;getPreferences(0).edit().putBoolean("manual_pack",true).apply();syncImportedModel();NativeBridge.release();message("模型已准备好 · 解码器："+manager.decoderLabel());},null);}}
+ @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(ttsTab!=null&&ttsTab.handleActivityResult(request,result,data))return;if(asrTab!=null&&asrTab.handleActivityResult(request,result,data))return;if(request==100&&result==RESULT_OK&&data!=null){Uri uri=data.getData();submit(()->{manager.importUri(uri);manualPack=true;getPreferences(0).edit().putBoolean("manual_pack",true).apply();syncImportedModel();NativeBridge.release();message("模型已准备好 · 解码器："+manager.decoderLabel());},null);}}
+ @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){super.onRequestPermissionsResult(request,permissions,results);if(asrTab!=null)asrTab.handlePermissionResult(request,results);}
  private void synthesize(String v,String s,String t,boolean stream,String runId)throws Exception{if(t.trim().isEmpty())throw new IOException("请输入文字");NativeBridge.ensureLoaded();ensureSelected();manager.requireCompatibleDecoder();File root=manager.current();if(!manager.ready(v)){message("正在准备所选模型…");root=manager.hasBundled()?manager.importBundled():downloadSelected(v);}if(!Arrays.asList("female","female_2","male","male_2").contains(s)||!new File(root,"voices/"+s+".f32").isFile())throw new IOException("该模型包未提供所选音色，请选择包内已有音色。");message("正在合成与缓冲 · 解码器："+manager.decoderLabel());File outputs=new File(getFilesDir(),"outputs");outputs.mkdirs();File out=new File(outputs,runId==null?Long.toString(System.currentTimeMillis()):runId);if(out.exists())throw new IOException("输出已存在");out.mkdirs();JSONObject report;
   PlaybackTask operation=new PlaybackTask();activePlayback=operation;
   try(StreamingPlayer player=new StreamingPlayer(stream,t.codePointCount(0,t.length()))){operation.player=player;ui.post(()->{if(activePlayback==operation)stopPlaybackButton.setEnabled(true);});String ref=BuildConfig.DEBUG?getIntent().getStringExtra("qa_ref_path"):null;String refText=BuildConfig.DEBUG?getIntent().getStringExtra("qa_ref_text"):null;boolean icl=BuildConfig.DEBUG&&getIntent().getBooleanExtra("qa_icl",false);
@@ -77,6 +138,6 @@ public class MainActivity extends Activity {
   else if("release".equals(action)){NativeBridge.release();}
   else throw new IOException("unknown QA action");
  },id);}
- @Override protected void onPause(){super.onPause();if(url!=null)getPreferences(0).edit().putString("manifest_url",url.getText().toString().trim()).apply();}
- @Override protected void onDestroy(){stopPlayback();catalogWorker.shutdownNow();if(replay!=null)replay.release();super.onDestroy();}
+ @Override protected void onPause(){super.onPause();if(url!=null)getPreferences(0).edit().putString("manifest_url",url.getText().toString().trim()).apply();if(ttsTab!=null)ttsTab.onPause();if(asrTab!=null)asrTab.onPause();}
+ @Override protected void onDestroy(){stopPlayback();if(ttsTab!=null)ttsTab.onDestroy();if(asrTab!=null)asrTab.onDestroy();catalogWorker.shutdownNow();if(replay!=null)replay.release();super.onDestroy();}
 }

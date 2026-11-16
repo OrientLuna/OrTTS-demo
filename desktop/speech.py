@@ -162,10 +162,15 @@ class SpeechTask:
         cfg = Config(C.sizeof(Config), model["family"].encode(), os.fsencode(Path(root) / model["model_path"]), 2, int(stream))
         if model.get("external_espeak"):
             base = resources()
-            library = base / "native/libespeak-ng.dylib"
+            lib_name = "libespeak-ng.dylib" if sys.platform == "darwin" else "libespeak-ng.so.1"
+            library = base / "native" / lib_name
             data = base / "espeak-ng-data"
             if not getattr(sys, "frozen", False):
-                library, data = Path("/opt/homebrew/lib/libespeak-ng.dylib"), Path("/opt/homebrew/share/espeak-ng-data")
+                if sys.platform == "darwin":
+                    library, data = Path("/opt/homebrew/lib/libespeak-ng.dylib"), Path("/opt/homebrew/share/espeak-ng-data")
+                else:
+                    library = next((p for p in (Path("/usr/lib/x86_64-linux-gnu/libespeak-ng.so.1"), Path("/usr/lib/aarch64-linux-gnu/libespeak-ng.so.1"), Path("/usr/lib/libespeak-ng.so.1")) if p.is_file()), library)
+                    data = next((p for p in (Path("/usr/lib/x86_64-linux-gnu/espeak-ng-data"), Path("/usr/lib/aarch64-linux-gnu/espeak-ng-data"), Path("/usr/share/espeak-ng-data")) if p.is_dir()), data)
             if not library.is_file() or not data.is_dir():
                 raise ValueError("此模型需要随 App 打包的 eSpeak NG")
             cfg.espeak, cfg.data = os.fsencode(library), os.fsencode(data)
@@ -232,7 +237,20 @@ def read_audio(path, cancel):
     """System decoder handles WAV/CAF/MP3/M4A; native ASR receives 16k mono only."""
     with tempfile.TemporaryDirectory(prefix="ortts-audio-") as temp:
         converted = Path(temp) / "input.wav"
-        subprocess.run(["/usr/bin/afconvert", "-f", "WAVE", "-d", "LEI16@16000", "-c", "1", str(path), str(converted)], check=True, capture_output=True, timeout=90)
+        if sys.platform == "darwin":
+            subprocess.run(["/usr/bin/afconvert", "-f", "WAVE", "-d", "LEI16@16000", "-c", "1", str(path), str(converted)], check=True, capture_output=True, timeout=90)
+        else:
+            use_direct = False
+            if str(path).lower().endswith(".wav"):
+                try:
+                    with wave.open(str(path), "rb") as w:
+                        use_direct = (w.getnchannels() == 1 and w.getframerate() == 16000 and w.getsampwidth() == 2)
+                except wave.Error:
+                    use_direct = False
+            if use_direct:
+                converted = Path(path)
+            else:
+                subprocess.run(["ffmpeg", "-y", "-i", str(path), "-ar", "16000", "-ac", "1", "-sample_fmt", "s16", str(converted)], check=True, capture_output=True, timeout=90)
         check_cancel(cancel)
         with wave.open(str(converted), "rb") as wav:
             if wav.getnframes() > 16000 * 60 or not wav.getnframes():

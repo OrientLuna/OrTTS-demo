@@ -71,7 +71,7 @@ class App:
         root.minsize(900, 760)
         root.protocol("WM_DELETE_WINDOW", self.close)
         self.speech_panels = []
-        self.notebook = ttk.Notebook(root) if sys.platform == "darwin" else None
+        self.notebook = ttk.Notebook(root)
         if self.notebook:
             self.notebook.pack(fill="both", expand=True)
         frame = ttk.Frame(self.notebook or root, padding=24)

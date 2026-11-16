@@ -24,7 +24,15 @@ diff --git a/include/engine/framework/runtime/kv_cache.h b/include/engine/framew
 index da67321..01ad705 100644
 --- a/include/engine/framework/runtime/kv_cache.h
 +++ b/include/engine/framework/runtime/kv_cache.h
-@@ -61,6 +61,7 @@ struct TransformerKVCacheOptions {
+@@ -4,6 +4,7 @@
+ 
+ #include <algorithm>
+ #include <cstdint>
++#include <optional>
+ #include <string>
+ #include <vector>
+ 
+@@ -61,6 +62,7 @@ struct TransformerKVCacheOptions {
      int64_t ring_pinned_steps = 0;
      // Device-only users can defer host staging allocation until import_state.
      bool lazy_import_scratch = false;

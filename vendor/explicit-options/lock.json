@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "patch": "vendor/explicit-options/audio.patch",
-  "patch_sha256": "805a3de4bfe61343ea3cd26c610edb0b5cbc5bac792a1dd00b6ac8ffb1ede2db",
+  "patch_sha256": "b3b1389f98881e1db0319701d75bc01c32fcc9cfb3c799eef8683832446ea64f",
   "files": [
     {
       "path": "include/engine/framework/modules/transformers/causal_decoder.h",
@@ -11,7 +11,7 @@
     {
       "path": "include/engine/framework/runtime/kv_cache.h",
       "base_sha256": "056ffd4fb9abe5c02718580c35a671519e92e7635781963a27790478d80c683f",
-      "sha256": "04ee1298fe4fe8ff843af5b11302d298b11f96b4ec4a12f0945662bd89d9d7c9"
+      "sha256": "4ec7ee5968d476497b337cbf9945cabbce68ef1cc6a4bfdd96d01d4df9b66da4"
     },
     {
       "path": "include/engine/models/qwen3_tts/assets.h",
