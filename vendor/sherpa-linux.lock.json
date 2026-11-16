@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "version": "1.13.8",
+  "source_commit": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+  "ort_version": "1.28.2",
+  "verification": "Official release URL and byte length; locally calculated SHA256, not an upstream published checksum",
+  "platforms": {
+    "linux-x86_64": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-linux-x64-shared-lib.tar.bz2",
+      "archive_sha256": "3892d184be41027e18165e67f549cd4e4cdd8dcd73ac5579e97afd55e14e30b6",
+      "files": {
+        "libonnxruntime.so": "4b3607aebd1784b26b6f9b20e4bd974c7ab8287043e4d095cb7d2cb40b5e566e",
+        "libsherpa-onnx-c-api.so": "b8351ca1632571ac108adbb317bcc4bf7cfe84b72690e3017316b0da3e1e344f",
+        "libsherpa-onnx-cxx-api.so": "5d8d510368554b767d7cd8d024fa6ea439b63b66bb4c23d9d285fb7ed74f3880"
+      }
+    },
+    "linux-aarch64": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-linux-aarch64-shared-cpu-lib.tar.bz2",
+      "archive_sha256": "fb98b80628a383909bf83626daca2e0d0ffc93bf1f7d222eaaa4282b388f072f",
+      "files": {
+        "libonnxruntime.so": "cfc800d4438f15e8d9017521326776ca7117d8783cb847ccccc2fc61ac4d540f",
+        "libsherpa-onnx-c-api.so": "11378e1aea169aecb59a4d41ca8da6f5ee4f3614c34a4b908dd78de7646a518d",
+        "libsherpa-onnx-cxx-api.so": "a4c49b9f8b81bd7e9df67655c7108e84e27d8a9ce57b138ea56bfdcbf0d7ec23"
+      }
+    }
+  }
+}

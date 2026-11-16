@@ -5,7 +5,7 @@ import argparse,hashlib,json,subprocess,shutil,os
 ROOT=Path(__file__).resolve().parents[1]/"vendor/unified"
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--release-compat',action='store_true');p.add_argument('--audio-source',type=Path,required=True);p.add_argument('--llama-source',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();out=a.out.resolve();lock=json.loads((ROOT/'lock.json').read_text())
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--release-compat',action='store_true');p.add_argument('--audio-source',type=Path,required=True,help='Derived output of prepare_runtime.py');p.add_argument('--llama-source',type=Path,default=ROOT.parents[1]/'third_party/llama.cpp');p.add_argument('--out',type=Path,required=True);a=p.parse_args();out=a.out.resolve();lock=json.loads((ROOT/'lock.json').read_text())
  if out.exists():raise ValueError('Output must not exist')
  if sha(ROOT/'audio.patch')!=lock['patch_sha256']:raise ValueError('Patch SHA mismatch')
  if sha(a.llama_source/'ggml/include/ggml.h')!=lock['ggml_header_sha256']:raise ValueError('Pinned ggml header identity mismatch')

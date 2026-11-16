@@ -34,4 +34,4 @@ def prepare(source, destination):
     (destination/'ORTTS_SOURCE_RECEIPT.json').write_text(json.dumps(receipt,indent=2)+'\n')
     return receipt
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source-repo',required=True,type=Path);p.add_argument('--out',type=Path,default=ROOT/'_work/audio.cpp');a=p.parse_args();print(json.dumps(prepare(a.source_repo,a.out),indent=2))
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source-repo',type=Path,default=ROOT/'third_party/audio.cpp',help='Pinned upstream submodule by default; an existing offline source repo is also accepted');p.add_argument('--out',type=Path,default=ROOT/'_work/audio.cpp');a=p.parse_args();print(json.dumps(prepare(a.source_repo,a.out),indent=2))

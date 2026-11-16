@@ -21,6 +21,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--target',choices=TARGETS,required=True)
     p.add_argument('--profile',required=True)
+    p.add_argument('--generator',choices=['Ninja','Unix Makefiles'],default='Ninja')
     p.add_argument('--source',type=Path,required=True)
     p.add_argument('--out',type=Path,required=True)
     p.add_argument('--sherpa-asr-prefix',type=Path,help='Optional local pinned Sherpa 1.13.8 compatibility SDK (requires --speech)');p.add_argument('--cmake',default='cmake');p.add_argument('--ninja',type=Path)
@@ -31,7 +32,7 @@ def main():
     if not 1<=a.jobs<=8:p.error('Use 1..8 build workers')
     source=a.source.resolve();out=a.out.resolve();lock=identity(source,a.liquidcodec,a.speech)
     apple=a.target.startswith(('macos','ios'))
-    cmd=[a.cmake,'-S',str(ROOT),'-B',str(out),'-G','Ninja',
+    cmd=[a.cmake,'-S',str(ROOT),'-B',str(out),'-G',a.generator,
          '-DCMAKE_BUILD_TYPE=Release','-DORTTS_AUDIOCPP_SOURCE='+str(source),
          '-DORTTS_BUILD_ENGINE_PLUGIN=ON','-DORTTS_CPU_PROFILE='+a.profile,
          '-DFETCHCONTENT_FULLY_DISCONNECTED=ON']
@@ -53,6 +54,14 @@ def main():
                 if not binary.is_file() or binary.stat().st_size!=entry['bytes'] or hashlib.sha256(binary.read_bytes()).hexdigest()!=entry['sha256']:
                     raise ValueError('Android Sherpa binary identity mismatch: '+entry['name'])
             sherpa.update(source_commit=android_lock['source_commit'],onnxruntime_version=android_lock['ort_version'],platform='android-arm64',android_sdk_lock_sha256=hashlib.sha256((ROOT/'vendor/sherpa-android.lock.json').read_bytes()).hexdigest())
+        if a.target.startswith('linux-'):
+            linux_lock=ROOT/'vendor/sherpa-linux.lock.json'
+            expected=json.loads(linux_lock.read_text())['platforms'][a.target]['files']
+            for name,digest in expected.items():
+                binary=prefix/'lib'/name
+                if not binary.is_file() or hashlib.sha256(binary.read_bytes()).hexdigest()!=digest:
+                    raise ValueError('Linux Sherpa binary identity mismatch: '+name)
+            sherpa.update(platform=a.target,linux_sdk_lock_sha256=hashlib.sha256(linux_lock.read_bytes()).hexdigest())
         cmd+=['-DORTTS_ENABLE_SHERPA_ASR=ON','-DORTTS_SHERPA_PREFIX='+str(prefix)]
     else:cmd+=['-DORTTS_ENABLE_SHERPA_ASR=OFF']
     if 'cpu_dispatch' in lock:

@@ -2,6 +2,42 @@
   "schema": "ortts-speech-catalog-v1",
   "models": [
     {
+      "id": "paraformer-streaming-zh-en-int8",
+      "family": "streaming_paraformer",
+      "task": "asr",
+      "model_path": "paraformer-streaming-zh-en-int8",
+      "validated_languages": [],
+      "declared_languages": ["zh", "en", "mixed"],
+      "voice_sample": [],
+      "source_revision": "8e40c43232a1c5c66c82111efc5820d3accca11b",
+      "assets": [
+        {
+          "path": "paraformer-streaming-zh-en-int8/encoder.int8.onnx",
+          "bytes": 165462184,
+          "sha256": "81a70226a8934e6ed92aa1d4fc486b428b5398e2f2619ed4897b7294cab90e9a",
+          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en/resolve/8e40c43232a1c5c66c82111efc5820d3accca11b/encoder.int8.onnx"
+        },
+        {
+          "path": "paraformer-streaming-zh-en-int8/decoder.int8.onnx",
+          "bytes": 71664561,
+          "sha256": "f3cca9f77bb9d93c8fcbfb63ae617b6b1ee96818df3aa3b151c40658fe38594f",
+          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en/resolve/8e40c43232a1c5c66c82111efc5820d3accca11b/decoder.int8.onnx"
+        },
+        {
+          "path": "paraformer-streaming-zh-en-int8/tokens.txt",
+          "bytes": 75756,
+          "sha256": "59aba8873a2ed1e122c25fee421e25f283b63290efbde85c1f01a853d83cb6e6",
+          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en/resolve/8e40c43232a1c5c66c82111efc5820d3accca11b/tokens.txt"
+        }
+      ],
+      "external_espeak": false,
+      "status": "experimental-English-and-mixed-quality-failed",
+      "notes": "Revisable partials; explicit or segment-limit endpoints. No automatic silence endpoint. Not a default recommendation.",
+      "demo_enabled": true,
+      "display_name": "Paraformer · 中英流式实验档",
+      "license_review": {"distribution_cleared": false, "notes": "Internal candidate; original fixed model provenance retained."}
+    },
+    {
       "id": "asr-lite-zh-en-v1",
       "family": "zipformer_bilingual",
       "task": "asr",

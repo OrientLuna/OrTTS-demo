@@ -68,6 +68,7 @@ public final class SpeechActivity extends Activity {
   long bytes=0;JSONArray assets=m.optJSONArray("assets");for(int i=0;i<assets.length();i++)bytes+=assets.optJSONObject(i).optLong("bytes");
    JSONObject license=m.optJSONObject("license_review");String detail=m.optString("family").equals("moss_tts_nano")?"中文 / English · female / male · 48kHz立体声 · 流式合成":m.optString("family").equals("zipformer_bilingual")?"中英及混说 · 增量流式实验档 · 质量筛查未达标，暂不推荐":m.optString("family").equals("moonshine_asr")?"英文增量识别 · 结果会修订":m.optString("task").equals("asr")?"多语言离线识别 · 中文已过本批筛查；英语及混说仍有错误 · 无情绪标签输出":"按模型和音色语言输入 · Piper/Kitten 离线合成";
    if(m.optString("family").equals("qwen3_asr"))detail="高内存离线可选 · 原28层INT8 · 按句返回，不是实时partial\n中英及混说仍需核对；非低配认证 · 本地ZIP导入，不自动下载";
+   if(m.optString("family").equals("streaming_paraformer"))detail="Paraformer · 中英增量流式 · partial会修订\n英语及混说质量筛查未达标 · 手动结束或分段上限，无自动静音端点";
    download.setText(m.optBoolean("local_only")?"检查本地模型":"下载 / 检查所选模型");
    info.setText(detail+String.format(Locale.ROOT,"\n模型约 %.1f MB · 大小及SHA256校验",bytes/1e6)+"\n许可："+license.optString("weights_license"));
  }

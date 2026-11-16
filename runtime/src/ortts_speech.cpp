@@ -160,6 +160,12 @@ const char*ortts_speech_catalog_json(void){
   base.insert(base.find("\"asr\":[")+7,"\"qwen3_asr\",");
 #endif
   base.insert(base.size()-1,R"(,"interaction_capabilities":{"schema":1,"primary_tts":"OrTTS","scheduling":"one-active-inference; ORTTS_BUSY; caller-owned residency","lifecycle":["create","run-or-accept-finish","cancel","reset","free-after-join"],"background_service":false,"profiles":{"sense_asr":{"input":"buffered-final","languages":["zh","en","yue","ja","ko"],"true_streaming":false,"emotion_output":false,"quality_status":"Chinese-screen-pass; English-and-mixed-English-screen-fail","cancel":"discard-after-offline-compute","reset":"clears-buffer; next-request-supported"},"moonshine_asr":{"input":"incremental","languages":["en"],"true_streaming":true,"emotion_output":false,"quality_status":"English-profile-existing; not-mixed-language"},"streaming_paraformer":{"available":false,"quality_status":"rejected-English-and-mixed-screen","true_streaming":true},"qwen3_asr":)"+qwen+R"(},"low_end_device_whitelist":[]})");
+#if ORTTS_WITH_SHERPA_ASR
+  const std::string disabled_paraformer="\"streaming_paraformer\":{\"available\":false";
+  base.replace(base.find(disabled_paraformer),disabled_paraformer.size(),"\"streaming_paraformer\":{\"available\":true");
+  const std::string compat_families="\"families\":[\"zipformer_bilingual\"]";
+  base.replace(base.find(compat_families),compat_families.size(),"\"families\":[\"zipformer_bilingual\",\"streaming_paraformer\"]");
+#endif
   static const std::string catalog=std::move(base);return catalog.c_str();
 #else
  return R"({"schema":1,"tts":[],"asr":[],"disabled":true})";
@@ -228,7 +234,7 @@ uint32_t ortts_asr_stream_abi_version(void){return ORTTS_WITH_SPEECH?ORTTS_ASR_S
 ortts_status ortts_asr_stream_create(const ortts_speech_config*c,const ortts_asr_stream_config*s,ortts_asr_stream**out){
  if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{
  require(ORTTS_WITH_SPEECH,"Speech feature disabled; rebuild with --speech");
- require(out&&c&&c->struct_size==sizeof(*c)&&present(c->family)&&(std::string(c->family)=="moonshine_asr"||(ORTTS_WITH_SHERPA_ASR&&std::string(c->family)=="zipformer_bilingual"))&&present(c->model_path)&&c->threads>=1&&c->threads<=8&&c->streaming==1,"Incremental ASR family unavailable or invalid configuration");
+  require(out&&c&&c->struct_size==sizeof(*c)&&present(c->family)&&(std::string(c->family)=="moonshine_asr"||(ORTTS_WITH_SHERPA_ASR&&(std::string(c->family)=="zipformer_bilingual"||std::string(c->family)=="streaming_paraformer")))&&present(c->model_path)&&c->threads>=1&&c->threads<=8&&c->streaming==1,"Incremental ASR family unavailable or invalid configuration");
  require(!c->session_option_count&&!present(c->espeak_library)&&!present(c->espeak_data)&&!c->max_input_frames,"Use typed incremental ASR settings, not offline/session options");
  require(std::filesystem::is_regular_file(c->model_path)||std::filesystem::is_directory(c->model_path),"Missing ASR model package");
  ortts_asr_stream_config v{sizeof(v),400,1000,15000,800,0.003F};
@@ -240,9 +246,9 @@ ortts_status ortts_asr_stream_create(const ortts_speech_config*c,const ortts_asr
  require(std::isfinite(v.energy_threshold)&&v.energy_threshold>0&&v.energy_threshold<1,"Invalid RMS energy threshold");
  auto e=std::make_unique<ortts_asr_stream>();
 #if ORTTS_WITH_SHERPA_ASR
- if(std::string(c->family)=="zipformer_bilingual"){
+  if(std::string(c->family)=="zipformer_bilingual"||std::string(c->family)=="streaming_paraformer"){
   require(v.silence_ms==0,"Bilingual compatibility recipe currently supports explicit/limit endpoints only");
-  e->zipformer=std::make_unique<OrTTSZipformerStream>(c->model_path,c->threads,v.max_segment_ms,v.update_ms,v.min_partial_ms);*out=e.release();return ORTTS_OK;
+   e->zipformer=std::make_unique<OrTTSZipformerStream>(c->model_path,c->threads,v.max_segment_ms,v.update_ms,v.min_partial_ms,std::string(c->family)=="streaming_paraformer");*out=e.release();return ORTTS_OK;
  }
 #endif
 #if ORTTS_WITH_SPEECH

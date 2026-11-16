@@ -2,6 +2,7 @@
 #include "ortts_speech.h"
 #include "file_sha256.h"
 #include "zipformer_assets.h"
+#include "paraformer_assets.h"
 #include <sherpa-onnx/c-api/c-api.h>
 #include <algorithm>
 #include <atomic>
@@ -32,7 +33,7 @@ class OrTTSZipformerStream {
  bool emit(int endpoint,const std::function<bool(const ortts_asr_stream_event&)>&sink){std::string t=voiced_?text():"";if(endpoint==ORTTS_ASR_PARTIAL&&(t.empty()||t==last_||received_-start_<min_partial_frames_||received_-last_emit_<update_frames_))return true;last_=t;last_emit_=received_;ortts_asr_stream_event e{sizeof(e),endpoint,segment_,start_,received_,++revision_,t.c_str(),"und"};return !sink(e);}
  bool end(int reason,const std::function<bool(const ortts_asr_stream_event&)>&sink,const std::function<bool()>&cancel){if(received_==start_)return true;if(voiced_){float tail[10560]={};SherpaOnnxOnlineStreamAcceptWaveform(stream_,16000,tail,10560);SherpaOnnxOnlineStreamInputFinished(stream_);if(!drain(cancel))return false;}if(cancel()||!emit(reason,sink))return false;new_stream();start_=received_;++segment_;return true;}
  public:
- OrTTSZipformerStream(const std::string&root,int threads,uint32_t max_ms,uint32_t update_ms=400,uint32_t min_partial_ms=1000):limit_(uint64_t(max_ms)*16),update_frames_(uint64_t(update_ms)*16),min_partial_frames_(uint64_t(min_partial_ms)*16){
+  OrTTSZipformerStream(const std::string&root,int threads,uint32_t max_ms,uint32_t update_ms=400,uint32_t min_partial_ms=1000,bool paraformer=false):limit_(uint64_t(max_ms)*16),update_frames_(uint64_t(update_ms)*16),min_partial_frames_(uint64_t(min_partial_ms)*16){
   // Official iOS and desktop 1.13.8 artifacts were built from different commits.
 #if defined(__ANDROID__)
 #ifndef ORTTS_SHERPA_ANDROID_GIT
@@ -53,9 +54,11 @@ ORTTS_SHERPA_ANDROID_ORT
 )throw std::runtime_error(std::string("Sherpa executor version mismatch: ")+SherpaOnnxGetVersionStr()+" git="+SherpaOnnxGetGitSha1()+" ort="+SherpaOnnxGetOnnxruntimeVersionStr());
   if(threads<1||threads>8||max_ms<1000||max_ms>30000||max_ms%20)throw std::invalid_argument("Invalid ASR recipe configuration");
   auto base=std::filesystem::canonical(root);
-  for(const auto&a:ortts_zipformer_assets){auto p=std::filesystem::canonical(base/a.path);auto rel=p.lexically_relative(base);if(rel.empty()||rel.is_absolute()||*rel.begin()==".."||!std::filesystem::is_regular_file(p)||std::filesystem::file_size(p)!=a.bytes||ortts_sha256::file(p.string())!=a.sha256)throw std::invalid_argument("ASR asset identity mismatch: "+std::string(a.path));}
+  auto verify=[&](const auto&a){auto p=std::filesystem::canonical(base/a.path);auto rel=p.lexically_relative(base);if(rel.empty()||rel.is_absolute()||*rel.begin()==".."||!std::filesystem::is_regular_file(p)||std::filesystem::file_size(p)!=a.bytes||ortts_sha256::file(p.string())!=a.sha256)throw std::invalid_argument("ASR asset identity mismatch: "+std::string(a.path));};
+  if(paraformer){for(const auto&a:ortts_paraformer_assets)verify(a);}else{for(const auto&a:ortts_zipformer_assets)verify(a);}
   auto enc=(base/"exp/32/encoder-epoch-99-avg-1.int8.onnx").string();auto dec=(base/"exp/32/decoder-epoch-99-avg-1.onnx").string();auto join=(base/"exp/32/joiner-epoch-99-avg-1.int8.onnx").string();auto tokens=(base/"data/lang_char_bpe/tokens.txt").string();
   SherpaOnnxOnlineRecognizerConfig c{};c.feat_config.sample_rate=16000;c.feat_config.feature_dim=80;c.model_config.transducer.encoder=enc.c_str();c.model_config.transducer.decoder=dec.c_str();c.model_config.transducer.joiner=join.c_str();c.model_config.tokens=tokens.c_str();c.model_config.num_threads=threads;c.model_config.provider="cpu";c.decoding_method="greedy_search";c.max_active_paths=4;c.enable_endpoint=0;
+  if(paraformer){enc=(base/"encoder.int8.onnx").string();dec=(base/"decoder.int8.onnx").string();tokens=(base/"tokens.txt").string();c.model_config.transducer={};c.model_config.paraformer.encoder=enc.c_str();c.model_config.paraformer.decoder=dec.c_str();c.model_config.tokens=tokens.c_str();}
   recognizer_=SherpaOnnxCreateOnlineRecognizer(&c);if(!recognizer_)throw std::runtime_error("ASR recognizer creation failed");try{new_stream();}catch(...){SherpaOnnxDestroyOnlineRecognizer(recognizer_);recognizer_=nullptr;throw;}
  }
  ~OrTTSZipformerStream(){if(stream_)SherpaOnnxDestroyOnlineStream(stream_);if(recognizer_)SherpaOnnxDestroyOnlineRecognizer(recognizer_);}

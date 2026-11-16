@@ -156,10 +156,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_openAs
  std::lock_guard<std::mutex>guard(mu);try{
    auto family=str(e,familyJ),path=str(e,pathJ),profile=str(e,profileJ);auto key=family+"\n"+path+"\n"+profile;
   if(key==speechAsrKey&&(speechAsr||speechStream)){++asrReuses;if(speechStream)speechCheck(ortts_asr_stream_reset(speechStream));else speechCheck(ortts_asr_reset(speechAsr));return;}
-  release();speechClose();bool streaming=family=="moonshine_asr"||family=="zipformer_bilingual";
+  release();speechClose();bool streaming=family=="moonshine_asr"||family=="zipformer_bilingual"||family=="streaming_paraformer";
    ortts_speech_config c{};c.struct_size=sizeof(c);c.family=family.c_str();c.model_path=path.c_str();c.threads=family=="moonshine_asr"?4:2;c.streaming=streaming;
    ortts_speech_option decoder{"qwen3_asr.decoder_profile",profile.c_str()};if(family=="qwen3_asr"){c.session_options=&decoder;c.session_option_count=1;}
-  if(streaming){ortts_asr_stream*engine=nullptr;ortts_asr_stream_config settings{sizeof(settings),400,1000,15000,0,0.003F};speechCheck(ortts_asr_stream_create(&c,family=="zipformer_bilingual"?&settings:nullptr,&engine));std::lock_guard<std::mutex>p(speechPointers);speechStream=engine;}
+  if(streaming){ortts_asr_stream*engine=nullptr;ortts_asr_stream_config settings{sizeof(settings),400,1000,15000,0,0.003F};speechCheck(ortts_asr_stream_create(&c,family!="moonshine_asr"?&settings:nullptr,&engine));std::lock_guard<std::mutex>p(speechPointers);speechStream=engine;}
    else{if(family!="sense_asr"&&family!="qwen3_asr")throw std::runtime_error("Unsupported Demo ASR");ortts_asr*engine=nullptr;speechCheck(ortts_asr_create(&c,&engine));std::lock_guard<std::mutex>p(speechPointers);speechAsr=engine;}
   speechAsrKey=key;++asrLoads;
  }catch(const std::exception&x){speechClose();speechError(e,x);}

@@ -44,4 +44,11 @@ class Acceptance(unittest.TestCase):
   r,p=self.fixture();r['trials']*=3
   for t in r['trials']:t['source_kind']='synthesized'
   self.assertEqual(score.evaluate(r,p)['status'],'not-recommended')
+ def test_paraformer_download_and_native_contract_agree(self):
+  import re
+  catalog=json.loads((ROOT/'runtime/models/asr-android-experiment.json').read_text())
+  model=next(m for m in catalog['models'] if m['family']=='streaming_paraformer')
+  native=re.findall(r'\{"([^"]+)",(\d+),"([a-f0-9]{64})"\}',(ROOT/'runtime/src/paraformer_assets.h').read_text())
+  self.assertEqual([(p,int(n),sha) for p,n,sha in native],[(str(Path(a['path']).relative_to(model['model_path'])),a['bytes'],a['sha256']) for a in model['assets']])
+  self.assertTrue(all('/resolve/'+model['source_revision']+'/' in a['url'] for a in model['assets']))
 if __name__=='__main__':unittest.main()
