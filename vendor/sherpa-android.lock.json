@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "platform": "android-arm64",
+  "source_commit": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+  "git_reported": "11afbd00",
+  "version": "1.13.8",
+  "ort_version": "1.28.2",
+  "header_sha256": "2a1b95084be8fd1deb3228fcad2fd3f7f0258b64582f7402281ec174c7b7f4ce",
+  "library_files": [
+    {
+      "name": "libonnxruntime.so",
+      "bytes": 22249560,
+      "sha256": "33847ad43bffe204699fd4a27f7f3603452a8cdaf2f9a44983a0bc31ffcf2da1"
+    },
+    {
+      "name": "libsherpa-onnx-c-api.so",
+      "bytes": 4465168,
+      "sha256": "c85e2382e2ca12b0513826be926eaccfea896b4cbf568182e287671ba526f80d"
+    }
+  ],
+  "device_probe": "SDK_DEVICE_PROBE.txt",
+  "official_archive_sha256": "2ff63469a71cb6009aa2e3ed5f4a670f8abdcbe4bb9ffd23776afc792a6b4f44"
+}

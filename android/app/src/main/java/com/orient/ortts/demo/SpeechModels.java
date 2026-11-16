@@ -40,7 +40,7 @@ final class SpeechModels {
  }
  File requireReady(JSONObject model)throws Exception {
   JSONArray assets=model.getJSONArray("assets");for(int i=0;i<assets.length();i++){
-   JSONObject a=assets.getJSONObject(i);if(!valid(child(a.getString("path")),a))throw new IOException("请先下载 / 检查所选模型");
+    JSONObject a=assets.getJSONObject(i);if(!valid(child(a.getString("path")),a))throw new IOException(model.optBoolean("local_only")?"请先导入已登记的本地模型ZIP / 检查文件":"请先下载 / 检查所选模型");
    }return child(model.getString("model_path"));
   }
  JSONObject reference(JSONObject model,String voice)throws Exception {
@@ -51,7 +51,8 @@ final class SpeechModels {
    return new JSONObject(r.toString()).put("local_path",target.getPath());
   }throw new IOException("缺少所选音色真实参考");
  }
- void download(JSONObject model)throws Exception {
+  void download(JSONObject model)throws Exception {
+   if(model.optBoolean("local_only")){requireReady(model);progress.update("本地模型大小与SHA256已通过；此候选请使用已登记ZIP导入");return;}
   JSONArray assets=model.getJSONArray("assets");long total=0,done=0;
   for(int i=0;i<assets.length();i++)total+=assets.getJSONObject(i).getLong("bytes");
   for(int i=0;i<assets.length();i++){

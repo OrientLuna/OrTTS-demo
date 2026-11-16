@@ -72,14 +72,14 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_NativeBridge_run
 
 #if ORTTS_WITH_SPEECH
 namespace {
-std::mutex speechPointers;std::string speechTtsKey;
+std::mutex speechPointers;std::string speechTtsKey,speechAsrKey;uint64_t asrLoads=0,asrReuses=0;
 ortts_tts *speechTts=nullptr;ortts_asr *speechAsr=nullptr;ortts_asr_stream *speechStream=nullptr;
 void speechCheck(ortts_status s){if(s!=ORTTS_OK)throw std::runtime_error(ortts_last_error());}
 jstring unicode(JNIEnv*e,const std::string&s){auto u=std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t>{}.from_bytes(s);return e->NewString(reinterpret_cast<const jchar*>(u.data()),u.size());}
 void speechError(JNIEnv*e,const std::exception&x){if(!e->ExceptionCheck())e->ThrowNew(e->FindClass("java/lang/IllegalStateException"),x.what());}
 void speechClose(){
  std::lock_guard<std::mutex>guard(speechPointers);
- ortts_tts_free(speechTts);speechTts=nullptr;speechTtsKey.clear();ortts_asr_free(speechAsr);speechAsr=nullptr;ortts_asr_stream_free(speechStream);speechStream=nullptr;
+ ortts_tts_free(speechTts);speechTts=nullptr;speechTtsKey.clear();speechAsrKey.clear();ortts_asr_free(speechAsr);speechAsr=nullptr;ortts_asr_stream_free(speechStream);speechStream=nullptr;
 }
 struct SpeechRuntimeScope {
  bool had_tmp=false;std::string old_tmp;
@@ -151,13 +151,17 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_syn
  e->ThrowNew(e->FindClass("java/lang/IllegalStateException"),"Speech feature disabled");return nullptr;
 #endif
 }
-extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_openAsr(JNIEnv*e,jclass,jstring familyJ,jstring pathJ){
+extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_openAsrProfile(JNIEnv*e,jclass,jstring familyJ,jstring pathJ,jstring profileJ){
 #if ORTTS_WITH_SPEECH
  std::lock_guard<std::mutex>guard(mu);try{
-  release();speechClose();auto family=str(e,familyJ),path=str(e,pathJ);bool streaming=family=="moonshine_asr";
-  ortts_speech_config c{};c.struct_size=sizeof(c);c.family=family.c_str();c.model_path=path.c_str();c.threads=4;c.streaming=streaming;
-  if(streaming){ortts_asr_stream*engine=nullptr;speechCheck(ortts_asr_stream_create(&c,nullptr,&engine));std::lock_guard<std::mutex>p(speechPointers);speechStream=engine;}
-  else{if(family!="sense_asr")throw std::runtime_error("Unsupported Demo ASR");ortts_asr*engine=nullptr;speechCheck(ortts_asr_create(&c,&engine));std::lock_guard<std::mutex>p(speechPointers);speechAsr=engine;}
+   auto family=str(e,familyJ),path=str(e,pathJ),profile=str(e,profileJ);auto key=family+"\n"+path+"\n"+profile;
+  if(key==speechAsrKey&&(speechAsr||speechStream)){++asrReuses;if(speechStream)speechCheck(ortts_asr_stream_reset(speechStream));else speechCheck(ortts_asr_reset(speechAsr));return;}
+  release();speechClose();bool streaming=family=="moonshine_asr"||family=="zipformer_bilingual";
+   ortts_speech_config c{};c.struct_size=sizeof(c);c.family=family.c_str();c.model_path=path.c_str();c.threads=family=="moonshine_asr"?4:2;c.streaming=streaming;
+   ortts_speech_option decoder{"qwen3_asr.decoder_profile",profile.c_str()};if(family=="qwen3_asr"){c.session_options=&decoder;c.session_option_count=1;}
+  if(streaming){ortts_asr_stream*engine=nullptr;ortts_asr_stream_config settings{sizeof(settings),400,1000,15000,0,0.003F};speechCheck(ortts_asr_stream_create(&c,family=="zipformer_bilingual"?&settings:nullptr,&engine));std::lock_guard<std::mutex>p(speechPointers);speechStream=engine;}
+   else{if(family!="sense_asr"&&family!="qwen3_asr")throw std::runtime_error("Unsupported Demo ASR");ortts_asr*engine=nullptr;speechCheck(ortts_asr_create(&c,&engine));std::lock_guard<std::mutex>p(speechPointers);speechAsr=engine;}
+  speechAsrKey=key;++asrLoads;
  }catch(const std::exception&x){speechClose();speechError(e,x);}
 #endif
 }
@@ -179,6 +183,28 @@ extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_finish
 extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_endTask(JNIEnv*,jclass){
 #if ORTTS_WITH_SPEECH
  std::lock_guard<std::mutex>guard(mu);std::lock_guard<std::mutex>p(speechPointers);
- ortts_asr_free(speechAsr);speechAsr=nullptr;ortts_asr_stream_free(speechStream);speechStream=nullptr;
+ // Retain the sole ASR model for bounded foreground reuse. close() owns release.
+#endif
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_orient_ortts_demo_SpeechBridge_resetAsr(JNIEnv* e,jclass){
+#if ORTTS_WITH_SPEECH
+ std::lock_guard<std::mutex> guard(mu);try{
+  if(speechStream)speechCheck(ortts_asr_stream_reset(speechStream));
+  else if(speechAsr)speechCheck(ortts_asr_reset(speechAsr));
+  else throw std::runtime_error("No ASR handle to reset");
+ }catch(const std::exception&x){speechError(e,x);}
+#endif
+}
+
+extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_capabilities(JNIEnv*e,jclass){
+ return e->NewStringUTF(ortts_speech_catalog_json());
+}
+
+extern "C" JNIEXPORT jstring JNICALL Java_com_orient_ortts_demo_SpeechBridge_residency(JNIEnv*e,jclass){
+#if ORTTS_WITH_SPEECH
+ std::lock_guard<std::mutex>guard(mu);std::ostringstream s;s<<"{\"loads\":"<<asrLoads<<",\"reuses\":"<<asrReuses<<",\"asr_resident\":"<<((speechAsr||speechStream)?"true":"false")<<"}";return unicode(e,s.str());
+#else
+ return e->NewStringUTF("{\"disabled\":true}");
 #endif
 }

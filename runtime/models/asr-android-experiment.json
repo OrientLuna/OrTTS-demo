@@ -1,0 +1,60 @@
+{
+  "schema": "ortts-speech-catalog-v1",
+  "models": [
+    {
+      "id": "asr-lite-zh-en-v1",
+      "family": "zipformer_bilingual",
+      "task": "asr",
+      "model_path": "asr-lite-zh-en-v1",
+      "validated_languages": [],
+      "declared_languages": [
+        "zh",
+        "en",
+        "mixed"
+      ],
+      "voice_sample": [],
+      "assets": [
+        {
+          "path": "asr-lite-zh-en-v1/exp/32/encoder-epoch-99-avg-1.int8.onnx",
+          "bytes": 42980793,
+          "sha256": "db6f51551762e40e549166fe041ea3e45464370b595e9ad23f06478ec3794fbb",
+          "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/exp/32/encoder-epoch-99-avg-1.int8.onnx"
+        },
+        {
+          "path": "asr-lite-zh-en-v1/exp/32/decoder-epoch-99-avg-1.onnx",
+          "bytes": 13877276,
+          "sha256": "89be509a83175261695bdef5fd1c7b9ab1129a663d1284e7ba9f8507b21e0906",
+          "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/exp/32/decoder-epoch-99-avg-1.onnx"
+        },
+        {
+          "path": "asr-lite-zh-en-v1/exp/32/joiner-epoch-99-avg-1.int8.onnx",
+          "bytes": 3228485,
+          "sha256": "bdda356d6f9b8c2d7cee9ee0e26075fa537490f7fd06520be408d287073667b9",
+          "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/exp/32/joiner-epoch-99-avg-1.int8.onnx"
+        },
+        {
+          "path": "asr-lite-zh-en-v1/data/lang_char_bpe/tokens.txt",
+          "bytes": 56317,
+          "sha256": "a8e0e4ec53810e433789b54a5c0134a7eaa2ffca595a6334d54c00da858841d3",
+          "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/data/lang_char_bpe/tokens.txt"
+        },
+        {
+          "path": "asr-lite-zh-en-v1/data/lang_char_bpe/bpe.model",
+          "bytes": 244836,
+          "sha256": "bcae393dbc5611be5ffa4c7ae0841558978a5a4f484008cb9dff3a2cc97ebe01",
+          "url": "https://huggingface.co/csukuangfj/k2fsa-zipformer-bilingual-zh-en-t/resolve/e2382758de9a0219b4efe682b95af30b399db3b8/data/lang_char_bpe/bpe.model"
+        }
+      ],
+      "external_espeak": false,
+      "status": "experimental-quality-failed-unverified-device",
+      "notes": "Quality screening failed; not a default or low-end recommendation. Device whitelist remains empty.",
+      "demo_enabled": false,
+      "display_name": "中英及混说 · 流式实验档",
+      "license_review": {
+        "weights_license": "Apache-2.0 declared by fixed model card",
+        "distribution_cleared": false,
+        "notes": "Internal test; preserve original model card and provenance."
+      }
+    }
+  ]
+}

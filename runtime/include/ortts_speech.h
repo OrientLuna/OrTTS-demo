@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 #define ORTTS_SPEECH_ABI_VERSION 1u
-/* Additive ABI; the existing P3/P5 ABI remains version 1. No ONNX executor. */
+/* Additive ABI; the existing P3/P5 ABI remains version 1. Optional compatibility executors are declared by the capability catalog. */
 typedef struct ortts_tts ortts_tts;
 typedef struct ortts_asr ortts_asr;
 typedef struct ortts_speech_audio ortts_speech_audio;
@@ -15,11 +15,13 @@ typedef struct ortts_speech_option { const char *key; const char *value; } ortts
 typedef struct ortts_speech_config {
  uint32_t struct_size;
  const char *family; /* Explicit catalog family. Never auto-detect or silently fallback. */
- const char *model_path; /* Verified local audio.cpp package; files outlive handle. */
+  const char *model_path; /* Verified local package; files outlive handle. Optional Qwen Android profile is not a ggml model. */
  int32_t threads; /* 1..8 */
  int32_t streaming; /* TTS: 0 offline, 1 callback; legacy ASR: 0; ASR stream API: 1. */
  /* SenseVoice: setting sense_asr.vad_model_path explicitly enables offline Silero
-  * speech segmentation; absent means no internal VAD. Not automatic endpointing. */
+   * speech segmentation; absent means no internal VAD. Not automatic endpointing.
+   * Android Sherpa Qwen: qwen3_asr.decoder_profile=headslice-compat (default) or
+   * original-int8. CPU2/offline only; last-row ASR consumer, not full logits. */
  const ortts_speech_option *session_options;
  size_t session_option_count;
  const char *espeak_library; /* Optional absolute external eSpeak-ng library path. */

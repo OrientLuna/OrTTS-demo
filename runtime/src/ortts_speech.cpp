@@ -18,6 +18,12 @@
 #if ORTTS_WITH_SHERPA_ASR
 #include "zipformer_stream.h"
 #endif
+#if ORTTS_WITH_SHERPA_ASR && defined(__ANDROID__)
+#define ORTTS_WITH_QWEN_ASR 1
+#include "qwen_asr.h"
+#else
+#define ORTTS_WITH_QWEN_ASR 0
+#endif
 #ifndef ORTTS_WITH_SPEECH
 #define ORTTS_WITH_SPEECH 0
 #endif
@@ -101,7 +107,11 @@ void init(Handle&h,const ortts_speech_config*c,bool asr){
 }
 }
 struct ortts_tts{Handle h;};
-struct ortts_asr{Handle h;size_t limit=16000*60;std::vector<float>pending;};
+struct ortts_asr{Handle h;size_t limit=16000*60;std::vector<float>pending;
+#if ORTTS_WITH_QWEN_ASR
+ std::unique_ptr<OrTTSQwenAsr> qwen;
+#endif
+};
 struct ortts_speech_audio{std::vector<float>samples;int rate=0,channels=0;ortts_metrics metrics{};};
 struct ortts_transcript{std::string text,language;double api_ms=0;};
 struct ortts_asr_stream {
@@ -127,7 +137,12 @@ ortts_status recognize(ortts_asr&e,const float*p,size_t n,const char*lang,ortts_
  // No implicit VAD file discovery. Host explicitly opts into verified Silero assets.
  // Exact digital silence is deterministic even when VAD is disabled (not a VAD).
  auto text=std::make_unique<ortts_transcript>();bool silent=std::all_of(p,p+n,[](float v){return v==0;});
- if(!silent){if(e.h.family=="sense_asr")check(audiocpp_request_set_option(q.p,"audio_chunk_mode",e.h.use_vad?"auto":"none"));Result r;check(audiocpp_session_run(e.h.session,q.p,&r.p));const char*t=nullptr,*l=nullptr;check(audiocpp_result_text(r.p,&t,&l));text->text=t?t:"";text->language=l?l:"";}
+  if(!silent){
+#if ORTTS_WITH_QWEN_ASR
+   if(e.qwen){require(!present(lang)||std::string(lang)=="auto","Qwen verified profile uses automatic language");text->text=e.qwen->run(p,n);}
+   else
+#endif
+   {if(e.h.family=="sense_asr")check(audiocpp_request_set_option(q.p,"audio_chunk_mode",e.h.use_vad?"auto":"none"));Result r;check(audiocpp_session_run(e.h.session,q.p,&r.p));const char*t=nullptr,*l=nullptr;check(audiocpp_result_text(r.p,&t,&l));text->text=t?t:"";text->language=l?l:"";}}
  if(e.h.cancelled){error="ASR cancelled after compute";return ORTTS_CANCELLED;}text->api_ms=ms(start);*out=text.release();return ORTTS_OK;
 }
 }
@@ -139,6 +154,12 @@ const char*ortts_speech_catalog_json(void){
 #if ORTTS_WITH_SHERPA_ASR
   base.insert(base.size()-1,R"(,"compatibility_asr":{"families":["zipformer_bilingual"],"executor":"sherpa-onnx-1.13.8/onnxruntime-cpu","api":"ortts_asr_stream_*","input":"16000Hz-mono-f32","languages":["zh","en"],"mixed_language":"candidate-not-low-end-certified","endpoint":["explicit","segment-limit"],"cancel":"between-decode-chunks-reset-required","additional_tensor_runtime":true,"cache_stats":"UINT64_MAX means unavailable","low_end_device_whitelist":[]})");
 #endif
+  std::string qwen=R"({"available":false,"quality_status":"optional-executor-disabled","true_streaming":false})";
+#if ORTTS_WITH_QWEN_ASR
+  qwen=R"({"available":true,"input":"buffered-final","true_streaming":false,"profile":"original28-int8-headslice-compat","rollback":"original-int8","quality_status":"high-memory-offline-opt-in; quality-pending; not-low-end-certified","decoder_consumer":"last-row-only; earlier expanded rows are placeholders","KV":"F32","threads":2,"cancel":"discard-after-offline-compute","emotion_output":false})";
+  base.insert(base.find("\"asr\":[")+7,"\"qwen3_asr\",");
+#endif
+  base.insert(base.size()-1,R"(,"interaction_capabilities":{"schema":1,"primary_tts":"OrTTS","scheduling":"one-active-inference; ORTTS_BUSY; caller-owned residency","lifecycle":["create","run-or-accept-finish","cancel","reset","free-after-join"],"background_service":false,"profiles":{"sense_asr":{"input":"buffered-final","languages":["zh","en","yue","ja","ko"],"true_streaming":false,"emotion_output":false,"quality_status":"Chinese-screen-pass; English-and-mixed-English-screen-fail","cancel":"discard-after-offline-compute","reset":"clears-buffer; next-request-supported"},"moonshine_asr":{"input":"incremental","languages":["en"],"true_streaming":true,"emotion_output":false,"quality_status":"English-profile-existing; not-mixed-language"},"streaming_paraformer":{"available":false,"quality_status":"rejected-English-and-mixed-screen","true_streaming":true},"qwen3_asr":)"+qwen+R"(},"low_end_device_whitelist":[]})");
   static const std::string catalog=std::move(base);return catalog.c_str();
 #else
  return R"({"schema":1,"tts":[],"asr":[],"disabled":true})";
@@ -183,7 +204,16 @@ int32_t ortts_speech_audio_sample_rate(const ortts_speech_audio*a){return a?a->r
 int32_t ortts_speech_audio_channels(const ortts_speech_audio*a){return a?a->channels:0;}
 ortts_status ortts_speech_audio_metrics(const ortts_speech_audio*a,ortts_metrics*out){if(!a||!out){error="Invalid speech audio/metrics";return ORTTS_INVALID;}*out=a->metrics;return ORTTS_OK;}
 void ortts_speech_audio_free(ortts_speech_audio*a){delete a;}
-ortts_status ortts_asr_create(const ortts_speech_config*c,ortts_asr**out){if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{require(out,"Missing ASR output pointer");auto e=std::make_unique<ortts_asr>();init(e->h,c,true);if(c->max_input_frames)e->limit=c->max_input_frames;require(e->limit>0&&e->limit<=16000*120,"ASR limit must be at most 120s");*out=e.release();return ORTTS_OK;}catch(...){return failure();}}
+ortts_status ortts_asr_create(const ortts_speech_config*c,ortts_asr**out){if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{require(out,"Missing ASR output pointer");auto e=std::make_unique<ortts_asr>();
+#if ORTTS_WITH_QWEN_ASR
+ if(c&&c->struct_size==sizeof(*c)&&present(c->family)&&std::string(c->family)=="qwen3_asr"){
+  require(ORTTS_WITH_SPEECH&&present(c->model_path)&&c->threads==2&&!c->streaming&&!present(c->espeak_library)&&!present(c->espeak_data),"Qwen ASR requires offline CPU2, no eSpeak");
+  pairs(c->session_options,c->session_option_count);require(c->session_option_count<=1,"Qwen ASR accepts only its decoder profile option");std::string profile="headslice-compat";
+  if(c->session_option_count){require(std::string(c->session_options[0].key)=="qwen3_asr.decoder_profile","Unknown Qwen ASR option");profile=c->session_options[0].value;}
+  e->h.family="qwen3_asr";e->qwen=std::make_unique<OrTTSQwenAsr>(c->model_path,profile,c->threads);
+ }else
+#endif
+ init(e->h,c,true);if(c->max_input_frames)e->limit=c->max_input_frames;require(e->limit>0&&e->limit<=16000*120,"ASR limit must be at most 120s");*out=e.release();return ORTTS_OK;}catch(...){return failure();}}
 ortts_status ortts_asr_run(ortts_asr*e,const float*p,size_t n,const char*lang,ortts_transcript**out){if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{require(e&&out,"Invalid ASR handle/output");require(e->pending.empty(),"ASR buffered input pending; finish/reset first");return recognize(*e,p,n,lang,out);}catch(...){return failure();}}
 ortts_status ortts_asr_accept(ortts_asr*e,const float*p,size_t n){auto lock=gate();if(!lock.owns_lock())return busy();try{require(e,"Missing ASR handle");pcm(p,n,16000,1);require(n<=e->limit-e->pending.size(),"ASR buffer limit exceeded; reset or finish");e->pending.insert(e->pending.end(),p,p+n);return ORTTS_OK;}catch(...){return failure();}}
 ortts_status ortts_asr_finish(ortts_asr*e,const char*lang,ortts_transcript**out){if(out)*out=nullptr;auto lock=gate();if(!lock.owns_lock())return busy();try{require(e&&out&&!e->pending.empty(),"No buffered ASR audio");auto input=std::move(e->pending);e->pending.clear();return recognize(*e,input.data(),input.size(),lang,out);}catch(...){return failure();}}

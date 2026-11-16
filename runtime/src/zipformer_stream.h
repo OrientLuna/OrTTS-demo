@@ -34,12 +34,23 @@ class OrTTSZipformerStream {
  public:
  OrTTSZipformerStream(const std::string&root,int threads,uint32_t max_ms,uint32_t update_ms=400,uint32_t min_partial_ms=1000):limit_(uint64_t(max_ms)*16),update_frames_(uint64_t(update_ms)*16),min_partial_frames_(uint64_t(min_partial_ms)*16){
   // Official iOS and desktop 1.13.8 artifacts were built from different commits.
-#if defined(__APPLE__) && TARGET_OS_IPHONE
+#if defined(__ANDROID__)
+#ifndef ORTTS_SHERPA_ANDROID_GIT
+#error "Android Sherpa executor requires a verified platform SDK lock"
+#endif
+  const char* expected_git=ORTTS_SHERPA_ANDROID_GIT;
+#elif defined(__APPLE__) && TARGET_OS_IPHONE
   const char* expected_git="793c2405";
 #else
   const char* expected_git="11afbd00";
 #endif
-  if(std::string(SherpaOnnxGetVersionStr())!="1.13.8"||std::string(SherpaOnnxGetGitSha1())!=expected_git||std::string(SherpaOnnxGetOnnxruntimeVersionStr())!="1.28.2")throw std::runtime_error(std::string("Sherpa executor version mismatch: ")+SherpaOnnxGetVersionStr()+" git="+SherpaOnnxGetGitSha1()+" ort="+SherpaOnnxGetOnnxruntimeVersionStr());
+  if(std::string(SherpaOnnxGetVersionStr())!="1.13.8"||std::string(SherpaOnnxGetGitSha1())!=expected_git||std::string(SherpaOnnxGetOnnxruntimeVersionStr())!=
+#if defined(__ANDROID__)
+ORTTS_SHERPA_ANDROID_ORT
+#else
+"1.28.2"
+#endif
+)throw std::runtime_error(std::string("Sherpa executor version mismatch: ")+SherpaOnnxGetVersionStr()+" git="+SherpaOnnxGetGitSha1()+" ort="+SherpaOnnxGetOnnxruntimeVersionStr());
   if(threads<1||threads>8||max_ms<1000||max_ms>30000||max_ms%20)throw std::invalid_argument("Invalid ASR recipe configuration");
   auto base=std::filesystem::canonical(root);
   for(const auto&a:ortts_zipformer_assets){auto p=std::filesystem::canonical(base/a.path);auto rel=p.lexically_relative(base);if(rel.empty()||rel.is_absolute()||*rel.begin()==".."||!std::filesystem::is_regular_file(p)||std::filesystem::file_size(p)!=a.bytes||ortts_sha256::file(p.string())!=a.sha256)throw std::invalid_argument("ASR asset identity mismatch: "+std::string(a.path));}

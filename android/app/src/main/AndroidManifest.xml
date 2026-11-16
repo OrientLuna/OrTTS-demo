@@ -7,6 +7,9 @@
   <activity android:name=".MainActivity" android:launchMode="singleTask" android:screenOrientation="portrait" android:exported="true">
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
   </activity>
+  <activity android:name=".AsrReleaseQaActivity" android:exported="${qaEnabled}"/>
+  <activity android:name=".InteractionQaActivity" android:exported="${qaEnabled}"/>
+  <activity android:name=".AsrQaActivity" android:exported="${qaEnabled}"/>
   <activity android:name=".SpeechActivity" android:screenOrientation="portrait" android:exported="false"/>
  </application>
 </manifest>

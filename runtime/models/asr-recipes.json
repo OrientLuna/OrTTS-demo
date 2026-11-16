@@ -27,7 +27,8 @@
         "onnxruntime_version": "1.28.2",
         "source_commit_by_platform": {
           "macos-arm64": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
-          "ios-arm64": "793c2405ada0e9ee55a55037fa2d56111b8e7206"
+          "ios-arm64": "793c2405ada0e9ee55a55037fa2d56111b8e7206",
+          "android-arm64": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf"
         }
       },
       "model": {
@@ -139,7 +140,7 @@
         "reuse_model_after_cancel": true
       },
       "physical_device_whitelist": [],
-      "identity_sha256": "3be7c3d185508af33d6429f6295a165ffbe6528018f614d494152fe9802ee700",
+      "identity_sha256": "f55469e3af4766416e5a3a8c48a71a595f43573ae7134149f2c72a9aa8df288e",
       "quality_evidence": {
         "report": "benchmarks/asr-lite-quality-screen-20261113.json",
         "reason": "English WER and mixed MER/English WER exceed predeclared thresholds"

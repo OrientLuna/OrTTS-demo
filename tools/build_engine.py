@@ -46,6 +46,13 @@ def main():
         binaries += [f/f.stem for f in (prefix/'Frameworks').glob('*.framework') if (f/f.stem).is_file()]
         if not binaries:raise ValueError('Missing Sherpa compatibility libraries')
         sherpa={'version':'1.13.8','source_commit':('793c2405ada0e9ee55a55037fa2d56111b8e7206' if a.target.startswith('ios') else '11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf'),'header_sha256':hashlib.sha256(header.read_bytes()).hexdigest(),'libraries':[{'name':str(f.relative_to(prefix)),'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'bytes':f.stat().st_size} for f in sorted(binaries)]}
+        if a.target=='android-arm64':
+            android_lock=json.loads((ROOT/'vendor/sherpa-android.lock.json').read_text())
+            for entry in android_lock['library_files']:
+                binary=prefix/'lib'/entry['name']
+                if not binary.is_file() or binary.stat().st_size!=entry['bytes'] or hashlib.sha256(binary.read_bytes()).hexdigest()!=entry['sha256']:
+                    raise ValueError('Android Sherpa binary identity mismatch: '+entry['name'])
+            sherpa.update(source_commit=android_lock['source_commit'],onnxruntime_version=android_lock['ort_version'],platform='android-arm64',android_sdk_lock_sha256=hashlib.sha256((ROOT/'vendor/sherpa-android.lock.json').read_bytes()).hexdigest())
         cmd+=['-DORTTS_ENABLE_SHERPA_ASR=ON','-DORTTS_SHERPA_PREFIX='+str(prefix)]
     else:cmd+=['-DORTTS_ENABLE_SHERPA_ASR=OFF']
     if 'cpu_dispatch' in lock:
