@@ -17,8 +17,8 @@
 3. 校验完成后选择音色，输入文字，点击“合成语音”。
 4. 可重播、停止，或点击“保存 WAV…”另存音频。
 
-macOS 为合成后播放；Linux 支持边合成边播放。Q4 只支持 P3，Q8 / 历史版可选 P3/P5。
-当前桌面菜单尚未接入 1.7B、第三方 TTS 或语音识别。
+macOS 上自研 OrTTS 为合成后播放，Linux 上支持边合成边播放；Q4 只支持 P3，Q8 / 历史版可选 P3/P5。
+当随包运行时启用语音扩展时，窗口顶部提供三个标签页：**OrTTS 合成**（0.6B）、**其他语音合成**（Kokoro、PocketTTS、Piper、Kitten）与**语音识别**（SenseVoice、Moonshine，以及启用 Sherpa 时的 Paraformer 实验档）。当前桌面菜单尚未接入 1.7B。
 
 ## 常见问题
 

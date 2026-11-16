@@ -5,14 +5,15 @@
 
 ## 代码与平台边界
 
-- `app.py` / `theme.py`：共享 Tk 界面和品牌资源；macOS 保留 Aqua 控件，Linux 使用 Clam。
-- `models.py`：固定发布身份、清单 SHA、完整模型导入；当前桌面菜单为 0.6B Q4/Q8/历史版。
+- `app.py` / `theme.py`：共享 Tk 三标签页界面（OrTTS 合成 / 其他语音合成 / 语音识别）与品牌资源；macOS 保留 Aqua 控件，Linux 使用 Clam。
+- `speech.py` / `speech_panel.py` / `speech_smoke.py`：基于 `ortts_speech_catalog_json()` 运行时能力探测，接入第三方 TTS / ASR、显式 eSpeak 路径与协作式停止。
+- `models.py`：固定发布身份、清单 SHA、完整模型导入；当前 OrTTS 桌面菜单为 0.6B Q4/Q8/历史版。
 - `download.py`：共享 HTTPS 下载、断点、校验与文件复用；不依赖播放后端。
 - `engine.py`：ctypes 显式声明 C ABI，自研模型使用 `runtime/include/ortts_engine.h`；不猜结构体。
 - `worker.py`：单一任务队列与固定推理线程。创建、推理、读取线程本地错误及释放均在 worker。
 - `audio.py`：有限 F32 校验、限幅转 PCM16 WAV、macOS `afplay` 合成后播放。
 - `../linux/`：独立启动器和 PCM 回调队列 / `aplay` 流式播放。
-- macOS 包为 arm64 CPU baseline；当前没有第三方 TTS/ASR 页面。不能因 speech 符号存在声称 UI 已接入。
+- macOS 包为 arm64 CPU baseline；随包运行时启用 `--speech`（及可选 Sherpa）时展示对应第三方 TTS/ASR 页面，缺符号时自动隐藏或提示不支持。
 - Windows 的 DLL、播放和打包未完成；不能把 macOS 产物改名当跨平台包。
 
 ## 生命周期与文件约定
@@ -43,7 +44,7 @@
 
 在仓库根目录运行，需 Python 3.12、可用 Tkinter、Xcode / CMake / Ninja。
 先按 [BUILD](../docs/BUILD.md) 和 [PTQ 约定](../docs/APPLE_PTQ_HANDOFF.md) 准备源码：
-`prepare_runtime.py → prepare_unified_runtime.py --release-compat → prepare_speech_runtime.py`。
+`prepare_runtime.py → prepare_unified_runtime.py --release-compat → prepare_speech_runtime.py → prepare_cancellable_runtime.py → prepare_explicit_options.py`。
 最终 source 必须带有效 receipt，不得直接用上游树或复用另一功能组合的构建目录。
 
 ```sh

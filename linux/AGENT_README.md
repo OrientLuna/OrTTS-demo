@@ -8,7 +8,7 @@ macOS 构建见 [desktop/AGENT_README.md](../desktop/AGENT_README.md)，不要�
 - `app.py` 使用共享 App，并注入 `linux/audio.py` 的 StreamPlayer。
 - 原生 PCM 回调仅复制至有界队列，专用线程送入 `aplay`；Python 不执行模型推理。
 - 首 PCM 就绪不等于扬声器发声；停止清空播放队列并请求取消；最终音频可重播/保存。
-- 仅 0.6B Q4/Q8/历史包菜单，没有 1.7B、第三方 TTS/ASR；Q4 必须限制 P3。
+- OrTTS 菜单为 0.6B Q4/Q8/历史包（没有 1.7B，Q4 必须限制 P3）；第三方 TTS/ASR 标签页通过 `desktop/speech_panel.py` 按运行时能力过滤展示。
 - 用户目录遵循 XDG，启动器不自动安装或升级系统组件。
 
 ## 构建与兼容

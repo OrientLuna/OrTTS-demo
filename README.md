@@ -34,7 +34,7 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 
 自行构建后打开 `OrTTS.app`，或通过 DMG 拖入“应用程序”。选择模型版本，导入完整模型目录或下载模型后，即可输入文字、合成、播放或保存 WAV。
 
-当前桌面版默认 **0.6B Q4 / P3**。下载需用户确认，支持取消、断点继续和已校验文件复用，不在启动时自动下载。macOS 仍为合成后播放，暂不提供第三方 TTS / ASR。构建、安装和签名边界见[桌面版说明](desktop/README.md)。
+当前桌面版（macOS / Linux）采用三标签页界面：**OrTTS 合成**（默认 **0.6B Q4 / P3**）、**其他语音合成**与**语音识别**（按随包运行时能力展示可用模型）。下载需用户确认，支持取消、断点继续和已校验文件复用，不在启动时自动下载。macOS 自研 OrTTS 仍为合成后播放，Linux 自研 OrTTS 通过 ALSA 边合成边播放。构建、安装和签名边界见[桌面版说明](desktop/README.md)。
 
 ### Linux 快速开始
 
@@ -58,11 +58,12 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 
 | 用途 | 后端 | 当前应用接入 |
 |---|---|---|
-| 语音合成 | Kokoro、PocketTTS、Piper、Kitten | Android / iOS 多模型页 |
-| 语音合成 | MOSS-TTS-Nano | Android 多模型页；iOS 页面尚未接入 |
-| 语音合成 | ZipVoice | SDK 接口，暂未接入手机菜单 |
-| 语音识别 | SenseVoice | Android / iOS；中文、英文离线识别 |
-| 语音识别 | Moonshine | Android / iOS；英语增量识别 |
+| 语音合成 | Kokoro、PocketTTS、Piper、Kitten | Android / iOS / 桌面端（macOS、Linux）多模型页 |
+| 语音合成 | MOSS-TTS-Nano | Android 多模型页；iOS / 桌面端尚未接入 |
+| 语音合成 | ZipVoice | SDK 接口，暂未接入界面菜单 |
+| 语音识别 | SenseVoice | Android / iOS / 桌面端；中文、英文离线识别 |
+| 语音识别 | Moonshine | Android / iOS / 桌面端；英语增量识别 |
+| 语音识别 | Paraformer（实验） | Android / iOS / 桌面端（启用 Sherpa 运行时）；中英流式识别 |
 
 “后端已接入”不等于所有平台、语言和音色均已验证，也不支持任意 ONNX / GGUF 文件。应用操作与限制见[多模型 Demo](docs/MOBILE_SPEECH_DEMO.md)，C ABI / Rust 接口见[语音 SDK](runtime/SPEECH.md)。
 
@@ -73,7 +74,7 @@ iOS 暂无公开 IPA / TestFlight；macOS 当前产物为本机构建、ad-hoc �
 - [x] macOS / Linux 共用模型下载、断点继续与文件复用；Linux 流式桌面及文件夹包构建入口。
 - [ ] macOS Developer ID 签名、公证与正式安装包发布。
 - [ ] Windows 原生运行库与桌面客户端；Linux 发行版兼容构建、`.deb` 打包与实体声卡验收。
-- [ ] 桌面端第三方 TTS / ASR 页面，以及 macOS 流式播放。
+- [x] 桌面端第三方 TTS / ASR 页面与协作式停止/打断；macOS 自研 OrTTS 流式播放待接入。
 - [ ] Apple Core ML / Metal、高通 QNN 等设备加速路线。
 - [ ] 更多音色、发音与自然度改善，以及更完整的音质评测。
 - [ ] 统一条件下的性能回归与跨设备验证。

@@ -10,7 +10,7 @@
 ./ortts
 ```
 
-需要 Python 3.10+、Tk、ALSA 播放工具和中文字体。Debian/Ubuntu 通常安装
+需要 Python 3.10+、Tk、ALSA 播放工具和中文字体（使用语音识别加载非 16kHz 单声道 WAV 音频时还需 `ffmpeg`，使用 Kokoro/Piper/Kitten 时需系统或随包 eSpeak NG）。Debian/Ubuntu 通常安装
 `python3-tk alsa-utils fonts-noto-cjk`，原生库也需匹配你的发行版与 CPU。
 当前文件夹包不是通用 AppImage 或 `.deb`；构建机产物不保证能直接运行于旧版 Ubuntu。
 
@@ -25,6 +25,7 @@ python3 -m linux.app --library /path/to/libortts.so
 1. 默认选择 **0.6B Q4 / P3**，下载模型或导入完整模型文件夹。
 2. 校验完成后选择音色、输入文字，点击“合成语音”，默认边生成边播放。
 3. 可停止、重播或保存 WAV；“释放模型”可回收占用，下次合成会重新加载。
+4. 随包运行时启用语音扩展时，顶部会显示 **其他语音合成** 与 **语音识别** 标签页，可独立选择、停止与保存。
 
 下载中断后选择同一位置继续。若 Hugging Face 拒绝访问，可改用 ModelScope。
 更多共用操作见[桌面使用说明](../desktop/README.md)。

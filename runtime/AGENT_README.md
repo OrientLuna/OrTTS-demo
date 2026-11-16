@@ -47,15 +47,16 @@ callback; copy/enqueue and return promptly. `api_ms` includes callback time,
 `generation_ms` excludes it, and `first_pcm_ms` is not acoustic onset. Successful finite
 PCM does not prove EOS, pronunciation or subjective quality.
 
-The native execution gate rejects concurrent load/synthesis within each executor
-domain with `ORTTS_BUSY`. Sherpa online ASR (`streaming_paraformer`,
-`zipformer_bilingual`) forms its own domain with its own ONNX Runtime sessions and
-can run concurrently with the ggml domain; probe
-`ortts_parallel_inference_version()` (1 = domain-parallel available). Model
-residency stays caller-owned, and this is not OS background execution.
-Calls temporarily alter process environment and restore it on return. Do not combine
-direct audio.cpp sessions or a second independently loaded runtime with these operations,
-reenter from callbacks, or free handles concurrently. This is not a multi-model server.
+Each native handle (`ortts_engine`, `ortts_tts`, `ortts_asr`, and `ortts_asr_stream` for
+`moonshine_asr`) owns its own execution mutex and rejects re-entrant operations on the
+same active handle with `ORTTS_BUSY`. Distinct ggml handles can execute concurrently
+(explicit `qwen3_tts.*` and `kokoro_tts.espeak_*` session options eliminate process-wide
+`setenv`/`unsetenv` mutation; `EspeakPhonemizer` serializes eSpeak calls internally).
+Sherpa online ASR (`streaming_paraformer`, `zipformer_bilingual`) uses its own ONNX
+Runtime domain gate (`compatibility_execution_gate`); probe `ortts_parallel_inference_version()`
+(1 = cross-domain parallel available). Model residency stays caller-owned, and this is
+not OS background execution. Do not reenter from callbacks or free an active handle
+concurrently.
 
 ## Cancellation contract
 
