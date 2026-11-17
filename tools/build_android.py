@@ -21,6 +21,8 @@ if __name__=='__main__':
   elif (libs/n).exists():(libs/n).unlink()
  prebuilt=next(p for p in (a.ndk/'toolchains/llvm/prebuilt').iterdir() if (p/'sysroot/usr/lib/aarch64-linux-android/libc++_shared.so').is_file())
  shutil.copyfile(prebuilt/'sysroot/usr/lib/aarch64-linux-android/libc++_shared.so',libs/'libc++_shared.so')
+ strip_tool=prebuilt/'bin/llvm-strip'
+ to_strip=['libaudiocpp.so','libortts_jni.so','libortts_device.so','libc++_shared.so']+(cpu_libs if a.cpu_auto else [])
  if a.sherpa_asr_prefix:
   lock=json.loads((ROOT/'vendor/sherpa-android.lock.json').read_text())
   for entry in lock['library_files']:
@@ -32,8 +34,12 @@ if __name__=='__main__':
    if (libs/name).exists():(libs/name).unlink()
  if a.g2p_install:
   shutil.copyfile(a.g2p_install/'libespeak-ng.so',libs/'libespeak-ng.so')
+  to_strip.append('libespeak-ng.so')
   assets=ROOT/'build/android-g2p-assets';assets.mkdir(parents=True,exist_ok=True)
   for name in ['espeak-ng-data','licenses']:shutil.copytree(a.g2p_install/name,assets/name,dirs_exist_ok=True)
+ # Keep unstripped binaries in build/android-app-native/ and ship stripped .so in APK.
+ if strip_tool.is_file():
+  subprocess.run([str(strip_tool),'--strip-unneeded',*[str(libs/n) for n in to_strip if (libs/n).is_file()]],check=True)
  gradle=[a.gradle,'--offline','--no-daemon','-p',str(ROOT/'android'),':app:assembleRelease' if a.release else ':app:assembleDebug','-PnativeLibsDir='+str(libs.parent)]
  gradle+=['-PnativeCpuProfile='+('arm64-auto' if a.cpu_auto else 'arm64-baseline' if a.speech else 'arm64-i8mm')]
  if a.speech:gradle+=['-Pg2pAssetsDir='+str(assets)]
