@@ -1,6 +1,7 @@
 # 发行记录
 
-- [0.4.0 候选：多模型手机 Demo](RELEASE_NOTES-0.4.0.md)，尚未发布稳定标签/签名包。
+- **v0.4.4**（2026-11-17）：首个正式版发布，提供已签名公证的 macOS ARM64 DMG 与 Android ARM64 APK，见 [GitHub Releases](https://github.com/OrientLuna/OrTTS-demo/releases/tag/v0.4.4)。
+- [0.4.0 候选：多模型手机 Demo](RELEASE_NOTES-0.4.0.md)（历史候选记录）。
 - [0.3.1-preview](RELEASE_NOTES-0.3.1-preview.md)，既有 Android 预览版。
 
 ## OrTTS Android Demo 0.2.3-preview（历史）

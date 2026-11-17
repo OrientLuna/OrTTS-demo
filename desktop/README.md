@@ -4,8 +4,8 @@
 
 ## 启动
 
-- **macOS Apple Silicon**：打开 `OrTTS.app`（使用 DMG 时拖入“应用程序”）。
-- **Linux**：运行文件夹包内的 `./ortts`，或从源码启动（环境准备见 [Linux 使用说明](../linux/README.md)）。
+- **macOS Apple Silicon**：从 [Latest Release](https://github.com/OrientLuna/OrTTS-demo/releases/latest) 下载已公证的 DMG 并将 `OrTTS.app` 拖入“应用程序”；或按[构建说明 / 桌面端](../docs/BUILD.md#桌面端macos--linux)自行编译打包。
+- **Linux**：当前暂不提供预编译安装包，请按 [Linux 使用说明](../linux/README.md) 与[构建说明](../docs/BUILD.md#桌面端macos--linux)先编译 `libortts.so`，再源码启动或组装文件夹包运行 `./ortts`。
 
 ## 功能与使用
 

@@ -1,6 +1,8 @@
 # Android ARM64
 
-使用 `tools/build.py` 搭配本地 Android NDK 构建 ARM64 原生运行库与 CLI；Android Demo 应用源码位于 `android/` 目录，提供与 iOS / 桌面端一致的 **OrTTS 合成 / 其他语音合成 / 语音识别** 三标签页界面。
+可直接从 [Latest Release](https://github.com/OrientLuna/OrTTS-demo/releases/latest) 下载已签名的 ARM64 APK；如需从源码构建：
+- 完整三标签页 Android Demo APK：使用 `tools/build_android.py` 构建，详见[构建说明 / Android](../../docs/BUILD.md#android)。
+- 独立 ARM64 原生运行库与 CLI：使用 `tools/build.py --platform android-arm64` 搭配本地 Android NDK 构建。
 
 ## 运行要求
 

@@ -10,18 +10,30 @@
 sudo apt install python3-tk alsa-utils fonts-noto-cjk ffmpeg espeak-ng libespeak-ng1
 ```
 
-## 启动
+## 准备与构建运行时
 
-文件夹包内直接运行：
+当前 Release 暂不提供 Linux 预编译安装包，使用前需先按[构建说明 / 桌面端](../docs/BUILD.md#桌面端macos--linux)准备运行时源码并编译出 `libortts.so`（例如在仓库根目录执行）：
 
 ```sh
-./ortts
+python3 tools/build_engine.py --target linux-x86_64 --profile x86_64-baseline \
+  --source _work/desktop-runtime --liquidcodec --speech --out build/linux-engine
 ```
 
-或从仓库根目录以源码方式启动：
+编译完成后，动态库位于 `build/linux-engine/install/lib/libortts.so`（ARM64 Linux 请改用 `--target linux-aarch64 --profile arm64-baseline`）。
+
+## 启动
+
+**方式一：从仓库根目录以源码方式启动**
 
 ```sh
-python3 -m linux.app --library /path/to/libortts.so
+python3 -m linux.app --library build/linux-engine/install/lib/libortts.so
+```
+
+**方式二：组装可移动文件夹包并运行**
+
+```sh
+python3 -m linux.build --library build/linux-engine/install/lib/libortts.so --output /path/to/OrTTS-Linux
+cd /path/to/OrTTS-Linux && ./ortts
 ```
 
 ## 使用提示

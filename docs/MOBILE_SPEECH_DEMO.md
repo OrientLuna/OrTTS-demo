@@ -1,10 +1,10 @@
-# 多模型手机 Demo（0.4.0 候选）
+# 多模型手机 Demo
 
-本版统一的是流水线使用的 ggml 与应用生命周期调度，并提供独立 TTS/ASR 接口。不是通用 ONNX 执行器，也没有引入 sherpa-onnx。手机使用 CPU arm64-baseline，尚未接入 Metal、Core ML 或 QNN。
+本版统一了流水线使用的 ggml 与应用生命周期调度，并提供独立 TTS/ASR 接口（启用 `--sherpa-asr-prefix` 时可选接入 Sherpa-ONNX 以支持 Paraformer 流式 ASR 实验档）。手机使用 CPU arm64-baseline，尚未接入 Metal、Core ML 或 QNN。
 
 ## 使用
 
-Android 在主页进入多模型语音页，选择 TTS 或 ASR；iOS 底部直接选择“中文合成”“多模型合成”或“语音识别”，任务各自保留页面状态。点击模型名称切换，选择后下载或导入。原有 P3/P5 模型保留独立页面和清单。
+Android 与 iOS 均采用 **OrTTS 合成 / 其他语音合成 / 语音识别** 三标签页结构，各自保留页面状态。点击模型名称切换，选择后下载或导入。原有 P3/P5 模型与最新 Q4/P3 精简包均在「OrTTS 合成」页内切换。
 
 | 菜单模型 | 输入/输出 | 下载量（十进制，约） | 音色/识别模式 |
 |---|---|---:|---|

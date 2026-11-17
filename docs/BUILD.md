@@ -12,6 +12,20 @@ python3 tools/prepare_runtime.py --source-repo /path/to/audio.cpp --out _work/ru
 
 该脚本使用本地已有的上游源码和本仓库补丁，不修改源仓库。
 
+如需构建带统一 ggml、多模型语音扩展（`--speech`）与协作式取消（桌面端 / 移动完整 Demo）的运行时源码，请继续按顺序执行：
+
+```bash
+python3 tools/prepare_unified_runtime.py \
+  --audio-source _work/runtime --llama-source /path/to/llama.cpp-v0.8.0 \
+  --out _work/unified --release-compat
+python3 tools/prepare_speech_runtime.py --source _work/unified/audio.cpp \
+  --out _work/demo-release/audio.cpp
+python3 tools/prepare_cancellable_runtime.py --source _work/demo-release/audio.cpp \
+  --out _work/cancellable-runtime
+python3 tools/prepare_explicit_options.py --source _work/cancellable-runtime \
+  --out _work/desktop-runtime
+```
+
 ## Android
 
 先按 [手机 G2P](MOBILE_G2P.md) 准备固定版本 eSpeak 库与字典，以下 `--g2p-install` 指向其 mobile 输出。
@@ -45,6 +59,38 @@ python3 tools/build.py --platform linux-aarch64 --source _work/runtime \
 工具链与目标系统须匹配；Android NDK 不能替代 Linux GNU 工具链。模型不随源码构建自动下载。
 
 加 `--release` 可构建未签名 release APK，再使用自己的签名密钥签名。
+
+## 桌面端（macOS / Linux）
+
+桌面端共享三标签页 GUI 依赖已完成取消与选项补丁的运行时源码（即上面的 `_work/desktop-runtime`）。若需在「语音识别」中启用 Paraformer 流式实验档，可额外传入 `--sherpa-asr-prefix /path/to/sherpa-prefix`。
+
+### macOS 桌面端（`.app` / DMG）
+
+```sh
+python3.12 tools/build_engine.py --target macos-arm64 --profile arm64-baseline \
+  --source _work/desktop-runtime --liquidcodec --speech --out build/pc-engine-macos
+python3.12 -m venv local/desktop-venv
+local/desktop-venv/bin/python -m pip install -r desktop/packaging/requirements-macos.txt
+local/desktop-venv/bin/python desktop/packaging/build_macos.py --engine-build build/pc-engine-macos
+local/desktop-venv/bin/python desktop/packaging/build_dmg.py
+```
+
+默认打包脚本仅生成 ad-hoc 签名的 `.app` 与未公证 DMG；如需公开分发，请另行使用 Developer ID 证书与 `notarytool` 签名公证。
+
+### Linux 桌面端
+
+```sh
+python3 tools/build_engine.py --target linux-x86_64 --profile x86_64-baseline \
+  --source _work/desktop-runtime --liquidcodec --speech --out build/linux-engine
+```
+
+ARM64 Linux 将 `--target` 与 `--profile` 改为 `linux-aarch64` / `arm64-baseline`。编译产物位于 `build/linux-engine/install/lib/libortts.so`，之后可直接源码启动或组装可移动文件夹包：
+
+```sh
+python3 -m linux.app --library build/linux-engine/install/lib/libortts.so
+# 或组装文件夹包：
+python3 -m linux.build --library build/linux-engine/install/lib/libortts.so --output /path/to/OrTTS-Linux
+```
 
 ## Apple
 
