@@ -121,6 +121,14 @@ def main():
                  NSHighResolutionCapable=True)
     with plist_path.open("wb") as f:
         plistlib.dump(plist, f)
+    # PyInstaller already collects @rpath dependencies into Contents/Frameworks/;
+    # drop duplicate copies from Contents/Frameworks/native/ before signing.
+    frameworks_dir = app / "Contents/Frameworks"
+    native_dir = frameworks_dir / "native"
+    for extra in native_libraries[1:]:
+        dup = native_dir / extra.name
+        if dup.is_file() and (frameworks_dir / extra.name).is_file():
+            dup.unlink()
     # Only ad-hoc signing: no developer certificate or notarization is implied.
     subprocess.run(["codesign", "--force", "--deep", "--sign", "-", str(app)], check=True)
     subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], check=True)
