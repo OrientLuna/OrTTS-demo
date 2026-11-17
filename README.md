@@ -26,7 +26,7 @@
 
 ### macOS / Linux 快速开始
 
-- **macOS**：自行构建或打开 `OrTTS.app`（DMG 拖入“应用程序”即可）。应用采用 **OrTTS 合成 / 其他语音合成 / 语音识别** 三标签页设计，默认 **0.6B Q4 / P3**，支持断点续传下载与本地模型目录导入。
+- **macOS**：从 [Latest Release](https://github.com/OrientLuna/OrTTS-demo/releases/latest) 下载已签名公证的 DMG 并拖入“应用程序”（或自行构建 `OrTTS.app`）。应用采用 **OrTTS 合成 / 其他语音合成 / 语音识别** 三标签页设计，默认 **0.6B Q4 / P3**，支持断点续传下载与本地模型目录导入。
 - **Linux**：按 [Linux 桌面版说明](linux/README.md) 组装文件夹包并运行 `./ortts`，或通过 `python3 -m linux.app` 启动，支持 ALSA 边合成边播放。
 
 ## 模型与后端支持
@@ -57,7 +57,7 @@
 - [x] Android / iOS 本地语音 Demo、模型下载与导入、多模型 TTS / ASR 接入。
 - [x] macOS / Linux 共享三标签页桌面端（统一 iOS 风格主题）、断点续传下载与本地模型复用。
 - [x] 任务级协作式取消，以及 ggml 域内 / Sherpa 跨域并发推理。
-- [ ] macOS Developer ID 正式签名与公证 DMG 发布。
+- [x] macOS Developer ID 正式签名与公证 DMG 发布。
 - [ ] Windows 原生运行库与桌面客户端；Linux 发行版通用打包（AppImage / `.deb`）。
 - [ ] Apple Core ML / Metal、高通 QNN 等硬件加速路线。
 
