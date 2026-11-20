@@ -1,5 +1,5 @@
 //! Single-use operation tickets. Only CancelHandle is shared with UI/control threads.
-use crate::{Callback, Config, Error, Request};
+use crate::{Callback, Config, Error, RawExecPolicy, Request};
 use std::{
     ffi::c_void,
     sync::{
@@ -14,6 +14,15 @@ type Create = unsafe extern "C" fn(*const Config, *mut c_void, *mut *mut c_void)
 type Synthesize = unsafe extern "C" fn(
     *mut c_void,
     *const Request,
+    *mut c_void,
+    Callback,
+    *mut c_void,
+    *mut *mut c_void,
+) -> i32;
+pub(crate) type SynthesizeEx = unsafe extern "C" fn(
+    *mut c_void,
+    *const Request,
+    *const RawExecPolicy,
     *mut c_void,
     Callback,
     *mut c_void,
@@ -38,15 +47,29 @@ pub struct Capabilities {
 
 #[derive(Clone, Copy, Default)]
 pub(crate) struct Api {
+    #[cfg(test)]
+    pub(crate) new: Option<CreateToken>,
+    #[cfg(not(test))]
     new: Option<CreateToken>,
+    #[cfg(test)]
+    pub(crate) request: Option<TokenFn>,
+    #[cfg(not(test))]
     request: Option<TokenFn>,
+    #[cfg(test)]
+    pub(crate) free: Option<TokenFn>,
+    #[cfg(not(test))]
     free: Option<TokenFn>,
     pub(crate) create: Option<Create>,
     pub(crate) synthesize: Option<Synthesize>,
-    cooperative: bool,
+    pub(crate) synthesize_ex: Option<SynthesizeEx>,
+    pub(crate) cooperative: bool,
 }
 
 impl Api {
+    pub(crate) fn has_tokens(self) -> bool {
+        self.new.is_some() && self.request.is_some() && self.free.is_some()
+    }
+
     fn capabilities(self) -> Capabilities {
         let mode = if self.cooperative {
             CancelMode::Cooperative
@@ -72,7 +95,7 @@ pub fn capabilities() -> Capabilities {
     api().capabilities()
 }
 
-fn api() -> Api {
+pub(crate) fn api() -> Api {
     static API: OnceLock<Api> = OnceLock::new();
     *API.get_or_init(discover)
 }
@@ -81,72 +104,118 @@ fn api() -> Api {
 // function, not RTLD_DEFAULT (which could resolve a second unrelated runtime).
 // No hard relocations to new symbols: old ABI1 libraries remain loadable.
 #[cfg(unix)]
-fn discover() -> Api {
-    use std::ffi::c_char;
-    #[repr(C)]
-    struct DlInfo {
-        file: *const c_char,
-        base: *mut c_void,
-        symbol: *const c_char,
-        address: *mut c_void,
+pub(crate) struct NativeImage {
+    handle: *mut c_void,
+}
+
+#[cfg(unix)]
+impl NativeImage {
+    pub(crate) fn open_linked() -> Option<Self> {
+        use std::ffi::c_char;
+        #[repr(C)]
+        struct DlInfo {
+            file: *const c_char,
+            base: *mut c_void,
+            symbol: *const c_char,
+            address: *mut c_void,
+        }
+        extern "C" {
+            fn dladdr(address: *const c_void, info: *mut DlInfo) -> i32;
+            fn dlopen(path: *const c_char, flags: i32) -> *mut c_void;
+        }
+        unsafe {
+            let mut info: DlInfo = std::mem::zeroed();
+            if dladdr(
+                crate::ortts_abi_version as *const () as *const c_void,
+                &mut info,
+            ) == 0
+                || info.file.is_null()
+            {
+                return None;
+            }
+            let handle = dlopen(info.file, 1); // RTLD_LAZY; this image is already linked.
+            if handle.is_null() {
+                None
+            } else {
+                Some(Self { handle })
+            }
+        }
     }
-    extern "C" {
-        fn dladdr(address: *const c_void, info: *mut DlInfo) -> i32;
-        fn dlopen(path: *const c_char, flags: i32) -> *mut c_void;
-        fn dlsym(handle: *mut c_void, symbol: *const c_char) -> *mut c_void;
-        fn dlclose(handle: *mut c_void) -> i32;
+
+    pub(crate) fn raw_symbol(&self, name: &'static [u8]) -> Option<*mut c_void> {
+        use std::ffi::c_char;
+        extern "C" {
+            fn dlsym(handle: *mut c_void, symbol: *const c_char) -> *mut c_void;
+        }
+        debug_assert!(name.last() == Some(&0));
+        let ptr = unsafe { dlsym(self.handle, name.as_ptr().cast()) };
+        (!ptr.is_null()).then_some(ptr)
     }
-    unsafe {
-        let mut info: DlInfo = std::mem::zeroed();
-        if dladdr(
-            crate::ortts_abi_version as *const () as *const c_void,
-            &mut info,
-        ) == 0
-            || info.file.is_null()
-        {
-            return Api::default();
+}
+
+#[cfg(unix)]
+impl Drop for NativeImage {
+    fn drop(&mut self) {
+        extern "C" {
+            fn dlclose(handle: *mut c_void) -> i32;
         }
-        let handle = dlopen(info.file, 1); // RTLD_LAZY; this image is already linked.
-        if handle.is_null() {
-            return Api::default();
+        unsafe {
+            // Balances only our lookup reference. ABI1 direct linkage retains image.
+            dlclose(self.handle);
         }
-        macro_rules! symbol {
-            ($name:literal, $ty:ty) => {{
-                let ptr = dlsym(handle, concat!($name, "\0").as_ptr().cast());
-                if ptr.is_null() {
-                    None
-                } else {
-                    Some(std::mem::transmute::<*mut c_void, $ty>(ptr))
-                }
-            }};
-        }
-        let new = symbol!("ortts_cancel_token_create", CreateToken);
-        let request = symbol!("ortts_cancel_token_request", TokenFn);
-        let free = symbol!("ortts_cancel_token_free", TokenFn);
-        let mut result = Api::default();
-        if new.is_some() && request.is_some() && free.is_some() {
-            result = Api {
-                new,
-                request,
-                free,
-                create: symbol!("ortts_engine_create_cancellable", Create),
-                synthesize: symbol!("ortts_engine_synthesize_cancellable", Synthesize),
-                cooperative: symbol!(
-                    "ortts_cooperative_cancel_version",
-                    unsafe extern "C" fn() -> u32
-                )
-                .is_some_and(|version| version() == 1),
-            };
-        }
-        // Balances only our lookup reference. ABI1 direct linkage retains image.
-        dlclose(handle);
-        result
     }
 }
 
 #[cfg(not(unix))]
+pub(crate) struct NativeImage;
+
+#[cfg(not(unix))]
+impl NativeImage {
+    pub(crate) fn open_linked() -> Option<Self> {
+        None
+    }
+
+    pub(crate) fn raw_symbol(&self, _name: &'static [u8]) -> Option<*mut c_void> {
+        None
+    }
+}
+
+macro_rules! resolve_symbol {
+    ($image:expr, $name:literal, $ty:ty) => {
+        $image
+            .raw_symbol(concat!($name, "\0").as_bytes())
+            .map(|ptr| std::mem::transmute::<*mut c_void, $ty>(ptr))
+    };
+}
+pub(crate) use resolve_symbol;
+
 fn discover() -> Api {
-    Api::default()
+    let Some(image) = NativeImage::open_linked() else {
+        return Api::default();
+    };
+    unsafe {
+        let new = resolve_symbol!(image, "ortts_cancel_token_create", CreateToken);
+        let request = resolve_symbol!(image, "ortts_cancel_token_request", TokenFn);
+        let free = resolve_symbol!(image, "ortts_cancel_token_free", TokenFn);
+        if new.is_some() && request.is_some() && free.is_some() {
+            Api {
+                new,
+                request,
+                free,
+                create: resolve_symbol!(image, "ortts_engine_create_cancellable", Create),
+                synthesize: resolve_symbol!(image, "ortts_engine_synthesize_cancellable", Synthesize),
+                synthesize_ex: resolve_symbol!(image, "ortts_engine_synthesize_ex", SynthesizeEx),
+                cooperative: resolve_symbol!(
+                    image,
+                    "ortts_cooperative_cancel_version",
+                    unsafe extern "C" fn() -> u32
+                )
+                .is_some_and(|version| version() >= 1),
+            }
+        } else {
+            Api::default()
+        }
+    }
 }
 
 struct Token {
@@ -205,7 +274,7 @@ impl Task {
     pub fn new() -> Result<Self, Error> {
         Self::with_api(api())
     }
-    fn with_api(api: Api) -> Result<Self, Error> {
+    pub(crate) fn with_api(api: Api) -> Result<Self, Error> {
         static NEXT: AtomicU64 = AtomicU64::new(1);
         let generation = NEXT
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))

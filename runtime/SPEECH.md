@@ -41,7 +41,7 @@ cache.evict_expired();
 cache.clear();
 ```
 
-缓存键包括模型路径、族、线程数、streaming、session options、G2P 路径、输入上限和调用者提供的资产身份；音色属于请求，不为每种音色复制权重。推理错误或回调取消会逐出句柄。缓存不下载也不替宿主验证资产，身份不能为空；宿主不得只用文件名。Demo 首次完整 SHA 校验，后续用预期 SHA 加 inode/大小/纳秒修改时间检查本地替换，变化后重新校验；这不是对恶意保留元数据篡改的持续扫描。
+缓存键包括模型路径、族、线程数、streaming、session options、G2P 路径、输入上限和调用者提供的资产身份；音色属于请求，不为每种音色复制权重。真实后端错误、回调 panic、sink 主动返回 `false` 或非协作取消会逐出句柄；使用 `TtsCache::{synthesize_cancellable, stream_cancellable, synthesize_ex, stream_ex}` 时，若运行时支持协作取消（`speech::cancellation_capabilities().synthesis == CancelMode::Cooperative`），由 `Task` 触发的 `Error::Cancelled` 与 `Error::is_busy()` 会保留常驻实例不卸载。缓存不下载也不替宿主验证资产，身份不能为空；宿主不得只用文件名。Demo 首次完整 SHA 校验，后续用预期 SHA 加 inode/大小/纳秒修改时间检查本地替换，变化后重新校验；这不是对恶意保留元数据篡改的持续扫描。
 
 `evict_expired` 同时在请求入口执行，但没有内建线程。宿主不安排 idle timer，就不能声称空闲时已经释放。升级 submodule 而继续逐次 create/free 也不会获得热启动收益。可执行验证见 `rust/examples/tts_cache.rs`。
 
@@ -116,12 +116,12 @@ Kokoro/Piper/Kitten和ZipVoice英文前端使用的eSpeak-ng不是系统内置�
 - accept/finish同步执行回调，借用字符串只在回调内有效；快速复制/入队，不得重入或free。回调非零或独立cancel均使取消保持到reset；可以从另一线程cancel，检查发生在20ms tick、编码前后及解码token边界，不能中断单个tensor kernel。reset清除音频、假设、分段计数与取消状态；free不得与任何操作/cancel并发。
 - INVALID输入不会消耗音频；推理/回调异常后必须reset。取消可能使一次accept只处理部分输入，received计数仍记录该次提供的总帧数，processed记录实际进入tick的帧数。此时不要重送未处理尾部，先reset并重新开始一段。
 
-Rust `speech::streaming::{Stream,Settings,Event,Kind,Stats,Cancellation}` 封装所有权并捕获回调panic，句柄保持!Send/!Sync；`cancellation()`返回可跨线程克隆的取消token，UI可以在推理中取消。token不保活权重，句柄释放后cancel为no-op。`accept`/`finish`返回拥有字符串的事件Vec；`accept_with`/`finish_with`在回调返回true继续、false取消。示例见 `rust/examples/asr_stream.rs`；Swift导入检查见 `examples/ImportSpeech.swift`。
+Rust `speech::streaming::{Stream,Settings,Event,Kind,Stats,Cancellation,families}` 封装所有权并捕获回调panic，句柄保持!Send/!Sync；`cancellation()`返回可跨线程克隆的取消token，UI可以在推理中取消。token不保活权重，句柄释放后cancel为no-op。`accept`/`finish`返回拥有字符串的事件Vec；`accept_with`/`finish_with`在回调返回true继续、false取消；`families()` 从 `speech::catalog()` 解析启用的流式家族，`Stats::*_opt()` 将 `u64::MAX` / `NaN` 哨兵值转为 `None`。示例见 `rust/examples/asr_stream.rs`；Swift导入检查见 `examples/ImportSpeech.swift`。
 
 ```rust,ignore
-use ortts_engine::speech::{Config, streaming::{Stream, Settings}};
-let mut config = Config::new("moonshine_asr", "/models/moonshine-streaming-tiny-q8_0.gguf");
-config.streaming = true;
+use ortts_engine::speech::{Config, streaming::{Stream, Settings, families}};
+let enabled = families(); // e.g. ["moonshine_asr", ...]
+let config = Config::new_streaming_asr("moonshine_asr", "/models/moonshine-streaming-tiny-q8_0.gguf", 4);
 let mut asr = Stream::new(&config, Settings::default())?;
 for event in asr.accept(&pcm16k)? { /* 用segment_id/revision替换partial或提交final */ }
 for event in asr.finish()? { /* flush最后一段 */ }
@@ -131,8 +131,8 @@ for event in asr.finish()? { /* flush最后一段 */ }
 
 ### 调度、协作取消、并发与流式分段
 
-- **每句柄独立互斥与有界抢占（`ortts_parallel_inference_version()==2`）**：已彻底移除运行期全局 `setenv` 与进程级 `execution_gate`，同进程内至少支持 1 路 ggml TTS 与 1 路 ggml ASR（以及 Sherpa 在线 ASR）并发执行而不返回 `ORTTS_BUSY`；单句柄仍严格串行。新增 `ortts_exec_policy`（`ortts_tts_synthesize_ex`、`ortts_asr_run_ex`、`ortts_asr_finish_ex`、`ortts_engine_synthesize_ex`）支持 `timeout_ms` 有界等待与 `supersede` 自动取消前序请求并接管执行权（亦可在 `ortts_tts_synthesize` 请求选项中传入 `"ortts.lock_timeout_ms"` 与 `"ortts.supersede"`）。
-- **算子级与冷加载取消（`ortts_speech_cooperative_cancel_version()==1`）**：取消信号采用线程局部作用域绑定到底层 ggml CPU `abort_callback`、NEON `ExecutionPlan` 与 GGUF 权重加载检查点，离线/流式 TTS 与 ASR 支持加载与算子级协作取消并保留常驻模型（`ortts_tts_create_cancellable`、`ortts_tts_synthesize_cancellable`、`ortts_asr_create_cancellable`、`ortts_asr_run_cancellable`、`ortts_asr_finish_cancellable`）。
+- **每句柄独立互斥与有界抢占（`ortts_parallel_inference_version()==2` / Rust `speech::supports_parallel_tts_asr()`）**：已彻底移除运行期全局 `setenv` 与进程级 `execution_gate`，同进程内至少支持 1 路 ggml TTS 与 1 路 ggml ASR（以及 Sherpa 在线 ASR）并发执行而不返回 `ORTTS_BUSY`；单句柄仍严格串行。新增 `ortts_exec_policy`（C：`ortts_tts_synthesize_ex`、`ortts_asr_run_ex`、`ortts_asr_finish_ex`、`ortts_engine_synthesize_ex`；Rust：`ExecPolicy`、`*_ex` 与 `Error::is_busy()`）支持 `timeout_ms` 有界等待与 `supersede` 自动取消前序请求并接管执行权（亦可在 `ortts_tts_synthesize` 请求选项中传入 `"ortts.lock_timeout_ms"` 与 `"ortts.supersede"`）。
+- **算子级与冷加载取消（`ortts_speech_cooperative_cancel_version()==1` / Rust `speech::cancellation_capabilities()`）**：取消信号采用线程局部作用域绑定到底层 ggml CPU `abort_callback`、NEON `ExecutionPlan` 与 GGUF 权重加载检查点，离线/流式 TTS 与 ASR 支持加载与算子级协作取消并保留常驻模型（C：`ortts_tts_create_cancellable`、`ortts_tts_synthesize_cancellable`、`ortts_asr_create_cancellable`、`ortts_asr_run_cancellable`、`ortts_asr_finish_cancellable`；Rust：`Tts::*_cancellable`、`Asr::*_cancellable`、`TtsCache::*_cancellable`）。
 - **ARM64 优化与流式首包**：AArch64 构建默认开启 `ENGINE_ENABLE_NEON=ON`，`kokoro_tts` 在 ARM64 默认优先选用 NEON generator，并在流式模式按固定小步长声码器窗口（首包约 200ms / 18 latent 帧，后续每包约 300ms / 24 帧，两侧 11 帧感受野上下文与 2 帧升余弦平滑拼接，目录标注 `"kokoro_tts":"vocoder-windows"`）吐出首帧 PCM（目标 TTFA < 400ms、RTF < 0.5）；Android `--speech` 构建支持与 `--cpu-auto`（baseline/DotProd/I8MM）及协作取消同开。
 - **中文流式自动分段**：启用 Sherpa 时，`ortts_asr_stream_create` 对 `streaming_paraformer` 与 `zipformer_bilingual` 同样开放 `silence_ms`（200..3000ms），可在说话停顿后自动触发 `ORTTS_ASR_SILENCE` 并推进 `segment_id`。
 

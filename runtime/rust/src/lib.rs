@@ -62,6 +62,61 @@ fn check(status: i32) -> Result<(), String> {
         }))
     }
 }
+
+/// Native status code returned when an active operation already holds the handle lock.
+pub const STATUS_BUSY: i32 = 3;
+
+/// Per-call lock acquisition policy for inference entry points.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ExecPolicy {
+    /// Maximum time in milliseconds to wait for the handle lock (`0..=30000`).
+    /// `0` performs a non-blocking try-lock unless `supersede` is `true` (which waits up to 500 ms).
+    pub timeout_ms: u32,
+    /// When `true`, requests cancellation of any active operation on the same handle and waits for the lock.
+    pub supersede: bool,
+}
+
+impl ExecPolicy {
+    pub const fn new(timeout_ms: u32, supersede: bool) -> Self {
+        Self {
+            timeout_ms,
+            supersede,
+        }
+    }
+
+    pub const fn is_default(&self) -> bool {
+        self.timeout_ms == 0 && !self.supersede
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct RawExecPolicy {
+    pub(crate) struct_size: u32,
+    pub(crate) timeout_ms: u32,
+    pub(crate) supersede: i32,
+}
+
+impl From<&ExecPolicy> for RawExecPolicy {
+    fn from(policy: &ExecPolicy) -> Self {
+        Self {
+            struct_size: std::mem::size_of::<Self>() as u32,
+            timeout_ms: policy.timeout_ms,
+            supersede: i32::from(policy.supersede),
+        }
+    }
+}
+
+pub(crate) fn validate_exec_policy(policy: &ExecPolicy) -> Result<(), Error> {
+    if policy.timeout_ms > 30_000 {
+        Err(Error::InvalidInput(
+            "Execution timeout_ms must be 0..=30000".into(),
+        ))
+    } else {
+        Ok(())
+    }
+}
+
 /// Structured errors for the task-aware own-model API. Legacy methods retain
 /// Result<_, String> for source compatibility with existing SDK callers.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -90,23 +145,42 @@ impl std::fmt::Display for Error {
     }
 }
 impl std::error::Error for Error {}
+pub(crate) fn status_error_with(
+    status: i32,
+    last_error_fn: unsafe extern "C" fn() -> *const c_char,
+) -> Error {
+    if status == 4 {
+        return Error::Cancelled;
+    }
+    let message = unsafe {
+        let ptr = last_error_fn();
+        if ptr.is_null() {
+            "Unknown runtime error".into()
+        } else {
+            CStr::from_ptr(ptr).to_string_lossy().into_owned()
+        }
+    };
+    Error::Native { status, message }
+}
+pub(crate) fn check_with(
+    status: i32,
+    last_error_fn: unsafe extern "C" fn() -> *const c_char,
+) -> Result<(), Error> {
+    if status == 0 {
+        Ok(())
+    } else {
+        Err(status_error_with(status, last_error_fn))
+    }
+}
 impl Error {
+    pub const fn is_busy(&self) -> bool {
+        matches!(self, Self::Native { status: STATUS_BUSY, .. })
+    }
+    pub const fn is_cancelled(&self) -> bool {
+        matches!(self, Self::Cancelled)
+    }
     fn status(status: i32) -> Result<(), Self> {
-        if status == 0 {
-            return Ok(());
-        }
-        if status == 4 {
-            return Err(Self::Cancelled);
-        }
-        let message = unsafe {
-            let ptr = ortts_last_error();
-            if ptr.is_null() {
-                "Unknown runtime error".into()
-            } else {
-                CStr::from_ptr(ptr).to_string_lossy().into_owned()
-            }
-        };
-        Err(Self::Native { status, message })
+        check_with(status, ortts_last_error)
     }
 }
 pub mod cancellation;
@@ -234,8 +308,17 @@ impl Engine {
         Ok(engine)
     }
     pub fn synthesize(&mut self, text: &str, seed: u64, max_tokens: i32) -> Result<Audio, String> {
-        self.run(text, seed, max_tokens, None, ptr::null_mut(), None)
-            .map_err(|e| e.to_string())
+        let policy = ExecPolicy::default();
+        self.run(RunArgs {
+            text,
+            seed,
+            max_tokens,
+            cb: None,
+            user: ptr::null_mut(),
+            policy: &policy,
+            operation: None,
+        })
+        .map_err(|e| e.to_string())
     }
     /// Cancel this generation only; loaded model/session remain owned by self.
     pub fn synthesize_cancellable(
@@ -246,14 +329,36 @@ impl Engine {
         task: &mut Task,
     ) -> Result<Audio, Error> {
         let operation = task.begin()?;
-        self.run(
+        let policy = ExecPolicy::default();
+        self.run(RunArgs {
             text,
             seed,
             max_tokens,
-            None,
-            ptr::null_mut(),
-            Some(&operation),
-        )
+            cb: None,
+            user: ptr::null_mut(),
+            policy: &policy,
+            operation: Some(&operation),
+        })
+    }
+    /// Synthesize with an explicit lock acquisition policy and optional task cancellation.
+    pub fn synthesize_ex(
+        &mut self,
+        text: &str,
+        seed: u64,
+        max_tokens: i32,
+        policy: &ExecPolicy,
+        task: Option<&mut Task>,
+    ) -> Result<Audio, Error> {
+        let operation = task.map(Task::begin).transpose()?;
+        self.run(RunArgs {
+            text,
+            seed,
+            max_tokens,
+            cb: None,
+            user: ptr::null_mut(),
+            policy,
+            operation: operation.as_ref(),
+        })
     }
     /// Return false from the callback to cancel. PCM is borrowed for the callback
     /// only. Panic is caught at this boundary, converted to cancellation/error.
@@ -264,7 +369,7 @@ impl Engine {
         max_tokens: i32,
         sink: F,
     ) -> Result<Audio, String> {
-        self.stream_inner(text, seed, max_tokens, sink, None)
+        self.stream_inner(text, seed, max_tokens, sink, &ExecPolicy::default(), None)
             .map_err(|e| e.to_string())
     }
     pub fn stream_cancellable<F: FnMut(&[f32], i32) -> bool>(
@@ -276,7 +381,27 @@ impl Engine {
         task: &mut Task,
     ) -> Result<Audio, Error> {
         let operation = task.begin()?;
-        self.stream_inner(text, seed, max_tokens, sink, Some(&operation))
+        self.stream_inner(
+            text,
+            seed,
+            max_tokens,
+            sink,
+            &ExecPolicy::default(),
+            Some(&operation),
+        )
+    }
+    /// Stream PCM chunks with an explicit lock acquisition policy and optional task cancellation.
+    pub fn stream_ex<F: FnMut(&[f32], i32) -> bool>(
+        &mut self,
+        text: &str,
+        seed: u64,
+        max_tokens: i32,
+        sink: F,
+        policy: &ExecPolicy,
+        task: Option<&mut Task>,
+    ) -> Result<Audio, Error> {
+        let operation = task.map(Task::begin).transpose()?;
+        self.stream_inner(text, seed, max_tokens, sink, policy, operation.as_ref())
     }
     fn stream_inner<F: FnMut(&[f32], i32) -> bool>(
         &mut self,
@@ -284,6 +409,7 @@ impl Engine {
         seed: u64,
         max_tokens: i32,
         sink: F,
+        policy: &ExecPolicy,
         operation: Option<&Operation>,
     ) -> Result<Audio, Error> {
         struct State<F> {
@@ -311,65 +437,30 @@ impl Engine {
             f: sink,
             panicked: false,
         };
-        let result = self.run(
+        let result = self.run(RunArgs {
             text,
             seed,
             max_tokens,
-            Some(invoke::<F>),
-            &mut state as *mut _ as *mut c_void,
+            cb: Some(invoke::<F>),
+            user: &mut state as *mut _ as *mut c_void,
+            policy,
             operation,
-        );
+        });
         if state.panicked {
             Err(Error::CallbackPanicked)
         } else {
             result
         }
     }
-    fn run(
-        &mut self,
-        text: &str,
-        seed: u64,
-        max_tokens: i32,
-        cb: Callback,
-        user: *mut c_void,
-        operation: Option<&Operation>,
-    ) -> Result<Audio, Error> {
-        if operation.is_some_and(|op| op.requested()) {
-            return Err(Error::Cancelled);
-        }
-        let text = CString::new(text).map_err(|e| Error::InvalidInput(e.to_string()))?;
-        let req = Request {
-            struct_size: std::mem::size_of::<Request>() as u32,
-            text: text.as_ptr(),
-            seed,
-            max_tokens,
-        };
-        let mut out = ptr::null_mut();
-        let status = unsafe {
-            if let Some(synthesize) = operation.and_then(|op| op.api().synthesize) {
-                synthesize(
-                    self.raw,
-                    &req,
-                    operation.unwrap().token(),
-                    cb,
-                    user,
-                    &mut out,
-                )
-            } else {
-                ortts_engine_synthesize(self.raw, &req, cb, user, &mut out)
-            }
-        };
+    fn run(&mut self, args: RunArgs<'_>) -> Result<Audio, Error> {
+        let api = args.operation.map_or_else(cancellation::api, Operation::api);
         struct Owned(*mut c_void);
         impl Drop for Owned {
             fn drop(&mut self) {
                 unsafe { ortts_audio_free(self.0) }
             }
         }
-        let out = Owned(out);
-        Error::status(status)?;
-        if out.0.is_null() {
-            return Err(Error::InvalidAudio);
-        }
+        let out = Owned(Self::run_raw(self.raw, api, ortts_engine_synthesize, &args)?);
         let mut metrics = Metrics::default();
         Error::status(unsafe { ortts_audio_metrics(out.0, &mut metrics) })?;
         let (samples, count, sample_rate) = unsafe {
@@ -390,7 +481,7 @@ impl Engine {
         if !pcm.iter().all(|v| v.is_finite()) {
             return Err(Error::InvalidAudio);
         }
-        if let Some(op) = operation {
+        if let Some(op) = args.operation {
             op.complete()?;
         }
         Ok(Audio {
@@ -399,6 +490,67 @@ impl Engine {
             metrics,
         })
     }
+    fn run_raw(
+        raw: *mut c_void,
+        api: cancellation::Api,
+        fallback: SynthesizeFallback,
+        args: &RunArgs<'_>,
+    ) -> Result<*mut c_void, Error> {
+        validate_exec_policy(args.policy)?;
+        if !args.policy.is_default() && api.synthesize_ex.is_none() {
+            return Err(Error::UnsupportedAbi);
+        }
+        if args.operation.is_some_and(Operation::requested) {
+            return Err(Error::Cancelled);
+        }
+        let text = CString::new(args.text).map_err(|e| Error::InvalidInput(e.to_string()))?;
+        let req = Request {
+            struct_size: std::mem::size_of::<Request>() as u32,
+            text: text.as_ptr(),
+            seed: args.seed,
+            max_tokens: args.max_tokens,
+        };
+        let raw_policy = RawExecPolicy::from(args.policy);
+        let mut out = ptr::null_mut();
+        let status = unsafe {
+            if let Some(synthesize_ex) = api.synthesize_ex {
+                synthesize_ex(
+                    raw,
+                    &req,
+                    &raw_policy,
+                    args.operation.map_or(ptr::null_mut(), Operation::token),
+                    args.cb,
+                    args.user,
+                    &mut out,
+                )
+            } else if let (Some(op), Some(synthesize)) = (args.operation, api.synthesize) {
+                synthesize(raw, &req, op.token(), args.cb, args.user, &mut out)
+            } else {
+                fallback(raw, &req, args.cb, args.user, &mut out)
+            }
+        };
+        if let Err(err) = Error::status(status) {
+            if !out.is_null() {
+                unsafe { ortts_audio_free(out) };
+            }
+            return Err(err);
+        }
+        if out.is_null() {
+            return Err(Error::InvalidAudio);
+        }
+        Ok(out)
+    }
+}
+type SynthesizeFallback =
+    unsafe extern "C" fn(*mut c_void, *const Request, Callback, *mut c_void, *mut *mut c_void) -> i32;
+struct RunArgs<'a> {
+    text: &'a str,
+    seed: u64,
+    max_tokens: i32,
+    cb: Callback,
+    user: *mut c_void,
+    policy: &'a ExecPolicy,
+    operation: Option<&'a Operation>,
 }
 impl Drop for Engine {
     fn drop(&mut self) {
@@ -408,3 +560,138 @@ impl Drop for Engine {
 
 /// Optional additive multi-model API; use a matched library built with --speech.
 pub mod speech;
+pub use speech::{parallel_inference_version, supports_parallel_tts_asr};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    #[test]
+    fn error_helpers_match_busy_and_cancelled() {
+        let busy = Error::Native {
+            status: STATUS_BUSY,
+            message: "custom message".into(),
+        };
+        assert!(busy.is_busy());
+        assert!(!busy.is_cancelled());
+        assert!(Error::Cancelled.is_cancelled());
+        assert!(!Error::Cancelled.is_busy());
+        assert!(!Error::UnsupportedAbi.is_busy());
+    }
+
+    #[test]
+    fn exec_policy_validation_and_ex_dispatch() {
+        static CALL_KIND: AtomicU32 = AtomicU32::new(0);
+        static LAST_TIMEOUT: AtomicU32 = AtomicU32::new(0);
+        static LAST_SUPERSEDE: AtomicU32 = AtomicU32::new(9);
+
+        unsafe extern "C" fn mock_fallback(
+            _: *mut c_void,
+            _: *const Request,
+            _: Callback,
+            _: *mut c_void,
+            _: *mut *mut c_void,
+        ) -> i32 {
+            CALL_KIND.store(1, Ordering::SeqCst);
+            STATUS_BUSY
+        }
+        unsafe extern "C" fn mock_ex(
+            _: *mut c_void,
+            _: *const Request,
+            policy: *const RawExecPolicy,
+            _: *mut c_void,
+            _: Callback,
+            _: *mut c_void,
+            _: *mut *mut c_void,
+        ) -> i32 {
+            CALL_KIND.store(2, Ordering::SeqCst);
+            let p = unsafe { &*policy };
+            assert_eq!(p.struct_size as usize, std::mem::size_of::<RawExecPolicy>());
+            LAST_TIMEOUT.store(p.timeout_ms, Ordering::SeqCst);
+            LAST_SUPERSEDE.store(p.supersede as u32, Ordering::SeqCst);
+            STATUS_BUSY
+        }
+
+        let invalid = ExecPolicy::new(30_001, false);
+        assert!(matches!(
+            Engine::run_raw(
+                ptr::null_mut(),
+                cancellation::Api::default(),
+                mock_fallback,
+                &RunArgs {
+                    text: "hi",
+                    seed: 1,
+                    max_tokens: 8,
+                    cb: None,
+                    user: ptr::null_mut(),
+                    policy: &invalid,
+                    operation: None,
+                },
+            ),
+            Err(Error::InvalidInput(_))
+        ));
+
+        let non_default = ExecPolicy::new(500, true);
+        assert!(matches!(
+            Engine::run_raw(
+                ptr::null_mut(),
+                cancellation::Api::default(),
+                mock_fallback,
+                &RunArgs {
+                    text: "hi",
+                    seed: 1,
+                    max_tokens: 8,
+                    cb: None,
+                    user: ptr::null_mut(),
+                    policy: &non_default,
+                    operation: None,
+                },
+            ),
+            Err(Error::UnsupportedAbi)
+        ));
+
+        let default_policy = ExecPolicy::default();
+        let err = Engine::run_raw(
+            ptr::null_mut(),
+            cancellation::Api::default(),
+            mock_fallback,
+            &RunArgs {
+                text: "hi",
+                seed: 1,
+                max_tokens: 8,
+                cb: None,
+                user: ptr::null_mut(),
+                policy: &default_policy,
+                operation: None,
+            },
+        )
+        .unwrap_err();
+        assert_eq!(CALL_KIND.load(Ordering::SeqCst), 1);
+        assert!(err.is_busy());
+
+        let api_with_ex = cancellation::Api {
+            synthesize_ex: Some(mock_ex),
+            ..cancellation::Api::default()
+        };
+        let err = Engine::run_raw(
+            ptr::null_mut(),
+            api_with_ex,
+            mock_fallback,
+            &RunArgs {
+                text: "hi",
+                seed: 1,
+                max_tokens: 8,
+                cb: None,
+                user: ptr::null_mut(),
+                policy: &non_default,
+                operation: None,
+            },
+        )
+        .unwrap_err();
+        assert_eq!(CALL_KIND.load(Ordering::SeqCst), 2);
+        assert_eq!(LAST_TIMEOUT.load(Ordering::SeqCst), 500);
+        assert_eq!(LAST_SUPERSEDE.load(Ordering::SeqCst), 1);
+        assert!(err.is_busy());
+    }
+}
