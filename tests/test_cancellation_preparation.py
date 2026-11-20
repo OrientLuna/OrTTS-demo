@@ -7,22 +7,23 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase, mock
 
-from tools import prepare_cancellable_runtime
+from tools import prepare_cancellable_runtime, prepare_cpu_dispatch
 from tools.source_identity import verify_mtmd_sources, identity
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class CancellationPreparationTests(TestCase):
-    def test_identity_rejects_cancel_dispatch_combination_before_build(self):
+    def test_identity_allows_cancel_dispatch_with_explicit_options(self):
         with TemporaryDirectory() as directory:
             source = Path(directory)
+            (source / "ORTTS_SOURCE_RECEIPT.json").write_text(json.dumps({"base_commit": "x", "patch_sha256": "y"}))
             (source / "ORTTS_CPU_DISPATCH_RECEIPT.json").write_text("{}")
             (source / "ORTTS_CANCELLATION_RECEIPT.json").write_text("{}")
-            with self.assertRaisesRegex(ValueError, "auto-dispatch is unsupported"):
+            with self.assertRaisesRegex(ValueError, "Source identity mismatch"):
                 identity(source, True, True)
 
-    def test_dispatch_preparation_rejects_cancellation_source(self):
+    def test_dispatch_requires_explicit_options_when_cancellable(self):
         with TemporaryDirectory() as directory:
             source = Path(directory) / "source"
             source.mkdir()
@@ -31,7 +32,19 @@ class CancellationPreparationTests(TestCase):
             result = subprocess.run([sys.executable, str(ROOT / "tools/prepare_cpu_dispatch.py"),
                                      "--source", str(source), "--out", str(output)], capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("auto-dispatch + cooperative cancellation is unsupported", result.stderr)
+            self.assertIn("prepare_explicit_options.py", result.stderr)
+            self.assertFalse(output.exists())
+
+    def test_dispatch_accepts_cancellable_plus_explicit_options_in_principle(self):
+        with TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            source.mkdir()
+            (source / "ORTTS_CANCELLATION_RECEIPT.json").write_text("{}")
+            (source / "ORTTS_EXPLICIT_OPTIONS_RECEIPT.json").write_text("{}")
+            output = Path(directory) / "output"
+            with mock.patch.object(prepare_cpu_dispatch, "identity", side_effect=ValueError("stop-after-receipt-check")):
+                with self.assertRaisesRegex(ValueError, "stop-after-receipt-check"):
+                    prepare_cpu_dispatch.prepare(source, output)
             self.assertFalse(output.exists())
 
     def test_cancellation_preparation_rejects_dispatch_source(self):
@@ -78,6 +91,11 @@ class CancellationPreparationTests(TestCase):
             entries = lock[key]
             self.assertEqual(len({e["path"] for e in entries}), len(entries))
             self.assertTrue(all(len(e["sha256"]) == 64 for e in entries))
+        dispatch = json.loads((ROOT / "vendor/cpu-dispatch/lock.json").read_text())
+        for name, digest in dispatch["patches"].items():
+            self.assertEqual(hashlib.sha256((ROOT / "vendor/cpu-dispatch" / name).read_bytes()).hexdigest(), digest)
+        self.assertIn("cancellable_files", dispatch)
+        self.assertTrue(all(len(e["sha256"]) == 64 for e in dispatch["cancellable_files"]))
 
     def test_invalid_source_does_not_create_output(self):
         with TemporaryDirectory() as directory:

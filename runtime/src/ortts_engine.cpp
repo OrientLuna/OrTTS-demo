@@ -24,8 +24,6 @@
 #include "engine/framework/core/ortts_cancellation.h"
 #endif
 
-struct ortts_cancel_token { std::atomic<bool> cancelled{false}; };
-
 namespace ortts::detail {
 thread_local std::string error;
 std::mutex execution_gate;
@@ -78,7 +76,7 @@ struct ortts_engine {
  audiocpp_registry* registry=nullptr;
  audiocpp_model* model=nullptr;
  audiocpp_session* session=nullptr;
- std::mutex execution;
+ std::timed_mutex execution;
  std::atomic<bool> running{false}, cancelled{false};
  ~ortts_engine() {
   audiocpp_session_free(session);
@@ -200,9 +198,12 @@ ortts_status ortts_engine_create_cancellable(const ortts_config* cfg,ortts_cance
  catch(...){error="Unknown engine load failure";return token&&token->cancelled?ORTTS_CANCELLED:ORTTS_RUNTIME_ERROR;}
 }
 ortts_status ortts_engine_synthesize(ortts_engine* e,const ortts_request* req,ortts_pcm_callback sink,void* user,ortts_audio** out) {
- return ortts_engine_synthesize_cancellable(e,req,nullptr,sink,user,out);
+ return ortts_engine_synthesize_ex(e,req,nullptr,nullptr,sink,user,out);
 }
 ortts_status ortts_engine_synthesize_cancellable(ortts_engine* e,const ortts_request* req,ortts_cancel_token* token,ortts_pcm_callback sink,void* user,ortts_audio** out) {
+ return ortts_engine_synthesize_ex(e,req,nullptr,token,sink,user,out);
+}
+ortts_status ortts_engine_synthesize_ex(ortts_engine* e,const ortts_request* req,const ortts_exec_policy* policy,ortts_cancel_token* token,ortts_pcm_callback sink,void* user,ortts_audio** out) {
  const auto api_start=Clock::now();
  if(out)*out=nullptr;
  error.clear();
@@ -210,8 +211,9 @@ ortts_status ortts_engine_synthesize_cancellable(ortts_engine* e,const ortts_req
   error="Invalid synthesis request";return ORTTS_INVALID;
  }
  if(!e->streaming&&sink){error="PCM callbacks require a streaming engine";return ORTTS_INVALID;}
- std::unique_lock<std::mutex> lock(e->execution,std::try_to_lock);
- if(!lock.owns_lock()){error="Another engine operation is active";return ORTTS_BUSY;}
+ ortts_status lock_status=ORTTS_BUSY;
+ auto lock=ortts::detail::try_acquire_execution(e->execution,e->running,e->cancelled,policy,lock_status);
+ if(!lock.owns_lock())return lock_status;
  const auto cancelled=[&] { return e->cancelled.load() || (token && token->cancelled.load()); };
  try {
   Running running(*e);
@@ -260,7 +262,7 @@ ortts_status ortts_engine_synthesize_cancellable(ortts_engine* e,const ortts_req
  return ORTTS_RUNTIME_ERROR;
 }
 void ortts_engine_cancel(ortts_engine* e){if(e&&e->running.load())e->cancelled=true;}
-void ortts_engine_free(ortts_engine* e){if(!e)return;{std::lock_guard<std::mutex> lock(e->execution);}delete e;}
+void ortts_engine_free(ortts_engine* e){if(!e)return;{std::lock_guard<std::timed_mutex> lock(e->execution);}delete e;}
 const float* ortts_audio_samples(const ortts_audio* a){return a?a->samples.data():nullptr;}
 size_t ortts_audio_sample_count(const ortts_audio* a){return a?a->samples.size():0;}
 int32_t ortts_audio_sample_rate(const ortts_audio* a){return a?24000:0;}

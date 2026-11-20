@@ -1,3 +1,33 @@
+diff --git a/include/engine/models/kokoro_tts/decoder.h b/include/engine/models/kokoro_tts/decoder.h
+index b766081..59f736d 100644
+--- a/include/engine/models/kokoro_tts/decoder.h
++++ b/include/engine/models/kokoro_tts/decoder.h
+@@ -3,6 +3,7 @@
+ #include "engine/models/kokoro_tts/predictor.h"
+ 
+ #include <cstdint>
++#include <functional>
+ #include <memory>
+ #include <string>
+ #include <vector>
+@@ -41,11 +42,17 @@ public:
+ 
+     void prepare(KokoroIstftNetDecoderCapacityContract contract);
+     void set_seed(uint64_t seed);
++    bool supports_capacity_reuse() const;
+ 
+     std::vector<float> decode(
+         const PredictorOutputs & predictor,
+         const std::vector<float> & ref_s);
+ 
++    std::vector<float> decode_streaming(
++        const PredictorOutputs & predictor,
++        const std::vector<float> & ref_s,
++        const std::function<void(const float * samples, size_t count)> & on_audio_chunk);
++
+ private:
+     struct Impl;
+     std::unique_ptr<Impl> impl_;
 diff --git a/include/engine/models/kokoro_tts/frontend.h b/include/engine/models/kokoro_tts/frontend.h
 index 900ee9b..a93101b 100644
 --- a/include/engine/models/kokoro_tts/frontend.h
@@ -142,6 +172,405 @@ index e847566..dc96b0f 100644
      return run_single(make_request(normalized_request));
    }
    const auto &audio = *normalized_request.audio_input;
+diff --git a/src/models/kokoro_tts/decoder.cpp b/src/models/kokoro_tts/decoder.cpp
+index 9e28702..5955d96 100644
+--- a/src/models/kokoro_tts/decoder.cpp
++++ b/src/models/kokoro_tts/decoder.cpp
+@@ -1262,6 +1262,34 @@ private:
+     std::unique_ptr<GeneratorGraphSession> session_;
+ };
+ 
++std::vector<float> spectrogram_to_waveform(
++    const std::vector<float> & generator_output,
++    int64_t generated_frames,
++    int64_t bins,
++    int64_t frames,
++    int64_t samples,
++    const audio::STFTConfig & istft_config) {
++    std::vector<float> complex_spec(static_cast<size_t>(bins * frames * 2), 0.0f);
++    for (int64_t f = 0; f < bins; ++f) {
++        for (int64_t c = 0; c < frames; ++c) {
++            const float mag = std::exp(generator_output[static_cast<size_t>(f * generated_frames + c)]);
++            const float phase = std::sin(generator_output[static_cast<size_t>((f + bins) * generated_frames + c)]);
++            const size_t base = static_cast<size_t>((f * frames + c) * 2);
++            complex_spec[base] = mag * std::cos(phase);
++            complex_spec[base + 1] = mag * std::sin(phase);
++        }
++    }
++    const auto & window = audio::get_cached_stft_window(istft_config);
++    return audio::ISTFT().compute(
++        complex_spec,
++        window,
++        1,
++        bins,
++        frames,
++        samples,
++        istft_config).values;
++}
++
+ }  // namespace
+ 
+ struct KokoroIstftNetDecoderRuntime::Impl {
+@@ -1390,6 +1418,14 @@ void KokoroIstftNetDecoderRuntime::prepare(KokoroIstftNetDecoderCapacityContract
+     impl_->prepare(contract);
+ }
+ 
++bool KokoroIstftNetDecoderRuntime::supports_capacity_reuse() const {
++#ifdef ENGINE_HAVE_NEON
++    return impl_->neon_generator != nullptr;
++#else
++    return false;
++#endif
++}
++
+ std::vector<float> KokoroIstftNetDecoderRuntime::decode(
+     const PredictorOutputs & predictor,
+     const std::vector<float> & ref_s) {
+@@ -1413,8 +1449,23 @@ std::vector<float> KokoroIstftNetDecoderRuntime::decode(
+     generator_ms = measure_ms([&]() {
+ #ifdef ENGINE_HAVE_NEON
+         if (impl_->neon_generator) {
+-            generator_output = impl_->neon_generator->run(read_decoder_x(predictor), int(predictor.decoder_x_cols),
+-                conditioning->features, int(conditioning->feature_cols), style_decoder, impl_->n_threads).values;
++            if (conditioning->valid_feature_cols < conditioning->feature_cols) {
++                const int64_t valid_cols = conditioning->valid_feature_cols;
++                std::vector<float> compact_har(static_cast<size_t>(conditioning->feature_rows * valid_cols));
++                for (int64_t row = 0; row < conditioning->feature_rows; ++row) {
++                    std::copy_n(
++                        conditioning->features.data() + static_cast<size_t>(row * conditioning->feature_cols),
++                        static_cast<size_t>(valid_cols),
++                        compact_har.data() + static_cast<size_t>(row * valid_cols));
++                }
++                generator_output = impl_->neon_generator->run(
++                    read_decoder_x(predictor), int(predictor.decoder_x_cols),
++                    compact_har, int(valid_cols), style_decoder, impl_->n_threads).values;
++            } else {
++                generator_output = impl_->neon_generator->run(
++                    read_decoder_x(predictor), int(predictor.decoder_x_cols),
++                    conditioning->features, int(conditioning->feature_cols), style_decoder, impl_->n_threads).values;
++            }
+             generator_output_cols = static_cast<int64_t>(generator_output.size()) / bins / 2;
+             return;
+         }
+@@ -1464,26 +1515,14 @@ std::vector<float> KokoroIstftNetDecoderRuntime::decode(
+     }
+     std::vector<float> waveform;
+     istft_ms = measure_ms([&]() {
+-        std::vector<float> complex_spec(static_cast<size_t>(bins * frames * 2), 0.0f);
+-        for (int64_t f = 0; f < bins; ++f) {
+-            for (int64_t c = 0; c < frames; ++c) {
+-                const float mag = std::exp(generator_output[static_cast<size_t>(f * generated_frames + c)]);
+-                const float phase = std::sin(generator_output[static_cast<size_t>((f + bins) * generated_frames + c)]);
+-                const size_t base = static_cast<size_t>((f * frames + c) * 2);
+-                complex_spec[base] = mag * std::cos(phase);
+-                complex_spec[base + 1] = mag * std::sin(phase);
+-            }
+-        }
+-        const auto & window = audio::get_cached_stft_window(impl_->inverse_stft_config);
+         const int64_t samples = impl_->inverse_stft_config.hop_length * (frames - 1);
+-        waveform = audio::ISTFT().compute(
+-            complex_spec,
+-            window,
+-            1,
++        waveform = spectrogram_to_waveform(
++            generator_output,
++            generated_frames,
+             bins,
+             frames,
+             samples,
+-            impl_->inverse_stft_config).values;
++            impl_->inverse_stft_config);
+     });
+     const int64_t valid_waveform_samples =
+         impl_->inverse_stft_config.hop_length * std::max<int64_t>(conditioning->valid_feature_cols - 1, 0);
+@@ -1498,4 +1537,287 @@ std::vector<float> KokoroIstftNetDecoderRuntime::decode(
+     return waveform;
+ }
+ 
++std::vector<float> KokoroIstftNetDecoderRuntime::decode_streaming(
++    const PredictorOutputs & predictor,
++    const std::vector<float> & ref_s,
++    const std::function<void(const float * samples, size_t count)> & on_audio_chunk) {
++    if (!on_audio_chunk) {
++        return decode(predictor, ref_s);
++    }
++    if (static_cast<int64_t>(ref_s.size()) != 256) {
++        throw std::runtime_error("Kokoro decoder requires ref_s with 256 elements");
++    }
++
++#ifdef ENGINE_HAVE_NEON
++    if (impl_->neon_generator) {
++        const std::vector<float> style_decoder(ref_s.begin(), ref_s.begin() + 128);
++        double conditioning_ms = 0.0;
++        double generator_ms = 0.0;
++        double istft_ms = 0.0;
++
++        const int64_t total_frames = predictor.decoder_x_cols;
++        if (total_frames <= 0) {
++            throw std::runtime_error("Kokoro decoder requires positive decoder frames");
++        }
++        if (static_cast<int64_t>(predictor.f0_curve.size()) != total_frames) {
++            throw std::runtime_error("Kokoro decoder f0 curve frame count mismatch");
++        }
++        const std::vector<float> full_x = read_decoder_x(predictor);
++        if (static_cast<int64_t>(full_x.size()) != predictor.decoder_x_rows * total_frames) {
++            throw std::runtime_error("Kokoro streaming decoder latent size mismatch");
++        }
++        const auto & gen_weights = impl_->weights->decoder.generator;
++        const int64_t x_rows = predictor.decoder_x_rows;
++        const int64_t hop = impl_->inverse_stft_config.hop_length;
++        const int64_t bins = impl_->inverse_stft_config.n_fft / 2 + 1;
++        const int64_t feature_rows = bins * 2;
++        const int64_t harmonic_dims = gen_weights.harmonic_num + 1;
++        if (gen_weights.source_linear.weight.empty() ||
++            static_cast<int64_t>(gen_weights.source_linear.weight.size()) < harmonic_dims ||
++            (gen_weights.source_linear.use_bias && gen_weights.source_linear.bias.empty())) {
++            throw std::runtime_error("kokoro decoder source affine weights are missing");
++        }
++        int64_t samples_per_frame = hop;
++        for (const auto & up : gen_weights.ups) {
++            samples_per_frame *= up.stride;
++        }
++        const int64_t cols_per_frame = samples_per_frame / hop;
++        const auto & stft_window = audio::get_cached_stft_window(impl_->inverse_stft_config);
++
++        std::vector<float> coarse_phase;
++        conditioning_ms += measure_ms([&]() {
++            coarse_phase.resize(static_cast<size_t>(harmonic_dims * total_frames));
++            for (int64_t h = 0; h < harmonic_dims; ++h) {
++                const float harmonic = static_cast<float>(h + 1);
++                float acc = 0.0f;
++                for (int64_t t = 0; t < total_frames; ++t) {
++                    acc += std::fmod(
++                        (predictor.f0_curve[static_cast<size_t>(t)] * harmonic) /
++                            static_cast<float>(gen_weights.sampling_rate),
++                        1.0f);
++                    coarse_phase[static_cast<size_t>(h * total_frames + t)] =
++                        acc * 2.0f * kPi * static_cast<float>(samples_per_frame);
++                }
++            }
++        });
++
++        auto splitmix64 = [](uint64_t x) noexcept -> uint64_t {
++            x += 0x9e3779b97f4a7c15ULL;
++            x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ULL;
++            x = (x ^ (x >> 27)) * 0x94d049bb133111ebULL;
++            return x ^ (x >> 31);
++        };
++        auto u01 = [](uint64_t r) noexcept -> float {
++            return (static_cast<float>(static_cast<uint32_t>(r >> 32)) + 0.5f) / 4294967296.0f;
++        };
++        const float source_bias = gen_weights.source_linear.use_bias ? gen_weights.source_linear.bias[0] : 0.0f;
++        const int64_t noise_pairs = (harmonic_dims + 1) / 2;
++        const uint64_t rng_seed = impl_->rng_seed;
++
++        auto decode_window = [&](int64_t lo, int64_t count) -> std::vector<float> {
++            std::vector<float> win_x(static_cast<size_t>(x_rows * count));
++            for (int64_t row = 0; row < x_rows; ++row) {
++                std::copy_n(
++                    full_x.data() + static_cast<size_t>(row * total_frames + lo),
++                    static_cast<size_t>(count),
++                    win_x.data() + static_cast<size_t>(row * count));
++            }
++            const int64_t win_samples = count * samples_per_frame;
++            const int64_t win_cols = cols_per_frame * count + 1;
++            std::vector<float> win_har(static_cast<size_t>(feature_rows * win_cols));
++            conditioning_ms += measure_ms([&]() {
++                std::vector<float> win_source(static_cast<size_t>(win_samples));
++                const int64_t sample_offset = lo * samples_per_frame;
++                for (int64_t s = 0; s < win_samples; ++s) {
++                    const int64_t t_global = sample_offset + s;
++                    const int64_t frame = std::min<int64_t>(t_global / samples_per_frame, total_frames - 1);
++                    const float uv_t =
++                        predictor.f0_curve[static_cast<size_t>(frame)] > gen_weights.voiced_threshold ? 1.0f : 0.0f;
++                    const float noise_amp =
++                        uv_t * gen_weights.noise_std + (1.0f - uv_t) * gen_weights.sine_amp / 3.0f;
++                    const float src =
++                        (static_cast<float>(t_global) + 0.5f) / static_cast<float>(samples_per_frame) - 0.5f;
++                    int64_t left = 0;
++                    int64_t right = 0;
++                    float frac = 0.0f;
++                    if (src >= static_cast<float>(total_frames - 1)) {
++                        left = total_frames - 1;
++                        right = total_frames - 1;
++                    } else if (src > 0.0f) {
++                        left = static_cast<int64_t>(std::floor(src));
++                        right = left + 1;
++                        frac = src - static_cast<float>(left);
++                    }
++                    const float w_left = 1.0f - frac;
++                    float merged_src = source_bias;
++                    float n0 = 0.0f;
++                    float n1 = 0.0f;
++                    for (int64_t h = 0; h < harmonic_dims; ++h) {
++                        if ((h & 1) == 0) {
++                            const uint64_t key =
++                                static_cast<uint64_t>(t_global) * static_cast<uint64_t>(noise_pairs) +
++                                static_cast<uint64_t>(h >> 1);
++                            const uint64_t r1 = splitmix64(rng_seed ^ (key * 0x517cc1b727220a95ULL + 1ULL));
++                            const uint64_t r2 = splitmix64(r1);
++                            const float radius = std::sqrt(-2.0f * std::log(std::max(u01(r1), 1.0e-12f)));
++                            const float theta = 2.0f * kPi * u01(r2);
++                            n0 = radius * std::cos(theta);
++                            n1 = radius * std::sin(theta);
++                        }
++                        const float noise_h = ((h & 1) == 0) ? n0 : n1;
++                        const size_t base = static_cast<size_t>(h * total_frames);
++                        const float interp_phase =
++                            coarse_phase[base + static_cast<size_t>(left)] * w_left +
++                            coarse_phase[base + static_cast<size_t>(right)] * frac;
++                        const float base_sine = std::sin(interp_phase) * gen_weights.sine_amp;
++                        const float noisy_sine = base_sine * uv_t + noise_amp * noise_h;
++                        merged_src += gen_weights.source_linear.weight[static_cast<size_t>(h)] * noisy_sine;
++                    }
++                    win_source[static_cast<size_t>(s)] = std::tanh(merged_src);
++                }
++                const audio::AudioTensor stft_out = audio::STFT().compute_complex(
++                    win_source,
++                    stft_window,
++                    1,
++                    win_samples,
++                    impl_->inverse_stft_config,
++                    static_cast<size_t>(impl_->n_threads));
++                if (stft_out.shape.size() < 3 ||
++                    stft_out.shape[1] != bins ||
++                    stft_out.shape[2] != win_cols) {
++                    throw std::runtime_error("Kokoro streaming per-window STFT shape mismatch");
++                }
++                for (int64_t bin = 0; bin < bins; ++bin) {
++                    for (int64_t col = 0; col < win_cols; ++col) {
++                        const size_t base = static_cast<size_t>(((bin * win_cols) + col) * 2);
++                        const float re = stft_out.values[base];
++                        const float im = stft_out.values[base + 1];
++                        win_har[static_cast<size_t>(bin * win_cols + col)] = std::sqrt(re * re + im * im);
++                        win_har[static_cast<size_t>((bin + bins) * win_cols + col)] = std::atan2(im, re);
++                    }
++                }
++            });
++            std::vector<float> gen_out;
++            generator_ms += measure_ms([&]() {
++                gen_out = impl_->neon_generator->run(
++                    win_x, int(count), win_har, int(win_cols), style_decoder, impl_->n_threads).values;
++            });
++            const int64_t gen_cols = static_cast<int64_t>(gen_out.size()) / bins / 2;
++            if (win_cols <= 0 || win_cols > gen_cols) {
++                throw std::runtime_error("Kokoro streaming decoder spectrogram columns mismatch");
++            }
++            std::vector<float> pcm;
++            istft_ms += measure_ms([&]() {
++                const int64_t target_samples = count * samples_per_frame;
++                pcm = spectrogram_to_waveform(
++                    gen_out,
++                    gen_cols,
++                    bins,
++                    win_cols,
++                    target_samples,
++                    impl_->inverse_stft_config);
++                if (static_cast<int64_t>(pcm.size()) < target_samples) {
++                    throw std::runtime_error("Kokoro streaming ISTFT produced fewer samples than expected");
++                }
++                pcm.resize(static_cast<size_t>(target_samples));
++            });
++            return pcm;
++        };
++
++        constexpr int64_t kFirstEmitFrames = 16;     // 200 ms window (175 ms net first emit)
++        constexpr int64_t kSteadyDecodeFrames = 48;  // 600 ms decode pass for low RTF
++        constexpr int64_t kSteadyEmitFrames = 24;    // 300 ms callback slice
++        constexpr int64_t kContextFrames = 11;       // >= 10.75 conv receptive field radius
++        constexpr int64_t kOverlapFrames = 2;        // 25 ms raised-cosine crossfade
++        const int64_t valid_waveform_samples = total_frames * samples_per_frame;
++        const size_t slice_len = static_cast<size_t>(kSteadyEmitFrames * samples_per_frame);
++        const size_t min_tail_samples = static_cast<size_t>(8 * samples_per_frame);
++
++        std::vector<float> merged;
++        merged.reserve(static_cast<size_t>(total_frames * samples_per_frame));
++
++        if (total_frames <= kFirstEmitFrames + kContextFrames) {
++            merged = decode_window(0, total_frames);
++            if (static_cast<int64_t>(merged.size()) > valid_waveform_samples) {
++                merged.resize(static_cast<size_t>(valid_waveform_samples));
++            }
++            for (size_t off = 0; off < merged.size(); off += slice_len) {
++                on_audio_chunk(merged.data() + off, std::min(slice_len, merged.size() - off));
++            }
++        } else {
++            const size_t overlap_samples = static_cast<size_t>(kOverlapFrames * samples_per_frame);
++            std::vector<float> overlap_tail(overlap_samples, 0.0f);
++            int64_t cursor = 0;
++            while (cursor < total_frames) {
++                const int64_t step = (cursor == 0) ? kFirstEmitFrames : kSteadyDecodeFrames;
++                int64_t logical_end = std::min<int64_t>(total_frames, cursor + step);
++                if (total_frames - logical_end < 16) {
++                    logical_end = total_frames;
++                }
++                const bool is_first = (cursor == 0);
++                const bool is_last = (logical_end == total_frames);
++                const int64_t need_lo = is_first ? 0 : (cursor - kOverlapFrames);
++                const int64_t lo = std::max<int64_t>(0, need_lo - kContextFrames);
++                const int64_t hi = std::min<int64_t>(total_frames, logical_end + (is_last ? 0 : kContextFrames));
++
++                std::vector<float> win_pcm = decode_window(lo, hi - lo);
++                std::vector<float> chunk_out;
++                chunk_out.reserve(static_cast<size_t>((logical_end - need_lo) * samples_per_frame));
++
++                if (!is_first) {
++                    const size_t win_overlap_start = static_cast<size_t>((need_lo - lo) * samples_per_frame);
++                    for (size_t i = 0; i < overlap_samples; ++i) {
++                        const float w = 0.5f - 0.5f * std::cos(
++                            kPi * static_cast<float>(i + 1) / static_cast<float>(overlap_samples + 1));
++                        chunk_out.push_back((1.0f - w) * overlap_tail[i] + w * win_pcm[win_overlap_start + i]);
++                    }
++                }
++                const int64_t body_end = is_last ? logical_end : (logical_end - kOverlapFrames);
++                const size_t body_start = static_cast<size_t>((cursor - lo) * samples_per_frame);
++                const size_t body_stop = static_cast<size_t>((body_end - lo) * samples_per_frame);
++                chunk_out.insert(chunk_out.end(), win_pcm.begin() + body_start, win_pcm.begin() + body_stop);
++
++                if (!is_last) {
++                    const size_t tail_start = static_cast<size_t>((logical_end - kOverlapFrames - lo) * samples_per_frame);
++                    std::copy_n(win_pcm.data() + tail_start, overlap_samples, overlap_tail.data());
++                }
++
++                merged.insert(merged.end(), chunk_out.begin(), chunk_out.end());
++                if (!chunk_out.empty()) {
++                    if (is_first) {
++                        on_audio_chunk(chunk_out.data(), chunk_out.size());
++                    } else {
++                        for (size_t off = 0; off < chunk_out.size();) {
++                            size_t emit_len = std::min(slice_len, chunk_out.size() - off);
++                            const size_t remaining = chunk_out.size() - (off + emit_len);
++                            if (remaining > 0 && remaining < min_tail_samples) {
++                                emit_len += remaining;
++                            }
++                            on_audio_chunk(chunk_out.data() + off, emit_len);
++                            off += emit_len;
++                        }
++                    }
++                }
++                cursor = logical_end;
++            }
++            if (static_cast<int64_t>(merged.size()) > valid_waveform_samples) {
++                merged.resize(static_cast<size_t>(valid_waveform_samples));
++            }
++        }
++
++        engine::debug::timing_log_scalar("kokoro.decoder.conditioning_ms", conditioning_ms);
++        engine::debug::timing_log_scalar("kokoro.decoder.generator_ms", generator_ms);
++        engine::debug::timing_log_scalar("kokoro.decoder.istft_ms", istft_ms);
++        return merged;
++    }
++#endif
++
++    std::vector<float> waveform = decode(predictor, ref_s);
++    constexpr size_t kFallbackChunkSamples = 6000;  // 250 ms @ 24 kHz
++    for (size_t off = 0; off < waveform.size(); off += kFallbackChunkSamples) {
++        on_audio_chunk(waveform.data() + off, std::min(kFallbackChunkSamples, waveform.size() - off));
++    }
++    return waveform;
++}
++
+ }  // namespace kokoro_ggml
 diff --git a/src/models/kokoro_tts/frontend.cpp b/src/models/kokoro_tts/frontend.cpp
 index 2104835..a00d8be 100644
 --- a/src/models/kokoro_tts/frontend.cpp
@@ -356,7 +785,7 @@ index 932bbc4..bc1d173 100644
          if (ctx) {
              ggml_free(ctx);
 diff --git a/src/models/kokoro_tts/session.cpp b/src/models/kokoro_tts/session.cpp
-index a282c57..f1b032f 100644
+index a282c57..e9fcae5 100644
 --- a/src/models/kokoro_tts/session.cpp
 +++ b/src/models/kokoro_tts/session.cpp
 @@ -64,9 +64,17 @@ KokoroTTSSession::KokoroTTSSession(
@@ -378,7 +807,18 @@ index a282c57..f1b032f 100644
      // Older embedded contracts omit exec_plan; parse_exec_plan validates its value.
      if (contract_->session_option_keys.find("kokoro_tts.exec_plan") == contract_->session_option_keys.end()) {
          validation_options.options.erase("kokoro_tts.exec_plan");
-@@ -344,12 +352,16 @@ KokoroSynthesisInput build_supplied_or_text_input(
+@@ -264,7 +272,9 @@ void KokoroTTSSession::prepare_decoder_graph_capacity(int64_t capacity) {
+     if (capacity <= 0) {
+         throw std::runtime_error("Kokoro decoder graph capacity must be positive");
+     }
+-    if (prepared_decoder_ && prepared_decoder_capacity_ == capacity) {
++    if (prepared_decoder_ &&
++        (prepared_decoder_capacity_ == capacity ||
++         (prepared_decoder_->supports_capacity_reuse() && prepared_decoder_capacity_ >= capacity))) {
+         return;
+     }
+     const int threads = std::max(1, execution_context().config().threads);
+@@ -344,12 +354,16 @@ KokoroSynthesisInput build_supplied_or_text_input(
      const KokoroAssets & assets,
      std::optional<std::string_view> chunk_phonemes,
      size_t chunk_index,
@@ -398,7 +838,7 @@ index a282c57..f1b032f 100644
      } catch (const std::exception & error) {
          throw std::runtime_error(
              "Kokoro supplied phoneme entry " + std::to_string(chunk_index) + ": " + error.what());
-@@ -606,7 +618,9 @@ void KokoroTTSSession::prepare(const runtime::SessionPreparationRequest & reques
+@@ -606,7 +620,9 @@ void KokoroTTSSession::prepare(const runtime::SessionPreparationRequest & reques
              if (prepare_phonemes.empty()) {
                  request_size = std::max(
                      request_size,
@@ -409,7 +849,7 @@ index a282c57..f1b032f 100644
              } else {
                  // Every entry is sized here, before anything is synthesized, so a bad entry
                  // near the end of a long list is reported without rendering the ones before it.
-@@ -615,7 +629,8 @@ void KokoroTTSSession::prepare(const runtime::SessionPreparationRequest & reques
+@@ -615,7 +631,8 @@ void KokoroTTSSession::prepare(const runtime::SessionPreparationRequest & reques
                          request_size = std::max(
                              request_size,
                              estimate_kokoro_request_tokens(
@@ -419,7 +859,7 @@ index a282c57..f1b032f 100644
                      } catch (const std::exception & error) {
                          throw std::runtime_error(
                              "Kokoro supplied phoneme entry " + std::to_string(index) + ": " + error.what());
-@@ -714,7 +729,8 @@ runtime::TaskResult KokoroTTSSession::synthesize(const runtime::TaskRequest & re
+@@ -714,7 +731,8 @@ runtime::TaskResult KokoroTTSSession::synthesize(const runtime::TaskRequest & re
                  return;
              }
              input = build_supplied_or_text_input(
@@ -429,6 +869,66 @@ index a282c57..f1b032f 100644
              if (!cache_key.empty()) {
                  cached_request_key_ = cache_key;
                  cached_input_ = std::make_unique<KokoroSynthesisInput>(input);
+@@ -747,19 +765,44 @@ runtime::TaskResult KokoroTTSSession::synthesize(const runtime::TaskRequest & re
+         if (static_cast<int64_t>(predictor.f0_curve.size()) != decoder_request_size) {
+             throw std::runtime_error("Kokoro predictor decoder and f0 frame counts diverged");
+         }
+-        if (!prepared_decoder_ || prepared_decoder_capacity_ != decoder_request_size) {
+-            prepare_decoder_graph_capacity(decoder_request_size);
++        const bool decoder_ready = prepared_decoder_ &&
++            (prepared_decoder_->supports_capacity_reuse()
++                 ? prepared_decoder_capacity_ >= decoder_request_size
++                 : prepared_decoder_capacity_ == decoder_request_size);
++        if (!decoder_ready) {
++            const int64_t target_capacity = (neon_generator_ && decoder_request_size < 512)
++                ? 512
++                : decoder_request_size;
++            prepare_decoder_graph_capacity(target_capacity);
+         }
+         if (!prepared_decoder_ ||
+             prepared_decoder_context_.decoder_frame_capacity <= 0 ||
+-            decoder_request_size != prepared_decoder_context_.decoder_frame_capacity) {
++            (prepared_decoder_->supports_capacity_reuse()
++                 ? decoder_request_size > prepared_decoder_context_.decoder_frame_capacity
++                 : decoder_request_size != prepared_decoder_context_.decoder_frame_capacity)) {
+             throw std::runtime_error("Kokoro decoder runtime was not prepared");
+         }
++        const bool stream_via_decoder = streaming && stream_event_sink();
+         std::vector<float> audio;
+         decoder_ms += measure_ms([&]() {
+-            audio = prepared_decoder_->decode(
+-                predictor,
+-                input.style);
++            if (stream_via_decoder) {
++                audio = prepared_decoder_->decode_streaming(
++                    predictor,
++                    input.style,
++                    [&](const float * samples, size_t count) {
++                        if (!samples || count == 0) {
++                            return;
++                        }
++                        runtime::StreamEvent event;
++                        event.audio_output = runtime::AudioBuffer{
++                            24000, 1, std::vector<float>(samples, samples + count)};
++                        stream_event_sink()(event);
++                    });
++            } else {
++                audio = prepared_decoder_->decode(
++                    predictor,
++                    input.style);
++            }
+         });
+         const auto inference_ended = std::chrono::steady_clock::now();
+         inference_ms += std::chrono::duration<double, std::milli>(inference_ended - inference_started).count();
+@@ -776,7 +819,7 @@ runtime::TaskResult KokoroTTSSession::synthesize(const runtime::TaskRequest & re
+         }
+         runtime::AudioBuffer chunk_audio{24000, 1, std::move(audio)};
+         runtime::append_audio_buffer(merged_audio, chunk_audio);
+-        if (streaming && stream_event_sink()) {
++        if (streaming && stream_event_sink() && !stream_via_decoder) {
+             runtime::StreamEvent event;
+             event.audio_output = std::move(chunk_audio);
+             stream_event_sink()(event);
 diff --git a/src/models/moonshine_asr/runtime.cpp b/src/models/moonshine_asr/runtime.cpp
 index 76f1b27..a13e1ac 100644
 --- a/src/models/moonshine_asr/runtime.cpp

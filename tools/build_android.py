@@ -4,11 +4,12 @@ import argparse,os,subprocess,shutil,json,hashlib
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 if __name__=='__main__':
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source',required=True,type=Path);p.add_argument('--ndk',required=True,type=Path);p.add_argument('--sdk',required=True,type=Path);p.add_argument('--java',required=True,type=Path);p.add_argument('--gradle',required=True);p.add_argument('--ninja',type=Path);p.add_argument('--cmake',default='cmake');p.add_argument('--jobs',type=int,default=4);p.add_argument('--model-assets',type=Path);p.add_argument('--release',action='store_true');p.add_argument('--cpu-auto',action='store_true',help='Package baseline, DotProd and I8MM CPU modules together');p.add_argument('--liquidcodec',action='store_true');p.add_argument('--speech',action='store_true');p.add_argument('--g2p-install',type=Path);p.add_argument('--sherpa-asr-prefix',type=Path);p.add_argument('--qa',action='store_true');a=p.parse_args();
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source',required=True,type=Path);p.add_argument('--ndk',required=True,type=Path);p.add_argument('--sdk',required=True,type=Path);p.add_argument('--java',required=True,type=Path);p.add_argument('--gradle',required=True);p.add_argument('--ninja',type=Path);p.add_argument('--cmake',default='cmake');p.add_argument('--jobs',type=int,default=4);p.add_argument('--model-assets',type=Path);p.add_argument('--release',action='store_true');p.add_argument('--cpu-auto',action='store_true',help='Package baseline, DotProd and I8MM CPU modules together');p.add_argument('--android-isa',default='armv8.2-a+dotprod+i8mm+fp16',choices=['armv8-a','armv8.2-a+dotprod+i8mm+fp16']);p.add_argument('--liquidcodec',action='store_true');p.add_argument('--speech',action='store_true');p.add_argument('--g2p-install',type=Path);p.add_argument('--sherpa-asr-prefix',type=Path);p.add_argument('--qa',action='store_true');a=p.parse_args();
  if a.speech and not a.g2p_install:p.error('--speech mobile Demo requires --g2p-install from build_mobile_g2p.py')
  if a.sherpa_asr_prefix and not a.speech:p.error('--sherpa-asr-prefix requires --speech')
  out=ROOT/'build/android-app-native';libs=ROOT/'build/android-app-libs/arm64-v8a';cmd=['python3',str(ROOT/'tools/build.py'),'--platform','android-arm64','--source',str(a.source.resolve()),'--out',str(out),'--ndk',str(a.ndk.resolve()),'--android-jni','--jobs',str(a.jobs),'--cmake',a.cmake]
  if a.cpu_auto:cmd+=['--cpu-auto']
+ else:cmd+=['--android-isa',a.android_isa]
  if a.liquidcodec:cmd+=['--liquidcodec']
  if a.speech:cmd+=['--speech']
  if a.sherpa_asr_prefix:cmd+=['--sherpa-asr-prefix',str(a.sherpa_asr_prefix.resolve())]
@@ -41,7 +42,7 @@ if __name__=='__main__':
  if strip_tool.is_file():
   subprocess.run([str(strip_tool),'--strip-unneeded',*[str(libs/n) for n in to_strip if (libs/n).is_file()]],check=True)
  gradle=[a.gradle,'--offline','--no-daemon','-p',str(ROOT/'android'),':app:assembleRelease' if a.release else ':app:assembleDebug','-PnativeLibsDir='+str(libs.parent)]
- gradle+=['-PnativeCpuProfile='+('arm64-auto' if a.cpu_auto else 'arm64-baseline' if a.speech else 'arm64-i8mm')]
+ gradle+=['-PnativeCpuProfile='+('arm64-auto' if a.cpu_auto else 'arm64-baseline' if a.android_isa=='armv8-a' else 'arm64-i8mm')]
  if a.speech:gradle+=['-Pg2pAssetsDir='+str(assets)]
  if a.model_assets:gradle+=['-PmodelAssetsDir='+str(a.model_assets.resolve())]
  if a.sherpa_asr_prefix:gradle+=['-PsherpaAsr']

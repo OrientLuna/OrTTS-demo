@@ -2,6 +2,11 @@
   "schema": 1,
   "files": [
     {
+      "path": "include/engine/models/kokoro_tts/decoder.h",
+      "base_sha256": "fc53eb76a1a015f37ea3af5cb1f587f8784009eea90ec213cc1be20ad420a339",
+      "sha256": "4d8fb61c3e20d24a3c50fe08404a5a750da34d15fea7feba05211f71210267a3"
+    },
+    {
       "path": "include/engine/models/kokoro_tts/frontend.h",
       "base_sha256": "cdda9ee6c09115af12c96b3ffa26632fdb0761fd29a55b8088e5900e71d9d7ea",
       "sha256": "8fac6be2f88007a88bd612075e8b7477b3101cee8bb8f9a6bb51b4310ea46371"
@@ -27,6 +32,11 @@
       "sha256": "b7f2bd212035da6fdac48beee0701e6d9488fa70941c5aa8086f905efb73b07d"
     },
     {
+      "path": "src/models/kokoro_tts/decoder.cpp",
+      "base_sha256": "edaa39c62549e2d73095ef278f81e3f043b11341cadda845adfd27f7ddf3207f",
+      "sha256": "7600ef6bb30e5dcecafb2bfd3f36a371b66e6d01b357f3d6d407514b1cc4d2ee"
+    },
+    {
       "path": "src/models/kokoro_tts/frontend.cpp",
       "base_sha256": "f87b9268ece889d34fa37129932d325c7bf65f01f3c48cec2dfa69dfb2b2b3cb",
       "sha256": "7ca6bbc6264681e041757e4cc2fe7db8245a1f0adf3766c66ccd117730239864"
@@ -44,7 +54,7 @@
     {
       "path": "src/models/kokoro_tts/session.cpp",
       "base_sha256": "af70928c4b7d845c9c3b441a8cf2048dad98cf86dd7a2694193d90f7a77260ea",
-      "sha256": "bfee2d5ea7a90640268b79c90b9ecb5435014052be213d5581ad031489f850c8"
+      "sha256": "372a3528d9347658b1790cfdf5f01f4170ad9298ceb6e0ba342947ab6c01e09c"
     },
     {
       "path": "src/models/moonshine_asr/runtime.cpp",
@@ -52,5 +62,5 @@
       "sha256": "8410925092f361abb9ddc562f718659043ec2a688d8df679575c48d825bea3d3"
     }
   ],
-  "patch_sha256": "8725a22009944208a60170eb4da7ac4c9019fc8f9b2071c53bacbc6bfb7b7ac7"
+  "patch_sha256": "988524d6a95022d686a3bd52e9aa26cfe29c80d42b9efff322ce49178e0c2475"
 }

@@ -129,15 +129,14 @@ for event in asr.finish()? { /* flush最后一段 */ }
 
 本机验收：C/Rust、跨线程取消、任意分块、reset复用、两会话交错、静音、自动与限长分段；303秒音频加速回放检查RSS平台。固定音色与自然13秒长句另做 offline 对照。详细记录见 `benchmarks/asr-stream-sdk-20261107.json`、`benchmarks/asr-stream-quality-20261107.json`；这些原始 SDK 记录不追溯替换为后续手机结果。新增手机验证参见 [Demo](../docs/MOBILE_SPEECH_DEMO.md)，中文仍使用 SenseVoice 离线接口。
 
-### 调度、缓存与内存
+### 调度、协作取消、并发与流式分段
 
-新旧接口默认进程级try-lock，活跃操作返回BUSY；这是保留旧环境配置依赖的限制。Sherpa在线ASR
-（`streaming_paraformer`/`zipformer_bilingual`）拥有独立ONNX会话，不触碰audio.cpp全局环境或
-audio.cpp/ggml调度，可与ggml域并行执行：每个执行域内仍串行（BUSY），跨域可同进程同时推理。
-探测`ortts_parallel_inference_version()`：1=分域并行可用（需Sherpa构建），0=单全局门。并行只
-是计算层面；模型驻留由宿主显式持有，OS后台执行、音频路由和回声消除不在运行时内。不要在回调
-里创建其他引擎，也不要用另一份直接audio.cpp绕过调度。需要全双工低延迟ASR时，宿主现有Sherpa
-路线应继续保留，不能因统一接口就删除它。
+- **每句柄独立互斥与有界抢占（`ortts_parallel_inference_version()==2`）**：已彻底移除运行期全局 `setenv` 与进程级 `execution_gate`，同进程内至少支持 1 路 ggml TTS 与 1 路 ggml ASR（以及 Sherpa 在线 ASR）并发执行而不返回 `ORTTS_BUSY`；单句柄仍严格串行。新增 `ortts_exec_policy`（`ortts_tts_synthesize_ex`、`ortts_asr_run_ex`、`ortts_asr_finish_ex`、`ortts_engine_synthesize_ex`）支持 `timeout_ms` 有界等待与 `supersede` 自动取消前序请求并接管执行权（亦可在 `ortts_tts_synthesize` 请求选项中传入 `"ortts.lock_timeout_ms"` 与 `"ortts.supersede"`）。
+- **算子级与冷加载取消（`ortts_speech_cooperative_cancel_version()==1`）**：取消信号采用线程局部作用域绑定到底层 ggml CPU `abort_callback`、NEON `ExecutionPlan` 与 GGUF 权重加载检查点，离线/流式 TTS 与 ASR 支持加载与算子级协作取消并保留常驻模型（`ortts_tts_create_cancellable`、`ortts_tts_synthesize_cancellable`、`ortts_asr_create_cancellable`、`ortts_asr_run_cancellable`、`ortts_asr_finish_cancellable`）。
+- **ARM64 优化与流式首包**：AArch64 构建默认开启 `ENGINE_ENABLE_NEON=ON`，`kokoro_tts` 在 ARM64 默认优先选用 NEON generator，并在流式模式按固定小步长声码器窗口（首包约 200ms / 18 latent 帧，后续每包约 300ms / 24 帧，两侧 11 帧感受野上下文与 2 帧升余弦平滑拼接，目录标注 `"kokoro_tts":"vocoder-windows"`）吐出首帧 PCM（目标 TTFA < 400ms、RTF < 0.5）；Android `--speech` 构建支持与 `--cpu-auto`（baseline/DotProd/I8MM）及协作取消同开。
+- **中文流式自动分段**：启用 Sherpa 时，`ortts_asr_stream_create` 对 `streaming_paraformer` 与 `zipformer_bilingual` 同样开放 `silence_ms`（200..3000ms），可在说话停顿后自动触发 `ORTTS_ASR_SILENCE` 并推进 `segment_id`。
+
+模型驻留仍由宿主显式持有；不要在回调里重入、释放或长时间阻塞。需要全双工低延迟ASR时，宿主可结合 `ortts_tts_synthesize_ex` / `ortts_asr_stream_*` 实现打断。
 
 运行时不做无限引擎池、模型下载或自动保活。宿主以模型资产SHA、family、profile和session选项作为缓存键；同一模型换音色用请求字段，避免每音色重复持有权重。设置小型缓存/逐出策略，移动端优先只保留当前模型。Kokoro本轮仍接近GiB级RSS，省内存补丁不等于手机认证。
 

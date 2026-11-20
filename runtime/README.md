@@ -39,12 +39,16 @@ Read `ortts_last_error()` on the calling thread when an operation fails.
 - Supply a prepared model directory, P3/P5, a matching voice and the model's manifest identity.
 - PCM chunks are borrowed during the callback. Copy or enqueue them without blocking generation.
 - Return nonzero from the callback to stop generation.
-- Cooperative builds support cancellable loading and synthesis with a fresh token per operation.
-  Older libraries may only stop at boundaries or discard the result after compute returns.
+- Cooperative builds support operator-level (`ggml` abort callback & NEON plan) and
+  load-phase cancellable synthesis (`ortts_cooperative_cancel_version()==1`,
+  `ortts_speech_cooperative_cancel_version()==1`), retaining resident model weights across
+  cancellation.
 - Keep each active handle on a dedicated worker; re-entering the same active handle
-  returns `ORTTS_BUSY`, while independent handles (and Sherpa online ASR when enabled,
-  detected via `ortts_parallel_inference_version()`) can run concurrently without
-  mutating process environment. Do not free an engine during a call or from its callback.
+  returns `ORTTS_BUSY` (unless using `ortts_*_ex` / `ortts_exec_policy` for bounded
+  `timeout_ms` waiting or `supersede` preemption), while independent handles
+  (`ortts_parallel_inference_version()==2`, including concurrent `1 TTS + 1 ASR` across
+  ggml and Sherpa) execute concurrently without mutating process environment.
+  Do not free an engine during a call or from its callback.
 
 For token ownership and older-library capability checks, see [maintainer notes](AGENT_README.md).
 
@@ -65,6 +69,7 @@ cargo run --offline --manifest-path runtime/rust/Cargo.toml --example synthesize
 ```
 
 On Linux use `LD_LIBRARY_PATH` instead. Embed/sign the native library for deployment.
-Android CPU auto-dispatch and cooperative cancellation cannot currently be combined.
+Android `--cpu-auto` dispatch and cooperative cancellation can be combined by preparing
+with `prepare_cancellable_runtime.py` -> `prepare_explicit_options.py` -> `prepare_cpu_dispatch.py`.
 
 See [licenses and notices](../NOTICE.md) for runtime and model dependencies.

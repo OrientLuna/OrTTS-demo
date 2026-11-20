@@ -39,6 +39,11 @@ typedef struct ortts_metrics {
  double first_pcm_ms; /* -1 if not observed; ready at callback, not audible onset. */
  size_t chunks;
 } ortts_metrics;
+typedef struct ortts_exec_policy {
+ uint32_t struct_size;
+ uint32_t timeout_ms; /* 0 = non-blocking try_lock; 1..30000 = max wait in ms for handle lock. */
+ int32_t supersede;   /* 0 = wait only; 1 = cancel active op on this handle and wait (500ms default if timeout_ms==0). */
+} ortts_exec_policy;
 /* Called synchronously on the synthesize thread. PCM is borrowed for this call.
  * Copy/enqueue quickly. Return nonzero to cancel. Never unwind/reenter/free here.
  * No playback, filesystem writes or network operations are performed by the API. */
@@ -60,6 +65,7 @@ ORTTS_API ortts_status ortts_engine_synthesize(ortts_engine*, const ortts_reques
  * fresh token for every invocation; do not reset/reuse or free it while in use.
  * Older libraries may lack this additive symbol. The execution gate is unchanged. */
 ORTTS_API ortts_status ortts_engine_synthesize_cancellable(ortts_engine*, const ortts_request*, ortts_cancel_token*, ortts_pcm_callback, void*, ortts_audio**);
+ORTTS_API ortts_status ortts_engine_synthesize_ex(ortts_engine*, const ortts_request*, const ortts_exec_policy*, ortts_cancel_token*, ortts_pcm_callback, void*, ortts_audio**);
 /* Thread-safe while handle is alive. Cooperative builds stop at CPU graph/step
  * checkpoints; a running kernel or blocking read may still need to return.
  * Legacy builds may only discard the result after offline compute returns.

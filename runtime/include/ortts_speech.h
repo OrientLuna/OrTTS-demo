@@ -47,18 +47,25 @@ typedef struct ortts_tts_request {
  * Never reenter/free any engine from callback. Return nonzero to cancel. */
 typedef int (*ortts_speech_pcm_callback)(void*,const float*,size_t,int32_t,int32_t);
 ORTTS_API uint32_t ortts_speech_abi_version(void); /* 0 when speech build disabled. */
-/* Additive capability. 1: Sherpa online ASR can execute concurrently with the
- * ggml domain (own/other TTS, SenseVoice, Moonshine). Each domain remains
- * serialized; concurrent same-domain calls return BUSY. 0: original global gate.
- * Older libraries may omit this symbol; detect before calling dynamically.
- * Create handles synchronously, retain both, then call each from its own worker.
- * This is not permission to reenter callbacks or to free active handles, and
- * does not provide OS background execution, audio routing, or echo cancellation. */
+/* Additive capability. 2: Per-handle concurrency across all TTS/ASR handles
+ * (at least 1 ggml TTS + 1 ggml ASR or Sherpa ASR concurrently without process env mutation).
+ * 1: Sherpa online ASR concurrent with serialized ggml domain. 0: global gate.
+ * Create handles synchronously, retain them, then call each from its own worker.
+ * Never reenter callbacks or free active handles, and does not provide
+ * OS background execution, audio routing, or echo cancellation. */
 ORTTS_API uint32_t ortts_parallel_inference_version(void);
+/* Additive capability: 1 means cooperative CPU graph/step & cold-load cancellation
+ * across speech TTS/ASR families. 0 retains boundary-only cancellation. */
+ORTTS_API uint32_t ortts_speech_cooperative_cancel_version(void);
 ORTTS_API const char *ortts_speech_catalog_json(void); /* Static; declarations, not device certification. */
 ORTTS_API ortts_status ortts_tts_create(const ortts_speech_config*,ortts_tts**);
+ORTTS_API ortts_status ortts_tts_create_cancellable(const ortts_speech_config*,ortts_cancel_token*,ortts_tts**);
+/* Supported request options also include optional "ortts.lock_timeout_ms" ("0".."30000")
+ * and "ortts.supersede" ("0"/"1") when calling ortts_tts_synthesize without ortts_exec_policy. */
 ORTTS_API ortts_status ortts_tts_synthesize(ortts_tts*,const ortts_tts_request*,ortts_speech_pcm_callback,void*,ortts_speech_audio**);
-ORTTS_API void ortts_tts_cancel(ortts_tts*); /* Active operation only; boundary cancellation, not kernel interruption. */
+ORTTS_API ortts_status ortts_tts_synthesize_cancellable(ortts_tts*,const ortts_tts_request*,ortts_cancel_token*,ortts_speech_pcm_callback,void*,ortts_speech_audio**);
+ORTTS_API ortts_status ortts_tts_synthesize_ex(ortts_tts*,const ortts_tts_request*,const ortts_exec_policy*,ortts_cancel_token*,ortts_speech_pcm_callback,void*,ortts_speech_audio**);
+ORTTS_API void ortts_tts_cancel(ortts_tts*); /* Cooperative CPU graph/step cancellation while retaining loaded weights. */
 ORTTS_API void ortts_tts_free(ortts_tts*); /* Do not race free with any operation/cancel. */
 ORTTS_API const float *ortts_speech_audio_samples(const ortts_speech_audio*);
 ORTTS_API size_t ortts_speech_audio_frames(const ortts_speech_audio*);
@@ -71,11 +78,16 @@ ORTTS_API void ortts_speech_audio_free(ortts_speech_audio*);
  * with explicit finish as endpoint. There are NO partials or automatic endpoints.
  * Do not call run while buffered input is pending; finish/reset first. */
 ORTTS_API ortts_status ortts_asr_create(const ortts_speech_config*,ortts_asr**);
+ORTTS_API ortts_status ortts_asr_create_cancellable(const ortts_speech_config*,ortts_cancel_token*,ortts_asr**);
 ORTTS_API ortts_status ortts_asr_run(ortts_asr*,const float*,size_t,const char *language,ortts_transcript**);
+ORTTS_API ortts_status ortts_asr_run_cancellable(ortts_asr*,const float*,size_t,const char *language,ortts_cancel_token*,ortts_transcript**);
+ORTTS_API ortts_status ortts_asr_run_ex(ortts_asr*,const float*,size_t,const char *language,const ortts_exec_policy*,ortts_cancel_token*,ortts_transcript**);
 ORTTS_API ortts_status ortts_asr_accept(ortts_asr*,const float*,size_t);
 ORTTS_API ortts_status ortts_asr_finish(ortts_asr*,const char *language,ortts_transcript**);
+ORTTS_API ortts_status ortts_asr_finish_cancellable(ortts_asr*,const char *language,ortts_cancel_token*,ortts_transcript**);
+ORTTS_API ortts_status ortts_asr_finish_ex(ortts_asr*,const char *language,const ortts_exec_policy*,ortts_cancel_token*,ortts_transcript**);
 ORTTS_API ortts_status ortts_asr_reset(ortts_asr*);
-ORTTS_API void ortts_asr_cancel(ortts_asr*); /* Discards result after offline computation returns. */
+ORTTS_API void ortts_asr_cancel(ortts_asr*); /* Cooperative CPU graph/step cancellation while retaining loaded weights. */
 ORTTS_API void ortts_asr_free(ortts_asr*);
 ORTTS_API const char *ortts_transcript_text(const ortts_transcript*);
 ORTTS_API const char *ortts_transcript_language(const ortts_transcript*);
@@ -116,8 +128,8 @@ typedef int (*ortts_asr_stream_callback)(void*,const ortts_asr_stream_event*);
 ORTTS_API uint32_t ortts_asr_stream_abi_version(void); /* 0 if --speech disabled */
 /* NULL stream config uses 400/1000/15000ms, 800ms silence, RMS 0.003.
  * Base config normally selects moonshine_asr, streaming=1, threads=1..8.
- * Optional Sherpa builds also accept internal family zipformer_bilingual for the
- * pinned Chinese/English recipe; set silence_ms=0 (explicit/limit endpoints).
+ * Optional Sherpa builds also accept streaming_paraformer and zipformer_bilingual;
+ * silence_ms (0 or 200..3000) enables automatic utterance segmentation (ORTTS_ASR_SILENCE).
  * For this compatibility path UINT64_MAX cache/buffer counts mean unavailable,
  * not zero memory usage; unobservable encoder/decoder timings are NaN; this does not imply low-end-device certification.
  * No session_options/eSpeak/max_input_frames: use typed stream settings. */

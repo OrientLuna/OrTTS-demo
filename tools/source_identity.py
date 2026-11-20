@@ -11,17 +11,21 @@ def verify_mtmd_sources(source, expected, cancellation):
 
 def identity(source,liquidcodec=False,speech=False):
  source=Path(source);lock=json.loads((ROOT/'vendor/runtime.lock.json').read_text())
- if (source/'ORTTS_CPU_DISPATCH_RECEIPT.json').exists() and (source/'ORTTS_CANCELLATION_RECEIPT.json').exists():raise ValueError('Cooperative cancellation + CPU auto-dispatch is unsupported; use a fixed CPU profile')
+ cancellation=source/'ORTTS_CANCELLATION_RECEIPT.json'
+ eo=source/'ORTTS_EXPLICIT_OPTIONS_RECEIPT.json'
+ has_cancel=cancellation.exists()
  receipt=json.loads((source/'ORTTS_SOURCE_RECEIPT.json').read_text())
  for k in ('base_commit','patch_sha256'):
   if receipt[k]!=lock[k]:raise ValueError('Source identity mismatch: '+k)
  if receipt.get('additional_patches',[])!=lock.get('additional_patches',[]):raise ValueError('Source patch list mismatch')
- dispatch=None
+ dispatch=None;dispatch_files=[]
  if (source/'ORTTS_CPU_DISPATCH_RECEIPT.json').exists():
   dispatch=json.loads((ROOT/'vendor/cpu-dispatch/lock.json').read_text())
   if json.loads((source/'ORTTS_CPU_DISPATCH_RECEIPT.json').read_text())!=dispatch:raise ValueError('CPU dispatch receipt mismatch')
+  if has_cancel and not eo.exists():raise ValueError('CPU dispatch + cancellation requires explicit-options receipt')
   for name,digest in dispatch['patches'].items():
    if hashlib.sha256((ROOT/'vendor/cpu-dispatch'/name).read_bytes()).hexdigest()!=digest:raise ValueError('CPU dispatch patch modified: '+name)
+  dispatch_files=dispatch['cancellable_files'] if has_cancel else dispatch['files']
  u=source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json';changes={}
  if u.exists():
   if not liquidcodec:raise ValueError('Unified source requires --liquidcodec; legacy builds use their original source')
@@ -34,11 +38,11 @@ def identity(source,liquidcodec=False,speech=False):
    if dispatch and item['path'].startswith('ggml/'):
     relative=item['path'][len('ggml/'):]
     actual=Path(ur['ggml_source_dir'])/relative
-    digest=next((x['sha256'] for x in dispatch['files'] if x['scope']=='ggml' and x['path']==relative),digest)
+    digest=next((x['sha256'] for x in dispatch_files if x['scope']=='ggml' and x['path']==relative),digest)
    if hashlib.sha256(actual.read_bytes()).hexdigest()!=digest:raise ValueError('Pinned llama source modified: '+item['path'])
   if ur.get('mtmd_sources'):
    cancel_mtmd={}
-   if (source/'ORTTS_CANCELLATION_RECEIPT.json').exists():
+   if has_cancel:
     cancel_mtmd={x['path']:x for x in json.loads((ROOT/'vendor/cancellation.lock.json').read_text()).get('mtmd_files',[])}
    verify_mtmd_sources(source,ur['mtmd_sources'],cancel_mtmd)
   for path,digest in ul['support_files'].items():
@@ -66,31 +70,32 @@ def identity(source,liquidcodec=False,speech=False):
   if json.loads(ptq.read_text())!=pl or hashlib.sha256((ROOT/pl['patch']).read_bytes()).hexdigest()!=pl['patch_sha256']:raise ValueError('PTQ source receipt mismatch')
   expected.update({x['path']:x['sha256'] for x in pl['files']})
   lock={**lock,'ptq_lazy':pl}
- if dispatch:
-  if not u.exists():raise ValueError('CPU dispatch requires unified sources')
-  ggml=Path(json.loads(u.read_text())['ggml_source_dir'])
-  for item in dispatch['files']:
-   if item['scope']=='audio':expected[item['path']]=item['sha256']
-   elif item['scope']=='ggml':
-    if hashlib.sha256((ggml/item['path']).read_bytes()).hexdigest()!=item['sha256']:raise ValueError('CPU dispatch ggml modified: '+item['path'])
-   else:raise ValueError('Unknown CPU dispatch source scope')
-  lock={**lock,'cpu_dispatch':dispatch}
- cancellation=source/'ORTTS_CANCELLATION_RECEIPT.json'
- if cancellation.exists():
+ if has_cancel:
   cl=json.loads((ROOT/'vendor/cancellation.lock.json').read_text())
   if json.loads(cancellation.read_text())!=cl or hashlib.sha256((ROOT/cl['patch']).read_bytes()).hexdigest()!=cl['patch_sha256']:raise ValueError('Cancellation source receipt mismatch')
-  if dispatch:raise ValueError('Cooperative cancellation does not support CPU dispatch modules; use a fixed CPU profile')
   if hashlib.sha256((ROOT/cl['mtmd_patch']).read_bytes()).hexdigest()!=cl['mtmd_patch_sha256']:raise ValueError('Cancellation mtmd patch mismatch')
   for item in cl['files']:
    if item['base_sha256'] is not None and item['path'] in expected and expected[item['path']]!=item['base_sha256']:raise ValueError('Cancellation patch ordering mismatch: '+item['path'])
    expected[item['path']]=item['sha256']
   lock={**lock,'cancellation':cl}
- eo=source/'ORTTS_EXPLICIT_OPTIONS_RECEIPT.json'
  if eo.exists():
   el=json.loads((ROOT/'vendor/explicit-options/lock.json').read_text())
   if json.loads(eo.read_text())!=el or hashlib.sha256((ROOT/el['patch']).read_bytes()).hexdigest()!=el['patch_sha256']:raise ValueError('Explicit-options source receipt mismatch')
-  expected.update({x['path']:x['sha256'] for x in el['files']})
+  for item in el['files']:
+   if item['base_sha256'] is not None and item['path'] in expected and expected[item['path']]!=item['base_sha256']:raise ValueError('Explicit-options patch ordering mismatch: '+item['path'])
+   expected[item['path']]=item['sha256']
   lock={**lock,'explicit_options':el}
+ if dispatch:
+  if not u.exists():raise ValueError('CPU dispatch requires unified sources')
+  ggml=Path(json.loads(u.read_text())['ggml_source_dir'])
+  for item in dispatch_files:
+   if item['scope']=='audio':
+    if item['base_sha256'] is not None and item['path'] in expected and expected[item['path']]!=item['base_sha256']:raise ValueError('CPU dispatch ordering mismatch: '+item['path'])
+    expected[item['path']]=item['sha256']
+   elif item['scope']=='ggml':
+    if hashlib.sha256((ggml/item['path']).read_bytes()).hexdigest()!=item['sha256']:raise ValueError('CPU dispatch ggml modified: '+item['path'])
+   else:raise ValueError('Unknown CPU dispatch source scope')
+  lock={**lock,'cpu_dispatch':dispatch}
  for rel,digest in expected.items():
   if hashlib.sha256((source/rel).read_bytes()).hexdigest()!=digest:raise ValueError('Prepared source modified: '+rel)
  return lock

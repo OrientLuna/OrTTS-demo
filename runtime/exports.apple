@@ -8,6 +8,7 @@ _ortts_cancel_token_request
 _ortts_cancel_token_free
 _ortts_engine_synthesize
 _ortts_engine_synthesize_cancellable
+_ortts_engine_synthesize_ex
 _ortts_engine_cancel
 _ortts_engine_free
 _ortts_audio_samples
@@ -17,9 +18,13 @@ _ortts_audio_metrics
 _ortts_audio_free
 _ortts_speech_abi_version
 _ortts_parallel_inference_version
+_ortts_speech_cooperative_cancel_version
 _ortts_speech_catalog_json
 _ortts_tts_create
+_ortts_tts_create_cancellable
 _ortts_tts_synthesize
+_ortts_tts_synthesize_cancellable
+_ortts_tts_synthesize_ex
 _ortts_tts_cancel
 _ortts_tts_free
 _ortts_speech_audio_samples
@@ -29,9 +34,14 @@ _ortts_speech_audio_channels
 _ortts_speech_audio_metrics
 _ortts_speech_audio_free
 _ortts_asr_create
+_ortts_asr_create_cancellable
 _ortts_asr_run
+_ortts_asr_run_cancellable
+_ortts_asr_run_ex
 _ortts_asr_accept
 _ortts_asr_finish
+_ortts_asr_finish_cancellable
+_ortts_asr_finish_ex
 _ortts_asr_reset
 _ortts_asr_cancel
 _ortts_asr_free

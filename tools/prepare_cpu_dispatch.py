@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Prepare checked Android CPU variants from local unified sources; no download."""
+"""Prepare checked Android CPU variants from local unified (and optionally cancellable) sources; no download."""
 import argparse, hashlib, json, os, shutil, subprocess
 from pathlib import Path
-from source_identity import identity
+try:
+ from source_identity import identity
+except ModuleNotFoundError:
+ from tools.source_identity import identity
 ROOT=Path(__file__).resolve().parents[1]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 
@@ -10,7 +13,9 @@ def prepare(source,out):
  source=source.resolve();out=out.resolve()
  if out.exists() or out==source or out.is_relative_to(source):raise ValueError('Choose a fresh output outside the input tree')
  if (source/'ORTTS_CPU_DISPATCH_RECEIPT.json').exists():raise ValueError('CPU dispatch already applied')
- if (source/'ORTTS_CANCELLATION_RECEIPT.json').exists():raise ValueError('CPU auto-dispatch + cooperative cancellation is unsupported; use separate fixed-profile cancellation sources')
+ cancellable=(source/'ORTTS_CANCELLATION_RECEIPT.json').exists()
+ if cancellable and not (source/'ORTTS_EXPLICIT_OPTIONS_RECEIPT.json').exists():
+  raise ValueError('Apply prepare_explicit_options.py after prepare_cancellable_runtime.py before prepare_cpu_dispatch.py')
  speech=(source/'ORTTS_SPEECH_SOURCE_RECEIPT.json').exists()
  identity(source,True,speech)
  ur=json.loads((source/'ORTTS_UNIFIED_SOURCE_RECEIPT.json').read_text());ggml=Path(ur['ggml_source_dir'])
@@ -18,7 +23,9 @@ def prepare(source,out):
  vendor=ROOT/'vendor/cpu-dispatch';lock=json.loads((vendor/'lock.json').read_text())
  for name,digest in lock['patches'].items():
   if sha(vendor/name)!=digest:raise ValueError('CPU dispatch patch modified: '+name)
- for item in lock['files']:
+ file_entries=lock['cancellable_files'] if cancellable else lock['files']
+ audio_patch_name='cancellable_audio.patch' if cancellable else 'audio.patch'
+ for item in file_entries:
   base=source if item['scope']=='audio' else ggml;p=base/item['path']
   if item['base_sha256'] is None:
    if p.exists():raise ValueError('CPU dispatch new file already exists: '+str(p))
@@ -31,8 +38,8 @@ def prepare(source,out):
   if origin.is_dir():shutil.copytree(origin,target,ignore=shutil.ignore_patterns('.git','__pycache__','*.pyc'))
   else:shutil.copyfile(origin,target)
  env={**os.environ,'GIT_CEILING_DIRECTORIES':str(out),'TMPDIR':'/tmp'}
- for scope,directory in [('audio',out/'audio.cpp'),('ggml',out/'ggml')]:
-  patch=vendor/(scope+'.patch')
+ for patch_name,directory in [(audio_patch_name,out/'audio.cpp'),('ggml.patch',out/'ggml')]:
+  patch=vendor/patch_name
   subprocess.run(['git','apply','--check',str(patch)],cwd=directory,env=env,check=True)
   subprocess.run(['git','apply',str(patch)],cwd=directory,env=env,check=True)
  ur['llama_source_read_only']=str(Path(ur.get('llama_source_read_only',ggml.parent)).resolve())
@@ -40,7 +47,7 @@ def prepare(source,out):
  (out/'audio.cpp/ORTTS_UNIFIED_SOURCE_RECEIPT.json').write_text(json.dumps(ur,indent=2)+'\n')
  (out/'audio.cpp/ORTTS_CPU_DISPATCH_RECEIPT.json').write_text(json.dumps(lock,indent=2)+'\n')
  identity(out/'audio.cpp',True,speech)
- return {'source':str(out/'audio.cpp'),'ggml':str(out/'ggml'),'verified':True,'models_copied':False}
+ return {'source':str(out/'audio.cpp'),'ggml':str(out/'ggml'),'cancellable':cancellable,'verified':True,'models_copied':False}
 
 if __name__=='__main__':
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();print(json.dumps(prepare(a.source,a.out),indent=2))

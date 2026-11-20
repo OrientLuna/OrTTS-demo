@@ -44,7 +44,7 @@ cmake --build build/apple-iphone-i8mm
 
 ## Android 与 Linux
 
-Android APK 的既有构建入口为 `tools/build_android.py`，原生命令行为 `tools/build.py`。后者的 `--android-isa` 默认 `armv8.2-a+dotprod+i8mm+fp16`，可显式选 `armv8-a`；该入口与上述插件 profile 参数不同，不要混用。旧发布 APK 要求 DotProd/I8MM/FP16。新入口支持 `--cpu-auto`：由 `tools/prepare_cpu_dispatch.py` 准备源树，随包携带 baseline、DotProd/FP16、I8MM CPU 模块，启动按实际 CPU 能力选择；JNI、ggml 和 C++ 运行库各保留一份。此自动分派仅适用于 Android，不改变 Apple 框架的编译档位。已验证范围见主 README。
+Android APK 的既有构建入口为 `tools/build_android.py`，原生命令行为 `tools/build.py`。两者 `--android-isa` 均默认 `armv8.2-a+dotprod+i8mm+fp16`（哪怕启用 `--speech` 也不再静默降回 `armv8-a`），可显式选 `--android-isa armv8-a` 或使用 `--cpu-auto` 随包携带 baseline、DotProd/FP16、I8MM 三档动态模块按 CPU 能力自动分派；ARM64 构建默认同时启用 `ENGINE_ENABLE_NEON=ON`。此外，按 `prepare_cancellable_runtime.py → prepare_explicit_options.py → prepare_cpu_dispatch.py` 顺序准备源码时，`--cpu-auto` 可与算子级协作取消同开。此自动分派仅适用于 Android，不改变 Apple 框架的编译档位。已验证范围见主 README。
 
 Linux ARM64 交叉编译需现有 toolchain，Android 需 NDK。Linux 指令集兼容不代表 glibc/libstdc++ 兼容，应在计划支持的旧系统工具链上构建。Intel、Linux 目标的历史支持不构成本轮 Apple 任务的重新验收。
 

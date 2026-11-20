@@ -36,6 +36,6 @@ fn run(model_root: &str, manifest_sha: &str) -> Result<(), Error> {
   或旧库的“原生调用返回后丢弃结果”。取消不保证立即打断任意计算或 I/O。
 
 原有 `new` / `synthesize` / `stream` 仍返回 `Result<_, String>`；任务级接口返回结构化 `Error`。
-Android CPU 自动分派暂不能与协作取消同时启用。
+Android `--cpu-auto` 与协作取消现已支持同开（准备顺序：`prepare_cancellable_runtime.py` → `prepare_explicit_options.py` → `prepare_cpu_dispatch.py`）。
 
 源码准备、验收、产物校验及安全设计见 [AGENT_README](AGENT_README.md)。

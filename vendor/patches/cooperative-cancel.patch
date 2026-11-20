@@ -1,29 +1,35 @@
 --- /dev/null
 +++ b/include/engine/framework/core/ortts_cancellation.h
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,33 @@
 +#pragma once
 +#include <atomic>
 +#include <stdexcept>
 +
-+// A single operation owns the execution gate; token outlives joined CPU work.
++// ggml CPU invokes abort_callback exclusively on worker ith == 0 (the calling thread),
++// and all host checkpoints run on that same thread. Thread-local pointers isolate
++// concurrent handles across threads with zero cross-talk.
 +namespace engine::core::ortts_cancel {
-+inline std::atomic<const std::atomic<bool> *> active{nullptr};
-+inline std::atomic<const std::atomic<bool> *> secondary{nullptr};
++inline thread_local const std::atomic<bool> * active = nullptr;
++inline thread_local const std::atomic<bool> * secondary = nullptr;
 +inline bool requested(void * = nullptr) noexcept {
-+    const auto * token = active.load(std::memory_order_acquire);
-+    const auto * other = secondary.load(std::memory_order_acquire);
-+    return (token && token->load(std::memory_order_relaxed)) ||
-+           (other && other->load(std::memory_order_relaxed));
++    return (active && active->load(std::memory_order_acquire)) ||
++           (secondary && secondary->load(std::memory_order_acquire));
 +}
 +inline void checkpoint() {
 +    if (requested()) throw std::runtime_error("OrTTS operation cancelled");
 +}
 +struct Scope {
-+    explicit Scope(const std::atomic<bool> * token, const std::atomic<bool> * other = nullptr) {
-+        secondary.store(other, std::memory_order_release);
-+        active.store(token, std::memory_order_release);
++    const std::atomic<bool> * prev_active;
++    const std::atomic<bool> * prev_secondary;
++    explicit Scope(const std::atomic<bool> * token, const std::atomic<bool> * other = nullptr) noexcept
++        : prev_active(active), prev_secondary(secondary) {
++        active = token;
++        secondary = other;
 +    }
-+    ~Scope() { active.store(nullptr, std::memory_order_release); secondary.store(nullptr, std::memory_order_release); }
++    ~Scope() {
++        active = prev_active;
++        secondary = prev_secondary;
++    }
 +    Scope(const Scope &) = delete;
 +    Scope & operator=(const Scope &) = delete;
 +};
@@ -38,15 +44,22 @@
  
  #include <algorithm>
  #include <cstdlib>
-@@ -232,6 +234,7 @@
+@@ -232,6 +234,14 @@
              if (backend == nullptr) {
                  throw std::runtime_error("Failed to initialize CPU backend");
              }
-+            ggml_backend_cpu_set_abort_callback(backend, ortts_cancel::requested, nullptr);
++            if (ggml_backend_dev_t dev = ggml_backend_get_device(backend)) {
++                if (ggml_backend_reg_t reg = ggml_backend_dev_backend_reg(dev)) {
++                    if (auto set_abort = reinterpret_cast<ggml_backend_set_abort_callback_t>(
++                            ggml_backend_reg_get_proc_address(reg, "ggml_backend_set_abort_callback"))) {
++                        set_abort(backend, ortts_cancel::requested, nullptr);
++                    }
++                }
++            }
              return backend;
          }
          case BackendType::Hip:
-@@ -420,6 +423,7 @@
+@@ -420,6 +430,7 @@
  }
  
  void validate_backend_graph_supported(ggml_backend_t backend, ggml_cgraph * graph, const char * label) {
@@ -54,14 +67,186 @@
      if (backend == nullptr || graph == nullptr) {
          throw std::runtime_error("Cannot validate backend graph support for null backend or graph");
      }
-@@ -602,6 +606,7 @@
+@@ -576,9 +587,14 @@
+ #else
+     (void)label;
+ #endif
+-    return plan != nullptr
++    ortts_cancel::checkpoint();
++    const ggml_status status = plan != nullptr
+         ? ggml_backend_graph_plan_compute(backend, plan)
+         : ggml_backend_graph_compute(backend, graph);
++    if (status == GGML_STATUS_ABORTED || ortts_cancel::requested()) {
++        throw std::runtime_error("OrTTS operation cancelled");
++    }
++    return status;
+ }
+ 
+ void prepare_host_graph_plan(const ExecutionContext & execution_context, ggml_cgraph * graph, HostGraphPlan & plan) {
+@@ -602,8 +618,13 @@
      ggml_cgraph * graph,
      HostGraphPlan & plan,
      const char * label) {
 +    ortts_cancel::checkpoint();
      if (plan.active()) {
-         return ggml_backend_graph_plan_compute(plan.backend, plan.plan);
+-        return ggml_backend_graph_plan_compute(plan.backend, plan.plan);
++        const ggml_status status = ggml_backend_graph_plan_compute(plan.backend, plan.plan);
++        if (status == GGML_STATUS_ABORTED || ortts_cancel::requested()) {
++            throw std::runtime_error("OrTTS operation cancelled");
++        }
++        return status;
      }
+     return compute_backend_graph(execution_context.backend(), graph, nullptr, label);
+ }
+--- a/src/framework/assets/tensor_source.cpp
++++ b/src/framework/assets/tensor_source.cpp
+@@ -1,6 +1,7 @@
+ #include "engine/framework/assets/tensor_source.h"
+ #include "engine/framework/assets/weight_adapter.h"
+ #include "engine/framework/assets/torch_bin.h"
++#include "engine/framework/core/ortts_cancellation.h"
+ 
+ #include "engine/framework/io/binary.h"
+ #include "engine/framework/io/filesystem.h"
+@@ -768,6 +769,7 @@
+ public:
+     GgufTensorSource(std::filesystem::path path, TensorSourceOptions options)
+         : source_path_(std::filesystem::weakly_canonical(path)), synchronized_access_(options.synchronized_access) {
++        core::ortts_cancel::checkpoint();
+         ggml_context * tensor_context = nullptr;
+         gguf_context * gguf = gguf_init_from_file(
+             source_path_.string().c_str(),
+@@ -802,6 +804,7 @@
+             size_t shape_cursor = 0;
+             infos_.reserve(static_cast<size_t>(count));
+             for (int64_t i = 0; i < count; ++i) {
++                core::ortts_cancel::checkpoint();
+                 GgufTensorInfo info;
+                 info.physical_name = gguf_get_tensor_name(gguf, i);
+                 info.logical_name = logical_names_key >= 0
+@@ -851,6 +854,7 @@
+         }
+         gguf_free(gguf);
+         ggml_free(tensor_context);
++        core::ortts_cancel::checkpoint();
+         bytes_ = engine::io::read_binary_blob(source_path_);
+     }
+ 
+@@ -1308,6 +1312,7 @@
+ }
+ 
+ TensorDataF32 TensorSource::require_f32_tensor(std::string_view name) const {
++    core::ortts_cancel::checkpoint();
+     const auto metadata = require_metadata(name);
+     return TensorDataF32{
+         shape_from_dims(metadata.shape),
+@@ -1318,6 +1323,7 @@
+ TensorDataF32 TensorSource::require_f32_tensor(
+     std::string_view name,
+     std::initializer_list<int64_t> expected_shape) const {
++    core::ortts_cancel::checkpoint();
+     const auto values = require_f32(name, expected_shape);
+     return TensorDataF32{
+         shape_from_dims(std::vector<int64_t>(expected_shape)),
+@@ -1336,6 +1342,7 @@
+     std::string_view name,
+     TensorStorageType storage_type,
+     const std::vector<int64_t> & expected_shape) const {
++    core::ortts_cancel::checkpoint();
+     const core::TensorShape shape = shape_from_dims(expected_shape);
+     const ggml_type type = ggml_type_for_tensor_storage(resolve_tensor_storage_type(*this, name, storage_type));
+     const auto raw = require_tensor_data(name);
+@@ -1378,6 +1385,7 @@
+     std::string_view name,
+     TensorStorageType storage_type,
+     const std::vector<int64_t> & expected_shape) const {
++    core::ortts_cancel::checkpoint();
+     TensorData data;
+     switch (expected_shape.size()) {
+         case 1:
+@@ -1426,6 +1434,7 @@
+ }
+ 
+ std::optional<RawTensorData> TensorSource::optional_tensor_data(std::string_view name) const {
++    core::ortts_cancel::checkpoint();
+     if (!has_tensor(name)) {
+         return std::nullopt;
+     }
+--- a/src/framework/neon/execution.cpp
++++ b/src/framework/neon/execution.cpp
+@@ -1,7 +1,9 @@
+ #include "engine/framework/neon/execution.h"
++#include "engine/framework/core/ortts_cancellation.h"
+ #include "operator_kernel.h"
+ 
+ #include <algorithm>
++#include <atomic>
+ #include <limits>
+ #include <stdexcept>
+ 
+@@ -294,8 +296,21 @@
+         }
+     }
+     p.prepare(inputs, threads);
++    core::ortts_cancel::checkpoint();
++    const std::atomic<bool> * cancel_active = core::ortts_cancel::active;
++    const std::atomic<bool> * cancel_secondary = core::ortts_cancel::secondary;
++    std::atomic<bool> aborted{false};
+     p.workers->run([&](detail::WorkerContext &worker) {
+         for (const auto &call : p.dispatch) {
++            if (worker.index == 0 &&
++                ((cancel_active && cancel_active->load(std::memory_order_acquire)) ||
++                 (cancel_secondary && cancel_secondary->load(std::memory_order_acquire)))) {
++                aborted.store(true, std::memory_order_relaxed);
++            }
++            worker.synchronize();
++            if (aborted.load(std::memory_order_relaxed)) {
++                return;
++            }
+             call.kernel->compute(call.inputs, call.output, call.shape, p.workspace, worker);
+             worker.synchronize();
+         }
+@@ -316,6 +331,10 @@
+             }
+         }
+     });
++    if (aborted.load(std::memory_order_relaxed)) {
++        core::ortts_cancel::checkpoint();
++        throw std::runtime_error("OrTTS operation cancelled");
++    }
+     p.completed = true;
+     return p.output;
+ }
+--- a/src/models/pocket_tts/session.cpp
++++ b/src/models/pocket_tts/session.cpp
+@@ -811,14 +811,19 @@
+     validate_request_options(request.options);
+     audio_decoder_.clear_runtime_cache();
+     const GenerationRequest generation_request = effective_request_for_run(request);
+-    const GenerationResult generated = generate(generation_request);
+-    runtime::TaskResult result;
+-    result.audio_output = runtime::AudioBuffer{
+-        generated.sample_rate,
+-        1,
+-        generated.audio,
+-    };
+-    return result;
++    try {
++        const GenerationResult generated = generate(generation_request);
++        runtime::TaskResult result;
++        result.audio_output = runtime::AudioBuffer{
++            generated.sample_rate,
++            1,
++            generated.audio,
++        };
++        return result;
++    } catch (...) {
++        audio_decoder_.reset_streaming_state();
++        throw;
++    }
+ }
+ 
+ runtime::StreamingPolicy PocketTTSSession::streaming_policy() const {
 --- a/src/models/qwen3_tts/talker.cpp
 +++ b/src/models/qwen3_tts/talker.cpp
 @@ -1,6 +1,7 @@
@@ -161,20 +346,43 @@
      debug::timing_log_scalar("qwen3_tts.cpu_chunks.first_pcm_ready_ms", cpu_first_pcm_ms_);
 --- a/src/models/qwen3_tts/ortts_joint/translator.h
 +++ b/src/models/qwen3_tts/ortts_joint/translator.h
-@@ -1,6 +1,7 @@
+@@ -1,6 +1,10 @@
  #pragma once
  #include "ggml.h"
  #include "ggml-cpu.h"
 +#include "engine/framework/core/ortts_cancellation.h"
++#ifdef ORTTS_ANDROID_CPU_AUTO
++#include "engine/framework/core/backend.h"
++#endif
  #include "nlohmann/json.hpp"
  #include <fstream>
  #include <map>
-@@ -15,7 +16,7 @@
+@@ -15,7 +19,27 @@
  inline void writef(const std::string&p,const V&v){std::ofstream f(p,std::ios::binary);f.write((char*)v.data(),v.size()*4);if(!f)throw std::runtime_error("write F32");}
  inline ggml_tensor* affine(ggml_context*c,ggml_tensor*w,ggml_tensor*x,ggml_tensor*b){auto*y=ggml_mul_mat(c,w,x);ggml_mul_mat_set_prec(y,GGML_PREC_F32);return b?ggml_add(c,y,ggml_reshape_2d(c,b,y->ne[0],1)):y;}
  inline ggml_tensor* tensor(ggml_context*c,int dim,int t,const V&v){if(v.size()!=size_t(dim*t))throw std::runtime_error("tensor size");auto*x=ggml_new_tensor_2d(c,GGML_TYPE_F32,dim,t);memcpy(x->data,v.data(),v.size()*4);return x;}
 -inline void compute(ggml_context*c,ggml_cgraph*g,int threads){if(ggml_graph_compute_with_ctx(c,g,threads)!=GGML_STATUS_SUCCESS)throw std::runtime_error("GGML compute");}
-+inline void compute(ggml_context*c,ggml_cgraph*g,int threads){engine::core::ortts_cancel::checkpoint();auto plan=ggml_graph_plan(g,threads,nullptr);std::vector<uint8_t>work(plan.work_size);plan.work_data=work.data();plan.abort_callback=engine::core::ortts_cancel::requested;plan.abort_callback_data=nullptr;if(ggml_graph_compute(g,&plan)!=GGML_STATUS_SUCCESS)throw std::runtime_error("GGML compute cancelled/failed");engine::core::ortts_cancel::checkpoint();}
++inline void compute(ggml_context*c,ggml_cgraph*g,int threads){
++ engine::core::ortts_cancel::checkpoint();
++#ifdef ORTTS_ANDROID_CPU_AUTO
++ engine::core::ensure_backends_loaded();
++ auto dev = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);
++ if(!dev)throw std::runtime_error("CPU registry missing");
++ auto reg = ggml_backend_dev_backend_reg(dev);
++ auto plan_fn = reinterpret_cast<decltype(&ggml_graph_plan)>(ggml_backend_reg_get_proc_address(reg, "ggml_graph_plan"));
++ auto compute_fn = reinterpret_cast<decltype(&ggml_graph_compute)>(ggml_backend_reg_get_proc_address(reg, "ggml_graph_compute"));
++ if(!plan_fn || !compute_fn)throw std::runtime_error("Selected CPU graph plan/compute API missing");
++ auto plan = plan_fn(g, threads, nullptr);
++ std::vector<uint8_t> work(plan.work_size);
++ plan.work_data = work.data();
++ plan.abort_callback = engine::core::ortts_cancel::requested;
++ plan.abort_callback_data = nullptr;
++ if(compute_fn(g, &plan) != GGML_STATUS_SUCCESS)throw std::runtime_error("GGML compute cancelled/failed");
++#else
++ auto plan=ggml_graph_plan(g,threads,nullptr);std::vector<uint8_t>work(plan.work_size);plan.work_data=work.data();plan.abort_callback=engine::core::ortts_cancel::requested;plan.abort_callback_data=nullptr;if(ggml_graph_compute(g,&plan)!=GGML_STATUS_SUCCESS)throw std::runtime_error("GGML compute cancelled/failed");
++#endif
++ engine::core::ortts_cancel::checkpoint();
++}
  struct Translator {
   Ctx weights{32ull<<20};std::map<std::string,ggml_tensor*>w;V histu;std::vector<V>hist;int64_t seen=0;bool finished=false,expanded;int threads;
   Translator(const std::string&root,bool exp,int nt):expanded(exp),threads(nt){

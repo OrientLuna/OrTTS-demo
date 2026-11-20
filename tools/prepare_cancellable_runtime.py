@@ -21,7 +21,7 @@ def prepare(source, output):
     speech = (source / "ORTTS_SPEECH_SOURCE_RECEIPT.json").exists()
     identity(source, liquidcodec=True, speech=speech)
     if (source / "ORTTS_CPU_DISPATCH_RECEIPT.json").exists():
-        raise ValueError("Cancellation currently requires the statically linked CPU backend, not CPU dispatch modules")
+        raise ValueError("Apply prepare_cancellable_runtime.py before prepare_cpu_dispatch.py, not CPU dispatch first")
     if output.exists():
         raise ValueError("Choose a fresh output directory")
     lock = json.loads((ROOT / "vendor/cancellation.lock.json").read_text())
