@@ -21,9 +21,18 @@ if __name__=='__main__':
  doc={'schema':'ortts-demo-assets-v1','variant':a.variant,'files':files}
  if a.standard_voices:
   voices={}
+  voice_meta={
+   'female':{'languages':['zh','en'],'description':'Warm, clear bilingual female voice (default anchor).'},
+   'male':{'languages':['zh','en'],'description':'Neutral, natural bilingual male voice.'},
+  }
   for name in ['female','male']:
    rel='voices/'+name+'.f32';v=(root/rel).resolve()
    if (not a.allow_external_assets and not v.is_relative_to(root)) or not v.is_file():raise ValueError('Missing/escaping voice '+name)
-   voices[name]={'path':rel,'sha256':sha(v),'bytes':v.stat().st_size}
+   entry={'path':rel,'sha256':sha(v),'bytes':v.stat().st_size,**voice_meta[name]}
+   for preview_rel in ('voices/'+name+'.wav','previews/'+name+'.wav'):
+    pv=(root/preview_rel).resolve()
+    if (a.allow_external_assets or pv.is_relative_to(root)) and pv.is_file():
+     entry['preview_audio']=preview_rel;entry['preview_sha256']=sha(pv);break
+   voices[name]=entry
   doc.update(default_voice='female',voices=voices)
  a.out.write_text(json.dumps(doc,indent=2)+'\n');print(str(a.out))

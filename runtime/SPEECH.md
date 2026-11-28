@@ -14,7 +14,7 @@ Moonshine 新增独立的 `ortts_asr_stream_*` / Rust `speech::streaming::Stream
 | Piper | Lessac medium | 原生22.05kHz F32 | 当前port仅离线；流式配置明确拒绝 |
 | Kitten | mini0.8 | 原生24kHz F32 | 当前port仅离线；流式配置明确拒绝 |
 | ZipVoice | Distill Q8 | 原生24kHz F32 | pull文本分块；需要参考PCM和匹配转写；用户报告手机效果不佳，保持可选 |
-| SenseVoice | Small Q8 | 输入16kHz mono F32 | 离线/有界缓冲后final；中文、英文；可显式配置Silero |
+| SenseVoice | Small Q8 | 输入16kHz mono F32 | 离线及内建能量分段流式（`ortts_asr_stream_*`，无需 Sherpa）；中文、英文；可显式配置Silero |
 | Moonshine | streaming tiny Q8，增量接口将编码器展开为F16 | 输入16kHz mono F32 | 独立增量接口支持英语 partial/final；有界重叠编码、重复解码；非逐层KV缓存 |
 
 F5、Whisper、VITS ONNX、CosyVoice、MeloTTS不在这个交付库的新模型目录中。F5独立基线很慢；Whisper独立基线未移植；此前VITS是Sherpa独立比较。Piper是模型专用流水线，不是任意VITS ONNX导入器。
@@ -86,9 +86,9 @@ Kokoro/Piper/Kitten和ZipVoice英文前端使用的eSpeak-ng不是系统内置�
 
 ## C ABI与生命周期
 
-1. 检查`ortts_abi_version()==1`，新增功能检查`ortts_speech_abi_version()==1`；未开启speech的新版库返回0。旧版库可能没有这个符号，动态加载方需检查符号存在。
+1. 检查`ortts_abi_version()==1`，新增功能检查`ortts_speech_abi_version()==1`；未开启speech的新版库返回0。旧版库可能没有这个符号，动态加载方需检查符号存在。`ortts_speech_catalog_json()` 在返回家族列表的同时给出结构化 `capabilities`（`tts` / `asr` 能力位）与 `recommended_bilingual_asr`。
 2. 用`ortts_tts_create`或`ortts_asr_create`建立拥有模型/session的句柄。设置`struct_size=sizeof(config)`。配置中的字符串/option在调用中消费，模型文件需持续可读。
-3. TTS请求每次选择text/language/voice，固定seed可选；ZipVoice提供`reference_pcm`、每通道frames、采样率、channels及准确转写。Piper/ZipVoice没有命名预置音色，不接受任意voice_id来假装切换声音。
+3. TTS请求每次选择text/language/voice，固定seed可选；通过 `struct_size` 兼容扩展的 `speed` 字段支持 `0.5..=2.0`（`0` 或未提供按 `1.0` 处理；`kokoro_tts`/`piper_tts`/`kitten_tts`/`zipvoice` 原生生效，Pocket/MOSS 安全忽略并在 `capabilities` 声明 `speed_control: false`）。ZipVoice提供`reference_pcm`、每通道frames、采样率、channels及准确转写。Piper/ZipVoice没有命名预置音色，不接受任意voice_id来假装切换声音。
 4. TTS返回`ortts_speech_audio`，通过原生rate/channels/frames读取交错F32。frames是每通道长度，float数=frames×channels。宿主负责重采样/声道转换与播放；不再假定所有模型24kHz。输入参考/单次输出限120秒，文本限64KiB，长内容由宿主拆分。
 5. 回调在生成线程同步执行，借用PCM只在该次回调有效。快速复制/入队；不得重入、释放或等待播放完成。返回非零取消。适配层分别处理主动回调和pull事件/命名音频，不把最终整段音频冒充首包。
 6. 所有音频、转写结果和引擎句柄显式free。Rust包装复制到Vec/String后立即释放C结果，句柄Drop释放session；它们故意不是Send/Sync，放在固定worker。
@@ -134,7 +134,7 @@ for event in asr.finish()? { /* flush最后一段 */ }
 - **每句柄独立互斥与有界抢占（`ortts_parallel_inference_version()==2` / Rust `speech::supports_parallel_tts_asr()`）**：已彻底移除运行期全局 `setenv` 与进程级 `execution_gate`，同进程内至少支持 1 路 ggml TTS 与 1 路 ggml ASR（以及 Sherpa 在线 ASR）并发执行而不返回 `ORTTS_BUSY`；单句柄仍严格串行。新增 `ortts_exec_policy`（C：`ortts_tts_synthesize_ex`、`ortts_asr_run_ex`、`ortts_asr_finish_ex`、`ortts_engine_synthesize_ex`；Rust：`ExecPolicy`、`*_ex` 与 `Error::is_busy()`）支持 `timeout_ms` 有界等待与 `supersede` 自动取消前序请求并接管执行权（亦可在 `ortts_tts_synthesize` 请求选项中传入 `"ortts.lock_timeout_ms"` 与 `"ortts.supersede"`）。
 - **算子级与冷加载取消（`ortts_speech_cooperative_cancel_version()==1` / Rust `speech::cancellation_capabilities()`）**：取消信号采用线程局部作用域绑定到底层 ggml CPU `abort_callback`、NEON `ExecutionPlan` 与 GGUF 权重加载检查点，离线/流式 TTS 与 ASR 支持加载与算子级协作取消并保留常驻模型（C：`ortts_tts_create_cancellable`、`ortts_tts_synthesize_cancellable`、`ortts_asr_create_cancellable`、`ortts_asr_run_cancellable`、`ortts_asr_finish_cancellable`；Rust：`Tts::*_cancellable`、`Asr::*_cancellable`、`TtsCache::*_cancellable`）。
 - **ARM64 优化与流式首包**：AArch64 构建默认开启 `ENGINE_ENABLE_NEON=ON`，`kokoro_tts` 在 ARM64 默认优先选用 NEON generator，并在流式模式按固定小步长声码器窗口（首包约 200ms / 18 latent 帧，后续每包约 300ms / 24 帧，两侧 11 帧感受野上下文与 2 帧升余弦平滑拼接，目录标注 `"kokoro_tts":"vocoder-windows"`）吐出首帧 PCM（目标 TTFA < 400ms、RTF < 0.5）；Android `--speech` 构建支持与 `--cpu-auto`（baseline/DotProd/I8MM）及协作取消同开。
-- **中文流式自动分段**：启用 Sherpa 时，`ortts_asr_stream_create` 对 `streaming_paraformer` 与 `zipformer_bilingual` 同样开放 `silence_ms`（200..3000ms），可在说话停顿后自动触发 `ORTTS_ASR_SILENCE` 并推进 `segment_id`。
+- **中英流式自动分段**：启用 `--speech` 时，`sense_asr` 默认自带基于能量门限/静音切段的伪流式适配器（`streaming_kind: "segmented-energy"`），可直接接入 `ortts_asr_stream_*` 输出 `ORTTS_ASR_PARTIAL` 与 `ORTTS_ASR_SILENCE`/`LIMIT`/`FLUSH`（无需 Sherpa）；额外启用 Sherpa 时，`ortts_asr_stream_create` 对 `streaming_paraformer` 与 `zipformer_bilingual`（`streaming_kind: "true-streaming"`，优先作为 `recommended_bilingual_asr`）同样开放 `silence_ms`（200..3000ms），可在说话停顿后自动触发 `ORTTS_ASR_SILENCE` 并推进 `segment_id`。Rust SDK 可通过 `speech::runtime_capabilities()` 查询各家族能力位与推荐双语流式包，并通过 `Request::with_speed(f32)` 传入语速。
 
 模型驻留仍由宿主显式持有；不要在回调里重入、释放或长时间阻塞。需要全双工低延迟ASR时，宿主可结合 `ortts_tts_synthesize_ex` / `ortts_asr_stream_*` 实现打断。
 

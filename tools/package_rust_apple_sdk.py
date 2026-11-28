@@ -99,12 +99,23 @@ def main():
         destination = output / "rust-sdk" / path.relative_to(ROOT / "runtime/rust")
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(path, destination)
+    runtime_meta = {}
+    rt_json = output / "macos/native/runtime.json"
+    if rt_json.is_file():
+        rt = json.loads(rt_json.read_text())
+        runtime_meta = {
+            "abi_version": rt.get("abi_version"),
+            "engine_feature_version": rt.get("engine_feature_version"),
+            "supported_families": rt.get("supported_families"),
+            "recommended_bilingual_asr": rt.get("recommended_bilingual_asr"),
+        }
     (output / "DELIVERY.json").write_text(json.dumps({
         "schema": 1, "git_head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "working_tree_dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT).strip()),
         "source_identity": "Exact delivered source bytes are pinned in SOURCE_SHA256.json; HEAD alone is not the source identity of a dirty build",
         "rustc": subprocess.check_output(["rustc", "--version"], text=True).strip(),
         "cancellation_lock": lock["cancellation"], "models_included": False,
+        **runtime_meta,
         "android_cpu_auto_cancellation": "UNSUPPORTED: rejected in both preparation orders, source identity and CMake",
         "notes": ["Per-target runtime acceptance is separate from build success; read acceptance/*.json",
                   "Unsigned SDK frameworks require signing by the host app; no provisioning/private keys included",

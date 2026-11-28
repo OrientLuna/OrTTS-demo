@@ -6,6 +6,7 @@ import ctypes
 import hashlib
 import json
 import math
+import os
 import struct
 import subprocess
 import threading
@@ -13,8 +14,8 @@ from types import SimpleNamespace
 import wave
 
 from desktop.audio import Player, write_wav
-from desktop.engine import Audio, Config, Engine, Metrics, Request
-from desktop.models import Cancelled, PACKAGES, safe_path, verify_pack
+from desktop.engine import Audio, Config, Engine, Metrics, Request, supports_four_round
+from desktop.models import available_packages, Cancelled, LOCAL_ONLY_PACKAGES, P3_ONLY_PACKAGES, PACKAGES, safe_path, verify_pack
 from desktop.worker import Worker
 from desktop.packaging.build_macos import git_metadata
 
@@ -31,16 +32,17 @@ class ModelTests(TestCase):
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_bytes(data)
 
-    def trust_manifest(self, transform=lambda d: None):
-        doc = {"schema": "ortts-download-manifest-v1", "revision": PACKAGES["Q4"][1],
-               "model_id": "OrientLuna/OrTTS-Qwen3-LFM-0.6B",
+    def trust_manifest(self, transform=lambda d: None, package="Q4", filename="DOWNLOAD_MANIFEST.json",
+                       model_id="OrientLuna/OrTTS-Qwen3-LFM-0.6B"):
+        doc = {"schema": "ortts-download-manifest-v1", "revision": PACKAGES[package][1],
+               "model_id": model_id,
                "runtime": {"decoder": {"dequant_manifest": "native/dequant/MANIFEST.json"}},
                "files": [{"path": k, "bytes": len(v), "sha256": hashlib.sha256(v).hexdigest()}
                          for k, v in self.data.items()]}
         transform(doc)
         data = json.dumps(doc).encode()
-        (self.root / "DOWNLOAD_MANIFEST.json").write_bytes(data)
-        patcher = mock.patch.dict(PACKAGES, {"Q4": ("test only", doc["revision"], hashlib.sha256(data).hexdigest())})
+        (self.root / filename).write_bytes(data)
+        patcher = mock.patch.dict(PACKAGES, {package: ("test only", doc["revision"], hashlib.sha256(data).hexdigest())})
         patcher.start()
         self.addCleanup(patcher.stop)
         return doc
@@ -119,6 +121,49 @@ class ModelTests(TestCase):
         cancel.set()
         with self.assertRaises(Cancelled):
             verify_pack(self.root, "Q4", cancel=cancel)
+
+    def test_four_round_model_json_and_contract(self):
+        self.assertIn("FourRound", PACKAGES)
+        self.assertIn("FourRound", LOCAL_ONLY_PACKAGES)
+        self.assertIn("FourRound", P3_ONLY_PACKAGES)
+        self.trust_manifest(package="FourRound", filename="model.json",
+                            model_id="research-four-round-expanded-1235")
+        pack = verify_pack(self.root, "FourRound")
+        self.assertEqual(pack.variants, ("P3",))
+        self.assertEqual(pack.voices, ("female",))
+
+    def test_four_round_wrong_model_id_rejected(self):
+        self.trust_manifest(package="FourRound", filename="model.json",
+                            model_id="OrientLuna/OrTTS-Qwen3-LFM-0.6B")
+        with self.assertRaisesRegex(ValueError, "身份不匹配"):
+            verify_pack(self.root, "FourRound")
+
+    def test_four_round_wrong_sha_rejected(self):
+        doc = {"schema": "ortts-download-manifest-v1", "revision": PACKAGES["FourRound"][1],
+               "model_id": "research-four-round-expanded-1235",
+               "runtime": {"decoder": {"dequant_manifest": "native/dequant/MANIFEST.json"}},
+               "files": [{"path": k, "bytes": len(v), "sha256": hashlib.sha256(v).hexdigest()}
+                         for k, v in self.data.items()]}
+        (self.root / "model.json").write_bytes(json.dumps(doc).encode())
+        with self.assertRaisesRegex(ValueError, "SHA256 不匹配"):
+            verify_pack(self.root, "FourRound")
+
+    def test_available_packages_and_four_round_library_gate(self):
+        self.assertNotIn("FourRound", available_packages(False))
+        self.assertIn("FourRound", available_packages(True))
+        plain = self.root / "plain.dylib"
+        enabled = self.root / "four.dylib"
+        plain.write_bytes(b"ortts_abi_version")
+        enabled.write_bytes(b"prefix-" + PACKAGES["FourRound"][2].encode("ascii") + b"-suffix")
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("ORTTS_ENABLE_P3_FOUR_ROUND", None)
+            self.assertFalse(supports_four_round(plain))
+            self.assertTrue(supports_four_round(enabled))
+            self.assertFalse(supports_four_round(self.root / "missing.dylib"))
+        with mock.patch.dict(os.environ, {"ORTTS_ENABLE_P3_FOUR_ROUND": "0"}):
+            self.assertFalse(supports_four_round(enabled))
+        with mock.patch.dict(os.environ, {"ORTTS_ENABLE_P3_FOUR_ROUND": "1"}):
+            self.assertTrue(supports_four_round(plain))
 
 
 class AudioAndABITests(TestCase):

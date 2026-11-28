@@ -6,7 +6,7 @@ import os
 import sys
 import threading
 
-from desktop.models import Cancelled
+from desktop.models import Cancelled, PACKAGES
 
 
 class Config(C.Structure):
@@ -36,6 +36,19 @@ def default_library():
         return Path(sys._MEIPASS) / "native" / name
     platform = "macos" if sys.platform == "darwin" else "linux"
     return Path(__file__).resolve().parents[1] / f"build/pc-engine-{platform}/install/lib" / name
+
+
+def supports_four_round(library=None):
+    override = os.environ.get("ORTTS_ENABLE_P3_FOUR_ROUND")
+    if override == "1":
+        return True
+    if override == "0":
+        return False
+    path = Path(library) if library else default_library()
+    try:
+        return PACKAGES["FourRound"][2].encode("ascii") in path.read_bytes()
+    except OSError:
+        return False
 
 
 @dataclass

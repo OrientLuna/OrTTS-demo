@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
  public class MainActivity extends Activity {
   static final ExecutorService worker=Executors.newSingleThreadExecutor();static final AtomicBoolean busy=new AtomicBoolean();
-  private final Handler ui=new Handler(Looper.getMainLooper());private LinearLayout box;private TextView status;private Spinner model,variant,voice;private TextView modelHint;private JSONArray catalog=new JSONArray();private boolean modelSpinnerReady,manualPack,skipModelSelection;private EditText text,url;private CheckBox streaming;private MediaPlayer replay;
+  private final Handler ui=new Handler(Looper.getMainLooper());private LinearLayout box;private TextView status;private Spinner model,variant,voice;private TextView modelHint;private JSONArray catalog=new JSONArray();private boolean modelSpinnerReady,manualPack,skipModelSelection,showingFourRoundPack;private EditText text,url;private CheckBox streaming;private MediaPlayer replay;
   private ScrollView orttsTab;private SpeechTabPanel ttsTab,asrTab;private final Button[] tabButtons=new Button[3];private int activeTab=0;private boolean tabsLocked;
   private static final class PlaybackTask {final AtomicBoolean cancelled=new AtomicBoolean();volatile StreamingPlayer player;}
  private static final class PlaybackCancelled extends IOException {PlaybackCancelled(){super("Playback cancelled");}}
@@ -113,7 +113,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
  private void syncImportedModel(){try{JSONObject imported=ModelManager.manifest(manager.current());String id=imported.getString("model_id"),revision=imported.getString("revision");for(int n=0;n<catalog.length();n++)if(id.equals(catalog.getJSONObject(n).getString("id"))&&revision.equals(catalog.getJSONObject(n).getString("revision"))){final int index=n;getPreferences(0).edit().putInt("model_index",index).putString("manifest_url",catalog.getJSONObject(index).getString("manifest_url")).apply();ui.post(()->{if(model.getSelectedItemPosition()!=index){skipModelSelection=true;model.setSelection(index);}url.setText(catalog.optJSONObject(index).optString("manifest_url"));updateModelHint();});return;}ui.post(this::updateModelHint);}catch(Exception ignored){}}
  private JSONObject builtinForUrl(String address){for(int n=0;n<catalog.length();n++){JSONObject e=catalog.optJSONObject(n);if(address.equals(e.optString("manifest_url")))return e;}return null;}
  private File downloadSelected(String v)throws Exception{JSONObject entry=builtinForUrl(url.getText().toString().trim());File root=manager.download(url.getText().toString().trim(),v,entry);manualPack=entry==null;getPreferences(0).edit().putBoolean("manual_pack",manualPack).apply();if(manualPack)syncImportedModel();else ui.post(this::updateModelHint);return root;}
- private void updateModelHint(){if(busy.get())return;if(manualPack){String hint="本地导入模型";try{JSONObject meta=ModelManager.manifest(manager.current());if(meta.has("research_policy"))hint+="\n精简版 · 仅提供轻量版";}catch(Exception ignored){}modelHint.setText(hint);return;}JSONObject e=selectedModel();JSONArray variants=e.optJSONArray("supported_variants"),presets=e.optJSONArray("voices");if(variants==null)variants=new JSONArray(Arrays.asList("P3","P5"));if(presets==null)presets=new JSONArray(Arrays.asList("female","female_2","male","male_2"));updateChoices(variant,variants);updateChoices(voice,presets);long size=e.optLong(String.valueOf(variant.getSelectedItem())+"_bytes");modelHint.setText(OwnModelCatalog.title(e)+(size>0?String.format(Locale.ROOT," · 完整文件约 %.2f GB",size/1e9):"")+"\n轻量版 P3 需加装小预测器；标准版 P5 使用原生预测器。主模型共用。\n相同文件自动复用，实际下载量会减少"+(e.optBoolean("p3_only")?"\n仅提供轻量版":""));}
+ private void updateModelHint(){if(busy.get())return;if(manualPack){String hint="本地导入模型";try{JSONObject meta=ModelManager.manifest(manager.current());if(meta.optString("model_id").equals("research-four-round-expanded-1235")){
+    showingFourRoundPack=true;
+    updateChoices(variant,new JSONArray(Arrays.asList("P3")));
+    updateChoices(voice,new JSONArray(Arrays.asList("female","male")));
+    hint+="\n扩池四轮 P3 · 0.6B Q4";
+   }else{
+    if(showingFourRoundPack){
+     showingFourRoundPack=false;
+     updateChoices(variant,new JSONArray(Arrays.asList("P3","P5")));
+     updateChoices(voice,new JSONArray(Arrays.asList("female","female_2","male","male_2")));
+    }
+    if(meta.has("research_policy"))hint+="\n精简版 · 仅提供轻量版";
+   }}catch(Exception ignored){}modelHint.setText(hint);return;}showingFourRoundPack=false;JSONObject e=selectedModel();JSONArray variants=e.optJSONArray("supported_variants"),presets=e.optJSONArray("voices");if(variants==null)variants=new JSONArray(Arrays.asList("P3","P5"));if(presets==null)presets=new JSONArray(Arrays.asList("female","female_2","male","male_2"));updateChoices(variant,variants);updateChoices(voice,presets);long size=e.optLong(String.valueOf(variant.getSelectedItem())+"_bytes");modelHint.setText(OwnModelCatalog.title(e)+(size>0?String.format(Locale.ROOT," · 完整文件约 %.2f GB",size/1e9):"")+"\n轻量版 P3 需加装小预测器；标准版 P5 使用原生预测器。主模型共用。\n相同文件自动复用，实际下载量会减少"+(e.optBoolean("p3_only")?"\n仅提供轻量版":""));}
 
  private void applyInteractionText(Intent i){String value=i.getStringExtra("interaction_text");if(value!=null&&!busy.get()&&value.length()<=8192){text.setText(value);message("识别结果已填入，可编辑后朗读");}}
  @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);applyInteractionText(i);handleTest(i);launchSpeechQA(i);}

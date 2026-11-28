@@ -12,7 +12,7 @@ Enable `--sherpa-asr-prefix` / `ORTTS_ENABLE_SHERPA_ASR` to include the pinned S
 
 ## Build
 
-Prepare the native sources using the [build guide](../docs/BUILD.md), then build the
+Prepare the native sources using the [build guide](../docs/BUILD.md) (plus `tools/prepare_speaker_switch.py` for per-request speaker switching, auto-applied when using `tools/build_engine.py`), then build the
 library for your target. For example:
 
 ```sh
@@ -37,6 +37,7 @@ Include [`ortts_engine.h`](include/ortts_engine.h). Set each configuration/reque
 Read `ortts_last_error()` on the calling thread when an operation fails.
 
 - Supply a prepared model directory, P3/P5, a matching voice and the model's manifest identity.
+- **Additive v1.1 engine features (`ortts_engine_feature_version() == 1`)**: `ortts_request` extends `ortts_request_v1` via `struct_size` with optional `speaker_f32`, `speaker_vector`/`speaker_dim`, and `speed` (`0.5..=2.0`, `0`/omitted = `1.0`), and `ortts_engine_set_speaker[_ex]` / `ortts_engine_set_speaker_vector[_ex]` switch active speaker on a resident engine without unloading model weights.
 - PCM chunks are borrowed during the callback. Copy or enqueue them without blocking generation.
 - Return nonzero from the callback to stop generation.
 - Cooperative builds support operator-level (`ggml` abort callback & NEON plan) and
@@ -68,7 +69,7 @@ cargo run --offline --manifest-path runtime/rust/Cargo.toml --example synthesize
   /path/to/models P3 TRUSTED_BRIDGE_SHA '你好，欢迎使用。' sample.f32 stream
 ```
 
-On Linux use `LD_LIBRARY_PATH` instead. Embed/sign the native library for deployment.
+On Linux use `LD_LIBRARY_PATH` instead. During local development/testing on macOS or Linux, you may set `ORTTS_EMBED_DEV_RPATH=1` alongside `ORTTS_LIB_DIR` to embed `-Wl,-rpath,<ORTTS_LIB_DIR>` (keep disabled for release bundles). Prebuilt install trees also include `runtime.json` (`abi_version`, `engine_feature_version`, `supported_families`, `recommended_bilingual_asr`, and `capabilities`). Embed/sign the native library for deployment.
 Android `--cpu-auto` dispatch and cooperative cancellation can be combined by preparing
 with `prepare_cancellable_runtime.py` -> `prepare_explicit_options.py` -> `prepare_cpu_dispatch.py`.
 

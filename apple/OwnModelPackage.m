@@ -1,6 +1,9 @@
 #import "OwnModelPackage.h"
 #import "OwnModelCatalog.h"
 #import <CommonCrypto/CommonDigest.h>
+#ifndef ORTTS_WITH_P3_FOUR_ROUND
+#define ORTTS_WITH_P3_FOUR_ROUND 0
+#endif
 
 NSDictionary *OrTTSOwnPackageInfo(NSInteger kind) {
     NSString *revision, *prefix, *hash, *directory;
@@ -14,6 +17,8 @@ NSDictionary *OrTTSOwnPackageInfo(NSInteger kind) {
         case OrTTSOwnPackagePTQ:
             revision=@"v0.3.1-ptq-q4"; prefix=@"variants/ptq-q4/"; directory=@"models-ptq-q4";
             hash=@"26cf9f79991fa38eb766541ee34a964c4521cb5130fd61034dad3302bebd0017"; break;
+        case OrTTSOwnPackageFourRound:
+            return @{@"id":@"research-four-round-expanded-1235",@"name":@"OrTTS 0.6B · 扩池四轮 P3 · 20261109-local-not-release",@"revision":@"20261109-local-not-release",@"manifest_url":@"",@"manifest_sha256":@"ebd5deee7981d75a9b927fc2fd0b0df404287a3c737702a09580d40d9c9cdedd",@"sha256":@"ebd5deee7981d75a9b927fc2fd0b0df404287a3c737702a09580d40d9c9cdedd",@"directory":@"models-p3-four-round",@"p3_only":@YES,@"supported_variants":@[@"P3"],@"voices":@[@"female",@"male"],@"decoder":@"liquidcodec",@"source":@"local-import"};
         default: return nil;
     }
     NSString *base=[NSString stringWithFormat:@"https://modelscope.cn/models/OrientLuna/OrTTS-Qwen3-LFM-0.6B/resolve/%@/%@",revision,prefix];
@@ -38,7 +43,13 @@ BOOL OrTTSOwnPackageSupportsVariant(NSInteger kind, NSString *variant) {
 }
 
 NSDictionary *OrTTSVerifiedOwnManifest(NSData *data, NSInteger kind) { return OrTTSVerifiedOwnModelManifest(data,OrTTSOwnPackageInfo(kind)); }
-NSArray *OrTTSBuiltInOwnModels(void) { return @[OrTTSOwnPackageInfo(0),OrTTSOwnPackageInfo(1),OrTTSOwnPackageInfo(2)]; }
+NSArray *OrTTSBuiltInOwnModels(void) {
+#if ORTTS_WITH_P3_FOUR_ROUND
+    return @[OrTTSOwnPackageInfo(0),OrTTSOwnPackageInfo(1),OrTTSOwnPackageInfo(2),OrTTSOwnPackageInfo(3)];
+#else
+    return @[OrTTSOwnPackageInfo(0),OrTTSOwnPackageInfo(1),OrTTSOwnPackageInfo(2)];
+#endif
+}
 NSString *OrTTSOwnModelDirectory(NSDictionary *entry) {
     if(!OrTTSValidOwnCatalogEntry(entry))return nil;
     for(NSDictionary *known in OrTTSBuiltInOwnModels())if([known[@"manifest_sha256"]isEqual:entry[@"manifest_sha256"]])return known[@"directory"];

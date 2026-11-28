@@ -53,6 +53,23 @@ pub(crate) struct RawRequest {
     channels: i32,
     reference_text: *const c_char,
 }
+#[repr(C)]
+struct RawRequestV1_1 {
+    size: u32,
+    text: *const c_char,
+    language: *const c_char,
+    voice: *const c_char,
+    seed_set: i32,
+    seed: u64,
+    options: *const Pair,
+    count: usize,
+    reference: *const f32,
+    frames: usize,
+    rate: i32,
+    channels: i32,
+    reference_text: *const c_char,
+    speed: f32,
+}
 pub(crate) type Callback =
     Option<unsafe extern "C" fn(*mut c_void, *const f32, usize, i32, i32) -> i32>;
 type AbiVersionFn = unsafe extern "C" fn() -> u32;
@@ -393,6 +410,292 @@ pub fn streaming_asr_families() -> Vec<String> {
     streaming::families()
 }
 
+/// Self-describing per-family TTS capabilities returned by [`runtime_capabilities`].
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct TtsCapabilities {
+    pub family: String,
+    pub api: String,
+    pub streaming: bool,
+    pub per_request_speaker: bool,
+    pub speaker_vector_clone: bool,
+    pub reference_audio_clone: bool,
+    pub speed_control: bool,
+    pub sample_rate: u32,
+    pub channels: u32,
+    pub languages: Vec<String>,
+}
+
+/// Self-describing per-family ASR capabilities returned by [`runtime_capabilities`].
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct AsrCapabilities {
+    pub family: String,
+    pub api: String,
+    pub streaming: bool,
+    pub true_streaming: bool,
+    pub streaming_kind: String,
+    pub languages: Vec<String>,
+    pub sample_rate: u32,
+    pub recommended_bilingual: bool,
+}
+
+/// Structured runtime capability manifest parsed from [`catalog()`].
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct RuntimeCapabilities {
+    pub abi_version: u32,
+    pub engine_feature_version: u32,
+    pub recommended_bilingual_asr: Option<String>,
+    pub tts: Vec<TtsCapabilities>,
+    pub asr: Vec<AsrCapabilities>,
+}
+
+/// Queries [`catalog()`] and parses structured runtime capabilities without extra dependencies.
+pub fn runtime_capabilities() -> RuntimeCapabilities {
+    parse_runtime_capabilities(&catalog())
+}
+
+/// Parses a `ortts_speech_catalog_json()` payload into [`RuntimeCapabilities`].
+pub fn parse_runtime_capabilities(catalog_json: &str) -> RuntimeCapabilities {
+    enum JVal {
+        Null,
+        Bool(bool),
+        Num(i64),
+        Str(String),
+        Arr(Vec<JVal>),
+        Obj(Vec<(String, JVal)>),
+    }
+    impl JVal {
+        fn get(&self, key: &str) -> Option<&JVal> {
+            match self {
+                Self::Obj(entries) => entries.iter().find(|(k, _)| k == key).map(|(_, v)| v),
+                _ => None,
+            }
+        }
+        fn as_str(&self) -> Option<&str> {
+            match self {
+                Self::Str(s) => Some(s.as_str()),
+                _ => None,
+            }
+        }
+        fn as_bool(&self) -> Option<bool> {
+            match self {
+                Self::Bool(b) => Some(*b),
+                _ => None,
+            }
+        }
+        fn as_u32(&self) -> Option<u32> {
+            match self {
+                Self::Num(n) if *n >= 0 => u32::try_from(*n).ok(),
+                _ => None,
+            }
+        }
+        fn as_str_vec(&self) -> Vec<String> {
+            match self {
+                Self::Arr(items) => items.iter().filter_map(|v| v.as_str().map(str::to_owned)).collect(),
+                _ => Vec::new(),
+            }
+        }
+    }
+    fn ws(b: &[u8], i: &mut usize) {
+        while b.get(*i).is_some_and(u8::is_ascii_whitespace) {
+            *i += 1;
+        }
+    }
+    fn parse_str(b: &[u8], i: &mut usize) -> Option<String> {
+        ws(b, i);
+        if *b.get(*i)? != b'"' {
+            return None;
+        }
+        *i += 1;
+        let mut out = String::new();
+        while let Some(&c) = b.get(*i) {
+            *i += 1;
+            match c {
+                b'"' => return Some(out),
+                b'\\' => {
+                    let esc = *b.get(*i)?;
+                    *i += 1;
+                    match esc {
+                        b'"' => out.push('"'),
+                        b'\\' => out.push('\\'),
+                        b'/' => out.push('/'),
+                        b'b' => out.push('\u{0008}'),
+                        b'f' => out.push('\u{000C}'),
+                        b'n' => out.push('\n'),
+                        b'r' => out.push('\r'),
+                        b't' => out.push('\t'),
+                        b'u' => {
+                            let h = std::str::from_utf8(b.get(*i..*i + 4)?).ok()?;
+                            let code = u32::from_str_radix(h, 16).ok()?;
+                            *i += 4;
+                            out.push(char::from_u32(code).unwrap_or(char::REPLACEMENT_CHARACTER));
+                        }
+                        _ => return None,
+                    }
+                }
+                _ => {
+                    let start = *i - 1;
+                    while *i < b.len() && b[*i] != b'"' && b[*i] != b'\\' {
+                        *i += 1;
+                    }
+                    out.push_str(std::str::from_utf8(&b[start..*i]).ok()?);
+                }
+            }
+        }
+        None
+    }
+    fn parse_val(b: &[u8], i: &mut usize) -> Option<JVal> {
+        ws(b, i);
+        match *b.get(*i)? {
+            b'"' => parse_str(b, i).map(JVal::Str),
+            b'{' => {
+                *i += 1;
+                ws(b, i);
+                let mut entries = Vec::new();
+                if b.get(*i) == Some(&b'}') {
+                    *i += 1;
+                    return Some(JVal::Obj(entries));
+                }
+                loop {
+                    let k = parse_str(b, i)?;
+                    ws(b, i);
+                    if *b.get(*i)? != b':' {
+                        return None;
+                    }
+                    *i += 1;
+                    entries.push((k, parse_val(b, i)?));
+                    ws(b, i);
+                    match *b.get(*i)? {
+                        b',' => *i += 1,
+                        b'}' => {
+                            *i += 1;
+                            return Some(JVal::Obj(entries));
+                        }
+                        _ => return None,
+                    }
+                }
+            }
+            b'[' => {
+                *i += 1;
+                ws(b, i);
+                let mut items = Vec::new();
+                if b.get(*i) == Some(&b']') {
+                    *i += 1;
+                    return Some(JVal::Arr(items));
+                }
+                loop {
+                    items.push(parse_val(b, i)?);
+                    ws(b, i);
+                    match *b.get(*i)? {
+                        b',' => *i += 1,
+                        b']' => {
+                            *i += 1;
+                            return Some(JVal::Arr(items));
+                        }
+                        _ => return None,
+                    }
+                }
+            }
+            _ => {
+                let start = *i;
+                while b
+                    .get(*i)
+                    .is_some_and(|c| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'+' | b'.'))
+                {
+                    *i += 1;
+                }
+                let tok = std::str::from_utf8(b.get(start..*i)?).ok()?;
+                match tok {
+                    "true" => Some(JVal::Bool(true)),
+                    "false" => Some(JVal::Bool(false)),
+                    "null" => Some(JVal::Null),
+                    _ => tok
+                        .parse::<i64>()
+                        .ok()
+                        .map(JVal::Num)
+                        .or(Some(JVal::Null)),
+                }
+            }
+        }
+    }
+
+    let mut idx = 0;
+    let Some(root) = parse_val(catalog_json.as_bytes(), &mut idx) else {
+        return RuntimeCapabilities::default();
+    };
+    let mut caps = RuntimeCapabilities {
+        abi_version: root.get("abi_version").and_then(JVal::as_u32).unwrap_or(1),
+        engine_feature_version: root
+            .get("engine_feature_version")
+            .and_then(JVal::as_u32)
+            .unwrap_or(0),
+        recommended_bilingual_asr: root
+            .get("recommended_bilingual_asr")
+            .and_then(JVal::as_str)
+            .map(str::to_owned),
+        tts: Vec::new(),
+        asr: Vec::new(),
+    };
+    if let Some(JVal::Obj(entries)) = root.get("capabilities").and_then(|c| c.get("tts")) {
+        for (fam, obj) in entries {
+            caps.tts.push(TtsCapabilities {
+                family: fam.clone(),
+                api: obj.get("api").and_then(JVal::as_str).unwrap_or("").to_owned(),
+                streaming: obj.get("streaming").and_then(JVal::as_bool).unwrap_or(false),
+                per_request_speaker: obj
+                    .get("per_request_speaker")
+                    .and_then(JVal::as_bool)
+                    .unwrap_or(false),
+                speaker_vector_clone: obj
+                    .get("speaker_vector_clone")
+                    .and_then(JVal::as_bool)
+                    .unwrap_or(false),
+                reference_audio_clone: obj
+                    .get("reference_audio_clone")
+                    .and_then(JVal::as_bool)
+                    .unwrap_or(false),
+                speed_control: obj
+                    .get("speed_control")
+                    .and_then(JVal::as_bool)
+                    .unwrap_or(false),
+                sample_rate: obj.get("sample_rate").and_then(JVal::as_u32).unwrap_or(0),
+                channels: obj.get("channels").and_then(JVal::as_u32).unwrap_or(1),
+                languages: obj
+                    .get("languages")
+                    .map(JVal::as_str_vec)
+                    .unwrap_or_default(),
+            });
+        }
+    }
+    if let Some(JVal::Obj(entries)) = root.get("capabilities").and_then(|c| c.get("asr")) {
+        for (fam, obj) in entries {
+            caps.asr.push(AsrCapabilities {
+                family: fam.clone(),
+                api: obj.get("api").and_then(JVal::as_str).unwrap_or("").to_owned(),
+                streaming: obj.get("streaming").and_then(JVal::as_bool).unwrap_or(false),
+                true_streaming: obj
+                    .get("true_streaming")
+                    .and_then(JVal::as_bool)
+                    .unwrap_or(false),
+                streaming_kind: obj
+                    .get("streaming_kind")
+                    .and_then(JVal::as_str)
+                    .unwrap_or("")
+                    .to_owned(),
+                languages: obj
+                    .get("languages")
+                    .map(JVal::as_str_vec)
+                    .unwrap_or_default(),
+                sample_rate: obj.get("sample_rate").and_then(JVal::as_u32).unwrap_or(16000),
+                recommended_bilingual: obj
+                    .get("recommended_bilingual")
+                    .and_then(JVal::as_bool)
+                    .unwrap_or(false),
+            });
+        }
+    }
+    caps
+}
+
 pub struct Config<'a> {
     pub family: &'a str,
     pub model_path: &'a str,
@@ -481,6 +784,7 @@ pub struct Request<'a> {
     pub seed: Option<u64>,
     pub options: &'a [(&'a str, &'a str)],
     pub reference: Option<Reference<'a>>,
+    pub speed: Option<f32>,
 }
 impl<'a> Request<'a> {
     pub fn new(text: &'a str) -> Self {
@@ -491,7 +795,12 @@ impl<'a> Request<'a> {
             seed: None,
             options: &[],
             reference: None,
+            speed: None,
         }
+    }
+    pub const fn with_speed(mut self, speed: f32) -> Self {
+        self.speed = Some(speed);
+        self
     }
 }
 pub struct Audio {
@@ -760,16 +1069,43 @@ impl Tts {
         };
         let raw_policy = RawExecPolicy::from(policy);
         let token = operation.as_ref().map_or(ptr::null_mut(), Operation::token);
+        if let Some(speed) = r.speed {
+            crate::validate_speed(speed).map_err(pre_err)?;
+            if self.api.cancel_api.feature_version == 0 && (speed - 1.0).abs() > f32::EPSILON {
+                return Err(pre_err(Error::UnsupportedAbi));
+            }
+        }
+        let req_v11 = RawRequestV1_1 {
+            size: std::mem::size_of::<RawRequestV1_1>() as u32,
+            text: text.as_ptr(),
+            language: cp(&lang),
+            voice: cp(&voice),
+            seed_set: r.seed.is_some() as i32,
+            seed: r.seed.unwrap_or(0),
+            options: options.as_ptr(),
+            count: options.len(),
+            reference,
+            frames,
+            rate,
+            channels,
+            reference_text: cp(&ref_text),
+            speed: r.speed.unwrap_or(0.0),
+        };
+        let req_ptr: *const RawRequest = if self.api.cancel_api.feature_version >= 1 {
+            (&req_v11 as *const RawRequestV1_1).cast()
+        } else {
+            &req
+        };
         let mut out = ptr::null_mut();
         let status = unsafe {
             if let Some(synth_ex) = self.api.tts_synthesize_ex {
-                synth_ex(self.raw, &req, &raw_policy, token, cb, user, &mut out)
+                synth_ex(self.raw, req_ptr, &raw_policy, token, cb, user, &mut out)
             } else if let (Some(_), Some(synth_cancellable)) =
                 (&operation, self.api.tts_synthesize_cancellable)
             {
-                synth_cancellable(self.raw, &req, token, cb, user, &mut out)
+                synth_cancellable(self.raw, req_ptr, token, cb, user, &mut out)
             } else {
-                (self.api.tts_synthesize)(self.raw, &req, cb, user, &mut out)
+                (self.api.tts_synthesize)(self.raw, req_ptr, cb, user, &mut out)
             }
         };
         struct Owned {
@@ -1161,10 +1497,8 @@ pub(crate) mod test_support {
             new: Some(mock_token_new),
             request: Some(mock_token_request),
             free: Some(mock_token_free),
-            create: None,
-            synthesize: None,
-            synthesize_ex: None,
             cooperative,
+            ..cancellation::Api::default()
         }
     }
 
@@ -1803,5 +2137,76 @@ mod tests {
         let transcript = asr_thread.join().unwrap().unwrap();
         assert_eq!(audio.pcm, vec![0.1, 0.2]);
         assert_eq!(transcript.text, "mock ok");
+    }
+
+    #[test]
+    fn parse_runtime_capabilities_and_speed_dispatch() {
+        let sample = r#"{
+            "schema": 1,
+            "abi_version": 1,
+            "engine_feature_version": 2,
+            "recommended_bilingual_asr": "sense_asr",
+            "capabilities": {
+                "tts": {
+                    "ortts_qwen3_lfm": {
+                        "api": "ortts_engine_*",
+                        "streaming": true,
+                        "per_request_speaker": true,
+                        "speaker_vector_clone": false,
+                        "reference_audio_clone": false,
+                        "speed_control": false,
+                        "sample_rate": 24000,
+                        "channels": 1,
+                        "languages": ["zh", "en"]
+                    },
+                    "kokoro_tts": {
+                        "api": "ortts_tts_*",
+                        "streaming": true,
+                        "per_request_speaker": true,
+                        "speaker_vector_clone": false,
+                        "reference_audio_clone": false,
+                        "speed_control": true,
+                        "sample_rate": 24000,
+                        "channels": 1,
+                        "languages": ["zh", "en-us", "en-gb"]
+                    }
+                },
+                "asr": {
+                    "sense_asr": {
+                        "api": "ortts_asr_*|ortts_asr_stream_*",
+                        "streaming": true,
+                        "true_streaming": false,
+                        "streaming_kind": "segmented-energy",
+                        "languages": ["zh", "en"],
+                        "sample_rate": 16000,
+                        "recommended_bilingual": true
+                    }
+                }
+            }
+        }"#;
+        let caps = parse_runtime_capabilities(sample);
+        assert_eq!(caps.abi_version, 1);
+        assert_eq!(caps.engine_feature_version, 2);
+        assert_eq!(caps.recommended_bilingual_asr.as_deref(), Some("sense_asr"));
+        assert_eq!(caps.tts.len(), 2);
+        assert!(caps.tts[0].per_request_speaker);
+        assert!(!caps.tts[0].speed_control);
+        assert!(caps.tts[1].speed_control);
+        assert_eq!(caps.asr.len(), 1);
+        assert!(!caps.asr[0].true_streaming);
+        assert!(caps.asr[0].recommended_bilingual);
+
+        let api = mock_speech_api(true, true);
+        let state = MockState::default();
+        install_thread_state(state);
+        let mut tts = Tts::open_with_op(api, &Config::new("kokoro_tts", "ok"), None).unwrap();
+        assert!(matches!(
+            tts.synthesize_ex(&Request::new("ok").with_speed(3.0), &ExecPolicy::default(), None),
+            Err(Error::InvalidInput(_))
+        ));
+        assert!(matches!(
+            tts.synthesize_ex(&Request::new("ok").with_speed(1.5), &ExecPolicy::default(), None),
+            Err(Error::UnsupportedAbi)
+        ));
     }
 }

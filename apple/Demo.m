@@ -21,6 +21,13 @@ static NSURL *Documents(void) { return [NSFileManager.defaultManager URLsForDire
 static BOOL Valid(NSURL *url, NSDictionary *entry) {
     return OrTTSValidSharedAsset(url,entry);
 }
+static NSData *ManifestData(NSURL *root) {
+    for (NSString *name in @[@"download-manifest.json", @"model.json", @"DOWNLOAD_MANIFEST.json"]) {
+        NSData *data = [NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:name]];
+        if (data) return data;
+    }
+    return nil;
+}
 @interface Demo () <UIDocumentPickerDelegate, AVAudioPlayerDelegate, UIGestureRecognizerDelegate> {
     NSLock *_lock;
     ortts_engine *_engine;
@@ -68,6 +75,10 @@ static int StreamPCM(void *user, const float *pcm, size_t count, int32_t rate) {
 - (void)setWorking:(BOOL)working {
     self.busy=working;
     for (UIControl *c in @[self.packageButton,self.refreshCatalogButton,self.variant,self.voice,self.download,self.channelButton,self.synthesize,self.importButton,self.replay]) c.enabled=!working;
+    if (!working && [self.ownModel[@"source"] isEqual:@"local-import"]) {
+        self.download.enabled=NO;
+        self.channelButton.enabled=NO;
+    }
     self.stop.enabled=working || self.player.isPlaying || self.stream.active;
     if(!working&&self.pendingCatalog){NSArray*pending=self.pendingCatalog;self.pendingCatalog=nil;[self applyOwnCatalog:pending];}
 }
@@ -139,7 +150,7 @@ static void OrTTSStyleSecondaryButton(UIButton *b, UIColor *tint) {
     [stack addArrangedSubview:playbackRow];
     self.status=[UILabel new]; self.status.numberOfLines=0; self.status.textColor=UIColor.secondaryLabelColor; self.status.font=[UIFont preferredFontForTextStyle:UIFontTextStyleFootnote]; self.status.text=@"首次使用请下载模型（约 2 GB），保持应用在前台。下载完成后可离线合成。"; [stack addArrangedSubview:self.status]; [self setWorking:NO];
     NSArray *arguments=NSProcessInfo.processInfo.arguments;
-    if([arguments containsObject:@"--benchmark-q8"])self.ownModel=OrTTSOwnPackageInfo(0);if([arguments containsObject:@"--benchmark-legacy"])self.ownModel=OrTTSOwnPackageInfo(1);if([arguments containsObject:@"--benchmark-ptq"])self.ownModel=OrTTSOwnPackageInfo(2);[self updatePackageMenu];[self packageChanged];
+    if([arguments containsObject:@"--benchmark-q8"])self.ownModel=OrTTSOwnPackageInfo(0);if([arguments containsObject:@"--benchmark-legacy"])self.ownModel=OrTTSOwnPackageInfo(1);if([arguments containsObject:@"--benchmark-ptq"])self.ownModel=OrTTSOwnPackageInfo(2);if([arguments containsObject:@"--benchmark-four-round"])self.ownModel=OrTTSOwnPackageInfo(OrTTSOwnPackageFourRound);[self updatePackageMenu];[self packageChanged];
     NSUInteger textIndex=[arguments indexOfObject:@"--benchmark-text"];
     if (textIndex!=NSNotFound && textIndex+1<arguments.count) self.text.text=arguments[textIndex+1];
     if ([arguments containsObject:@"--benchmark-p5"]) self.variant.selectedSegmentIndex=1;
@@ -166,7 +177,7 @@ static void OrTTSStyleSecondaryButton(UIButton *b, UIColor *tint) {
 - (void)refreshOwnCatalog {if(self.catalogRefreshing)return;self.catalogRefreshing=YES;[self message:@"正在发现ModelScope自研模型，仅获取目录…"];NSArray*previous=self.ownCatalog;dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY,0),^{@autoreleasepool{NSError*error=nil;NSArray*models=OrTTSRefreshOwnCatalog(previous,&error);if(models&&!OrTTSSaveOwnCatalog([self catalogURL],models,&error))models=nil;dispatch_async(dispatch_get_main_queue(),^{self.catalogRefreshing=NO;if(models){[self applyOwnCatalog:models];if(!self.busy)self.status.text=[NSString stringWithFormat:@"自研目录已更新 · %lu项；选择模型后再下载权重",(unsigned long)models.count];}else if(!self.busy)self.status.text=[@"目录暂不可用，保留离线列表：" stringByAppendingString:error.localizedDescription?:@"未发现兼容模型"];});}});}
 - (NSURL*)modelRoot {return [Documents() URLByAppendingPathComponent:OrTTSOwnModelDirectory(self.ownModel)];}
 - (NSString*)selectedVoice {NSArray*voices=self.ownModel[@"voices"];NSInteger index=MAX(0,MIN(self.voice.selectedSegmentIndex,(NSInteger)voices.count-1));return voices.count?voices[index]:@"female";}
-- (void)packageChanged {self.legacyPack=[self.ownModel[@"decoder"]isEqual:@"qwen_lfm"];self.ptqPack=[self.ownModel[@"p3_only"]boolValue];[self.variant setEnabled:OrTTSOwnModelSupportsVariant(self.ownModel,@"P3") forSegmentAtIndex:0];[self.variant setEnabled:OrTTSOwnModelSupportsVariant(self.ownModel,@"P5") forSegmentAtIndex:1];if(!OrTTSOwnModelSupportsVariant(self.ownModel,[self selectedVariant]))self.variant.selectedSegmentIndex=[self.ownModel[@"supported_variants"]containsObject:@"P3"]?0:1;[self.stream stop];[self.player stop];[self.voice removeAllSegments];NSArray*voices=self.ownModel[@"voices"];for(NSUInteger i=0;i<voices.count;i++)[self.voice insertSegmentWithTitle:@{@"female":@"女声1",@"female_2":@"女声2",@"male":@"男声1",@"male_2":@"男声2"}[voices[i]] atIndex:i animated:NO];self.voice.selectedSegmentIndex=0;[self updatePackageMenu];self.status.text=[NSString stringWithFormat:@"%@ · %@",OrTTSOwnModelTitle(self.ownModel),self.ptqPack?@"下载更小，仅提供轻量版":@"按需下载，已有相同文件会自动复用"];}
+- (void)packageChanged {self.legacyPack=[self.ownModel[@"decoder"]isEqual:@"qwen_lfm"];self.ptqPack=[self.ownModel[@"p3_only"]boolValue];[self.variant setEnabled:OrTTSOwnModelSupportsVariant(self.ownModel,@"P3") forSegmentAtIndex:0];[self.variant setEnabled:OrTTSOwnModelSupportsVariant(self.ownModel,@"P5") forSegmentAtIndex:1];if(!OrTTSOwnModelSupportsVariant(self.ownModel,[self selectedVariant]))self.variant.selectedSegmentIndex=[self.ownModel[@"supported_variants"]containsObject:@"P3"]?0:1;[self.stream stop];[self.player stop];[self.voice removeAllSegments];NSArray*voices=self.ownModel[@"voices"];for(NSUInteger i=0;i<voices.count;i++)[self.voice insertSegmentWithTitle:@{@"female":@"女声1",@"female_2":@"女声2",@"male":@"男声1",@"male_2":@"男声2"}[voices[i]] atIndex:i animated:NO];self.voice.selectedSegmentIndex=0;[self updatePackageMenu];BOOL localOnly=[self.ownModel[@"source"]isEqual:@"local-import"];self.download.enabled=!self.busy && !localOnly;self.channelButton.enabled=!self.busy && !localOnly;self.status.text=[NSString stringWithFormat:@"%@ · %@",OrTTSOwnModelTitle(self.ownModel),localOnly?@"扩池四轮 P3 冻结预览 · 请点“导入本地模型文件夹”":self.ptqPack?@"下载更小，仅提供轻量版":@"按需下载，已有相同文件会自动复用"];}
 - (NSString*)bridgeIdentity:(NSDictionary*)manifest {id runtime=manifest[@"runtime"];NSString*path=[runtime isKindOfClass:NSDictionary.class]?runtime[@"decoder"][@"dequant_manifest"]:nil;if(!path)return BridgeSHA;for(NSDictionary*entry in manifest[@"files"])if([entry[@"path"] isEqual:path])return entry[@"sha256"];return nil;}
 - (NSString *)selectedVariant { return self.variant.selectedSegmentIndex==0 ? @"P3":@"P5"; }
 - (NSArray *)entries:(NSDictionary *)manifest variant:(NSString *)variant {
@@ -181,7 +192,7 @@ static void OrTTSStyleSecondaryButton(UIButton *b, UIColor *tint) {
     return result.count ? result:nil;
 }
 - (void)finish:(NSString *)message { dispatch_async(dispatch_get_main_queue(), ^{ [self setWorking:NO]; self.status.text=message; NSLog(@"OrTTS status: %@",message); }); }
-- (void)downloadModel {if(self.busy)return;OrTTSConfirmModelDownload(self,^(BOOL allow){if(!self.busy)[self downloadModelAllowMetered:allow];});}
+- (void)downloadModel {if(self.busy)return;if([self.ownModel[@"source"]isEqual:@"local-import"]){self.status.text=@"该冻结预览包仅支持点“导入本地模型文件夹”导入";return;}OrTTSConfirmModelDownload(self,^(BOOL allow){if(!self.busy)[self downloadModelAllowMetered:allow];});}
 - (void)downloadModelAllowMetered:(BOOL)allowMetered {
     NSString *variant=[self selectedVariant]; self.cancelled=NO; [self setWorking:YES]; [self message:@"正在获取模型清单…"];
     dispatch_async(OrTTSDemoQueue(), ^{
@@ -234,7 +245,7 @@ static void OrTTSStyleSecondaryButton(UIButton *b, UIColor *tint) {
     dispatch_async(OrTTSDemoQueue(), ^{
         NSURL *root=[self modelRoot]; NSError *error=nil;
         [NSFileManager.defaultManager createDirectoryAtURL:root withIntermediateDirectories:YES attributes:nil error:&error];
-        NSData*manifestData=nil;for(NSString*name in @[@"download-manifest.json",@"model.json",@"DOWNLOAD_MANIFEST.json"]){manifestData=[NSData dataWithContentsOfURL:[source URLByAppendingPathComponent:name]];if(manifestData)break;}
+        NSData*manifestData=ManifestData(source);
         NSDictionary*manifest=OrTTSVerifiedOwnModelManifest(manifestData,self.ownModel);NSArray*entries=[self entries:manifest variant:variant];
         if(!entries)error=[NSError errorWithDomain:@"OrTTS" code:1 userInfo:@{NSLocalizedDescriptionKey:@"清单未通过固定版本校验，或与所选模型包不匹配（PTQ仅支持P3）。"}];
         for(NSDictionary*entry in entries){if(error||self.cancelled)break;NSURL*from=[source URLByAppendingPathComponent:entry[@"path"]],*to=[root URLByAppendingPathComponent:entry[@"path"]];if(!Valid(from,entry)){error=[NSError errorWithDomain:@"OrTTS" code:1 userInfo:@{NSLocalizedDescriptionKey:@"导入文件 SHA 校验失败"}];break;}if(Valid(to,entry))continue;if([NSFileManager.defaultManager fileExistsAtPath:to.path]){error=[NSError errorWithDomain:@"OrTTS" code:1 userInfo:@{NSLocalizedDescriptionKey:@"目标文件冲突，请先移走所选模型目录。"}];break;}[NSFileManager.defaultManager createDirectoryAtURL:to.URLByDeletingLastPathComponent withIntermediateDirectories:YES attributes:nil error:&error];if(!error)[NSFileManager.defaultManager copyItemAtURL:from toURL:to error:&error];}
@@ -268,7 +279,7 @@ static void OrTTSStyleSecondaryButton(UIButton *b, UIColor *tint) {
     [self message:@"正在校验模型、加载并合成…"];
     dispatch_async(OrTTSDemoQueue(), ^{OrTTSPerformWithStack(^{
         NSURL *root=[self modelRoot];
-        NSData *data=[NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:@"download-manifest.json"]];
+        NSData *data=ManifestData(root);
         NSDictionary *manifest=OrTTSVerifiedOwnModelManifest(data,self.ownModel);
         NSArray *entries=[self entries:manifest variant:variant];
         if (!entries) { [self finish:@"请先下载 / 检查所选模型"]; return; }
@@ -310,7 +321,7 @@ static void OrTTSStyleSecondaryButton(UIButton *b, UIColor *tint) {
     NSArray*args=NSProcessInfo.processInfo.arguments;NSUInteger at=[args indexOfObject:@"--benchmark-repeat"];NSUInteger count=at!=NSNotFound&&at+1<args.count?MIN((NSUInteger)4,MAX((NSUInteger)1,[args[at+1] integerValue])):4;NSUInteger idAt=[args indexOfObject:@"--benchmark-run-id"];NSString*runID=idAt!=NSNotFound&&idAt+1<args.count?args[idAt+1]:@"own-benchmark";
     NSString*text=[self.text.text copy],*variant=[self selectedVariant],*voiceID=[self selectedVoice];[self setWorking:YES];
     dispatch_async(OrTTSDemoQueue(),^{OrTTSPerformWithStack(^{
-        NSURL*root=[self modelRoot];NSData*data=[NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:@"download-manifest.json"]];NSDictionary*manifest=OrTTSVerifiedOwnModelManifest(data,self.ownModel);NSArray*entries=[self entries:manifest variant:variant];int status=entries?ORTTS_OK:ORTTS_INVALID;NSString*failure=entries?nil:@"Model manifest missing or untrusted";
+        NSURL*root=[self modelRoot];NSData*data=ManifestData(root);NSDictionary*manifest=OrTTSVerifiedOwnModelManifest(data,self.ownModel);NSArray*entries=[self entries:manifest variant:variant];int status=entries?ORTTS_OK:ORTTS_INVALID;NSString*failure=entries?nil:@"Model manifest missing or untrusted";
         for(NSDictionary*entry in entries)if(self.cancelled)break;else if(!Valid([root URLByAppendingPathComponent:entry[@"path"]],entry)){status=ORTTS_INVALID;failure=@"Model asset SHA validation failed";break;}
         NSString*speaker=[[root URLByAppendingPathComponent:[NSString stringWithFormat:@"voices/%@.f32",voiceID]] path];ortts_config c={sizeof(c),root.path.UTF8String,variant.UTF8String,speaker.UTF8String,[self bridgeIdentity:manifest].UTF8String,4,1};ortts_engine*engine=NULL;NSMutableArray*runs=[NSMutableArray new];
         if(self.cancelled){status=ORTTS_CANCELLED;failure=@"Cancelled";}if(!status){status=ortts_engine_create(&c,&engine);if(status)failure=[NSString stringWithUTF8String:ortts_last_error()];}

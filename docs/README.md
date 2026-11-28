@@ -18,6 +18,7 @@
 | P3 新旧 codec 为什么不同 | [性能归因](development/p3-codec-performance-2026-11-08.md) | 同音色、baseline/I8MM、固定codes的codec隔离 |
 | 查看性能证据 | [BENCHMARKS](BENCHMARKS.md) | RTF、测试条件、原始数据及局限 |
 | 嵌入其他应用 | [运行时](../runtime/README.md) | C ABI、Rust、PCM及取消、并发约束 |
+| SDK 增量能力需求与验证 | [SDK 增量需求 (2026-11-27)](development/sdk-incremental-requirements-2026-11-27.md) | 热切说话人、语速参数、能力自描述、流式ASR统一、dev rpath与runtime.json |
 | ggml 流式 ASR 与 FunASR | [增量验证](development/ggml-streaming-asr-2026-11-07.md) | 本机原型、数值筛查、中文在线模型与移植边界 |
 | 许可与历史发行 | [NOTICE](../NOTICE.md)、[发行记录](../releases/RELEASE_NOTES.md) | 依赖许可、已有 Android 发行历史 |
 

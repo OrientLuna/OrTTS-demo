@@ -28,6 +28,13 @@ pub(crate) type SynthesizeEx = unsafe extern "C" fn(
     *mut c_void,
     *mut *mut c_void,
 ) -> i32;
+pub(crate) type FeatureVersionFn = unsafe extern "C" fn() -> u32;
+pub(crate) type SetSpeakerFn = unsafe extern "C" fn(*mut c_void, *const std::ffi::c_char) -> i32;
+pub(crate) type SetSpeakerExFn =
+    unsafe extern "C" fn(*mut c_void, *const std::ffi::c_char, *const RawExecPolicy) -> i32;
+pub(crate) type SetSpeakerVecFn = unsafe extern "C" fn(*mut c_void, *const f32, usize) -> i32;
+pub(crate) type SetSpeakerVecExFn =
+    unsafe extern "C" fn(*mut c_void, *const f32, usize, *const RawExecPolicy) -> i32;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CancelMode {
@@ -63,6 +70,11 @@ pub(crate) struct Api {
     pub(crate) synthesize: Option<Synthesize>,
     pub(crate) synthesize_ex: Option<SynthesizeEx>,
     pub(crate) cooperative: bool,
+    pub(crate) feature_version: u32,
+    pub(crate) set_speaker: Option<SetSpeakerFn>,
+    pub(crate) set_speaker_ex: Option<SetSpeakerExFn>,
+    pub(crate) set_speaker_vector: Option<SetSpeakerVecFn>,
+    pub(crate) set_speaker_vector_ex: Option<SetSpeakerVecExFn>,
 }
 
 impl Api {
@@ -194,6 +206,21 @@ fn discover() -> Api {
         return Api::default();
     };
     unsafe {
+        let feature_version = resolve_symbol!(
+            image,
+            "ortts_engine_feature_version",
+            FeatureVersionFn
+        )
+        .map_or(0, |f| f());
+        let set_speaker = resolve_symbol!(image, "ortts_engine_set_speaker", SetSpeakerFn);
+        let set_speaker_ex = resolve_symbol!(image, "ortts_engine_set_speaker_ex", SetSpeakerExFn);
+        let set_speaker_vector =
+            resolve_symbol!(image, "ortts_engine_set_speaker_vector", SetSpeakerVecFn);
+        let set_speaker_vector_ex = resolve_symbol!(
+            image,
+            "ortts_engine_set_speaker_vector_ex",
+            SetSpeakerVecExFn
+        );
         let new = resolve_symbol!(image, "ortts_cancel_token_create", CreateToken);
         let request = resolve_symbol!(image, "ortts_cancel_token_request", TokenFn);
         let free = resolve_symbol!(image, "ortts_cancel_token_free", TokenFn);
@@ -211,9 +238,21 @@ fn discover() -> Api {
                     unsafe extern "C" fn() -> u32
                 )
                 .is_some_and(|version| version() >= 1),
+                feature_version,
+                set_speaker,
+                set_speaker_ex,
+                set_speaker_vector,
+                set_speaker_vector_ex,
             }
         } else {
-            Api::default()
+            Api {
+                feature_version,
+                set_speaker,
+                set_speaker_ex,
+                set_speaker_vector,
+                set_speaker_vector_ex,
+                ..Api::default()
+            }
         }
     }
 }

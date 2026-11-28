@@ -34,3 +34,8 @@ MODEL_ROOT/
 完整文件列表以可信下载清单为准，不能只下载上述几个 GGUF。P3 需要额外 predictor 文件。传给引擎的 `bridge_manifest_sha256` 应来自已验证模型清单，不能把任意本地文件计算出的SHA当成信任来源。当前 v0.2.0-preview 值为 `a4202fc2d5ba0352cd847b02e83fd7382b0a2ba54e3e3aefdc4c82c7aa068228`，其他版本应重新核对。
 
 新模型包可声明声学解码器，由运行时自动选择；格式与兼容构建见 [解码器支持](DECODERS.md)。当前发布 APK 的能力以其发行说明为准。
+
+## 音色目录元数据与预编译契约
+
+- `models/qwen3-lfm-0.6b/voices.json` 与 `tools/make_asset_manifest.py` 支持可选音色扩展字段：`description`（人设/风格说明）、`persona`、`languages`（适用语种列表）与 `preview_audio`（包内相对路径静态试听样本，便于宿主零冷启动播放试听）。
+- 使用 `tools/build_engine.py` 安装预编译原生库时，会在 `<install>/runtime.json` 生成契约清单（`schema: "ortts-prebuilt-runtime-v1"`），记录 `abi_version`、`engine_feature_version`、`speech_abi_version`、`asr_stream_abi_version`、`parallel_inference_version`、`supported_families`、`recommended_bilingual_asr` 与各家族 `capabilities`，并写入 `ENGINE_BUILD_RECEIPT.json` 校验清单。

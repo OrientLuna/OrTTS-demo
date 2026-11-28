@@ -117,7 +117,7 @@ def main():
     plist_path = app / "Contents/Info.plist"
     with plist_path.open("rb") as f:
         plist = plistlib.load(f)
-    plist.update(LSMinimumSystemVersion="13.3", CFBundleShortVersionString="0.1.0", CFBundleVersion="1",
+    plist.update(LSMinimumSystemVersion="13.3", CFBundleShortVersionString="0.4.5", CFBundleVersion="2026112301",
                  NSHighResolutionCapable=True)
     with plist_path.open("wb") as f:
         plistlib.dump(plist, f)

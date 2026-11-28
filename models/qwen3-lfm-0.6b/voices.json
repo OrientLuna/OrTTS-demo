@@ -5,6 +5,13 @@
     {
       "id": "female",
       "label": "female",
+      "description": "Warm, clear bilingual female voice (default anchor).",
+      "persona": "Gentle, steady studio narrator suitable for Chinese and English.",
+      "languages": [
+        "zh",
+        "en"
+      ],
+      "preview_audio": "voices/female.wav",
       "reference": "voices/female.wav",
       "vector": "voices/female.f32",
       "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
@@ -18,6 +25,13 @@
     {
       "id": "male",
       "label": "male",
+      "description": "Neutral, natural bilingual male voice.",
+      "persona": "Calm conversational male voice for Chinese and English narration.",
+      "languages": [
+        "zh",
+        "en"
+      ],
+      "preview_audio": "voices/male.wav",
       "reference": "voices/male.wav",
       "vector": "voices/male.f32",
       "reference_sha256": "67713e91d3cb4018bcd3fbc461b85f6adc56ad813484b3606763aa11c99190fb",

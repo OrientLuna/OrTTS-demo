@@ -1,17 +1,29 @@
 #include "ortts_speech.h"
 #include "runtime_internal.h"
 #include "audiocpp.h"
+#include "sense_asr_stream.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
+#include <iomanip>
 #include <limits>
+#include <locale>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#if defined(__has_include)
+#if __has_include("ortts_speaker_switch_support.h")
+#include "ortts_speaker_switch_support.h"
+#endif
+#endif
+#ifndef ORTTS_AUDIOCPP_PER_REQUEST_SPEAKER
+#define ORTTS_AUDIOCPP_PER_REQUEST_SPEAKER 0
+#endif
 #ifndef ORTTS_WITH_COOPERATIVE_CANCEL
 #define ORTTS_WITH_COOPERATIVE_CANCEL 0
 #endif
@@ -176,6 +188,7 @@ struct ortts_asr_stream {
  std::unique_ptr<OrTTSZipformerStream> zipformer;
 #endif
 #if ORTTS_WITH_SPEECH
+ std::unique_ptr<OrTTSSenseAsrStream> sense;
  std::unique_ptr<engine::models::moonshine_asr::MoonshineIncremental> native;
 #endif
 };
@@ -219,7 +232,11 @@ ORTTS_API uint32_t ortts_parallel_inference_version(void){return ORTTS_WITH_SPEE
 ORTTS_API uint32_t ortts_speech_cooperative_cancel_version(void){return (ORTTS_WITH_SPEECH&&ORTTS_WITH_COOPERATIVE_CANCEL)?1u:0u;}
 const char*ortts_speech_catalog_json(void){
 #if ORTTS_WITH_SPEECH
-  std::string base=R"({"schema":1,"executor":"audio.cpp/ggml-cpu","shared_ggml":true,"tts":["kokoro_tts","piper_tts","kitten_tts","pocket_tts","zipvoice","moss_tts_nano"],"asr":["sense_asr","moonshine_asr"],"tts_stream_kind":{"kokoro_tts":"vocoder-windows","pocket_tts":"codec-chunks","zipvoice":"text-chunks","moss_tts_nano":"codec-chunks-stereo","piper_tts":"offline-only","kitten_tts":"offline-only"},"reference_required":["zipvoice","moss_tts_nano"],"output_channels":{"moss_tts_nano":2},"asr_input":"16000Hz-mono-f32","asr_stream":"bounded-buffer-final","partial":false,"automatic_endpoint":false,"incremental_asr":{"abi":1,"api":"ortts_asr_stream_*","families":["moonshine_asr"],"languages":["en"],"partial":"revisable","encoder":"bounded-overlap-f16","decoder":"hypothesis-redecode","endpoint":["explicit","energy-silence","segment-limit"],"max_segment_ms":30000,"cancellation":"ticks-encode-boundaries-decoder-tokens","per_layer_kv_cache":false},"cancellation":")";
+  std::string base=R"({"schema":1,"abi_version":1,"engine_feature_version":)";
+  base+=(ORTTS_AUDIOCPP_PER_REQUEST_SPEAKER?"2":"0");
+  base+=R"(,"recommended_bilingual_asr":")";
+  base+=(ORTTS_WITH_SHERPA_ASR?"zipformer_bilingual":"sense_asr");
+  base+=R"(","executor":"audio.cpp/ggml-cpu","shared_ggml":true,"tts":["kokoro_tts","piper_tts","kitten_tts","pocket_tts","zipvoice","moss_tts_nano"],"asr":["sense_asr","moonshine_asr"],"tts_stream_kind":{"kokoro_tts":"vocoder-windows","pocket_tts":"codec-chunks","zipvoice":"text-chunks","moss_tts_nano":"codec-chunks-stereo","piper_tts":"offline-only","kitten_tts":"offline-only"},"reference_required":["zipvoice","moss_tts_nano"],"output_channels":{"moss_tts_nano":2},"asr_input":"16000Hz-mono-f32","asr_stream":"bounded-buffer-final","partial":false,"automatic_endpoint":false,"incremental_asr":{"abi":1,"api":"ortts_asr_stream_*","families":["moonshine_asr","sense_asr"],"languages":["zh","en"],"partial":"revisable","encoder":"bounded-overlap-f16","decoder":"hypothesis-redecode","endpoint":["explicit","energy-silence","segment-limit"],"max_segment_ms":30000,"cancellation":"ticks-encode-boundaries-decoder-tokens","per_layer_kv_cache":false},"cancellation":")";
   base+=(ORTTS_WITH_COOPERATIVE_CANCEL?"operator-abort-and-load-cancel":"callback-boundary-or-discard-after-compute");
   base+=R"(","scheduler":"per-handle-busy-or-policy","exec_policy":{"timeout_ms_max":30000,"supersede":true,"request_options":["ortts.lock_timeout_ms","ortts.supersede"]},"excluded":["f5_tts","whisper","arbitrary-onnx"]})";
 #if ORTTS_WITH_SHERPA_ASR
@@ -230,7 +247,20 @@ const char*ortts_speech_catalog_json(void){
   qwen=R"({"available":true,"input":"buffered-final","true_streaming":false,"profile":"original28-int8-headslice-compat","rollback":"original-int8","quality_status":"high-memory-offline-opt-in; quality-pending; not-low-end-certified","decoder_consumer":"last-row-only; earlier expanded rows are placeholders","KV":"F32","threads":2,"cancel":"discard-after-offline-compute","emotion_output":false})";
   base.insert(base.find("\"asr\":[")+7,"\"qwen3_asr\",");
 #endif
-  base.insert(base.size()-1,R"(,"interaction_capabilities":{"schema":1,"primary_tts":"OrTTS","scheduling":"per-handle-busy-or-policy; concurrent-tts-and-asr; caller-owned residency","lifecycle":["create","run-or-accept-finish","cancel","reset","free-after-join"],"background_service":false,"profiles":{"sense_asr":{"input":"buffered-final","languages":["zh","en","yue","ja","ko"],"true_streaming":false,"emotion_output":false,"quality_status":"Chinese-screen-pass; English-and-mixed-English-screen-fail","cancel":"operator-abort-and-load-cancel","reset":"clears-buffer; next-request-supported"},"moonshine_asr":{"input":"incremental","languages":["en"],"true_streaming":true,"emotion_output":false,"quality_status":"English-profile-existing; not-mixed-language"},"streaming_paraformer":{"available":false,"quality_status":"rejected-English-and-mixed-screen","true_streaming":true},"qwen3_asr":)"+qwen+R"(},"low_end_device_whitelist":[]})");
+  std::string caps=R"(,"capabilities":{"tts":{"ortts_qwen3_lfm":{"api":"ortts_engine_*","streaming":true,"per_request_speaker":)";
+  caps+=(ORTTS_AUDIOCPP_PER_REQUEST_SPEAKER?"true":"false");
+  caps+=R"(,"speaker_vector_clone":false,"reference_audio_clone":false,"speed_control":false,"sample_rate":24000,"channels":1,"languages":["zh","en"]},"kokoro_tts":{"api":"ortts_tts_*","streaming":true,"per_request_speaker":true,"speaker_vector_clone":false,"reference_audio_clone":false,"speed_control":true,"sample_rate":24000,"channels":1,"languages":["zh","en-us","en-gb"]},"piper_tts":{"api":"ortts_tts_*","streaming":false,"per_request_speaker":false,"speaker_vector_clone":false,"reference_audio_clone":false,"speed_control":true,"sample_rate":22050,"channels":1,"languages":["en"]},"kitten_tts":{"api":"ortts_tts_*","streaming":false,"per_request_speaker":true,"speaker_vector_clone":false,"reference_audio_clone":false,"speed_control":true,"sample_rate":24000,"channels":1,"languages":["en"]},"pocket_tts":{"api":"ortts_tts_*","streaming":true,"per_request_speaker":true,"speaker_vector_clone":false,"reference_audio_clone":true,"speed_control":false,"sample_rate":24000,"channels":1,"languages":["en"]},"zipvoice":{"api":"ortts_tts_*","streaming":true,"per_request_speaker":false,"speaker_vector_clone":false,"reference_audio_clone":true,"speed_control":true,"sample_rate":24000,"channels":1,"languages":["zh","en"]},"moss_tts_nano":{"api":"ortts_tts_*","streaming":true,"per_request_speaker":false,"speaker_vector_clone":false,"reference_audio_clone":true,"speed_control":false,"sample_rate":24000,"channels":2,"languages":["zh","en"]}},"asr":{"sense_asr":{"api":"ortts_asr_*|ortts_asr_stream_*","streaming":true,"true_streaming":false,"streaming_kind":"segmented-energy","languages":["zh","en","yue","ja","ko"],"sample_rate":16000,"recommended_bilingual":)";
+  caps+=(ORTTS_WITH_SHERPA_ASR?"false":"true");
+  caps+=R"(},"moonshine_asr":{"api":"ortts_asr_*|ortts_asr_stream_*","streaming":true,"true_streaming":true,"streaming_kind":"bounded-overlap-incremental","languages":["en"],"sample_rate":16000,"recommended_bilingual":false})";
+#if ORTTS_WITH_SHERPA_ASR
+  caps+=R"(,"zipformer_bilingual":{"api":"ortts_asr_stream_*","streaming":true,"true_streaming":true,"streaming_kind":"true-streaming","languages":["zh","en"],"sample_rate":16000,"recommended_bilingual":true},"streaming_paraformer":{"api":"ortts_asr_stream_*","streaming":true,"true_streaming":true,"streaming_kind":"true-streaming","languages":["zh","en"],"sample_rate":16000,"recommended_bilingual":false})";
+#endif
+#if ORTTS_WITH_QWEN_ASR
+  caps+=R"(,"qwen3_asr":{"api":"ortts_asr_*","streaming":false,"true_streaming":false,"streaming_kind":"offline","languages":["zh","en"],"sample_rate":16000,"recommended_bilingual":false})";
+#endif
+  caps+="}}";
+  base.insert(base.size()-1,caps);
+  base.insert(base.size()-1,R"(,"interaction_capabilities":{"schema":1,"primary_tts":"OrTTS","scheduling":"per-handle-busy-or-policy; concurrent-tts-and-asr; caller-owned residency","lifecycle":["create","run-or-accept-finish","cancel","reset","free-after-join"],"background_service":false,"profiles":{"sense_asr":{"input":"buffered-final|segmented-stream","languages":["zh","en","yue","ja","ko"],"true_streaming":false,"segmented_streaming":true,"emotion_output":false,"quality_status":"Chinese-screen-pass; English-and-mixed-English-screen-fail","cancel":"operator-abort-and-load-cancel","reset":"clears-buffer; next-request-supported"},"moonshine_asr":{"input":"incremental","languages":["en"],"true_streaming":true,"emotion_output":false,"quality_status":"English-profile-existing; not-mixed-language"},"streaming_paraformer":{"available":false,"quality_status":"rejected-English-and-mixed-screen","true_streaming":true},"qwen3_asr":)"+qwen+R"(},"low_end_device_whitelist":[]})");
 #if ORTTS_WITH_SHERPA_ASR
   const std::string disabled_paraformer="\"streaming_paraformer\":{\"available\":false";
   base.replace(base.find(disabled_paraformer),disabled_paraformer.size(),"\"streaming_paraformer\":{\"available\":true");
@@ -273,10 +303,18 @@ ortts_status ortts_tts_synthesize_ex(ortts_tts*e,const ortts_tts_request*r,const
  if(!e){error="Invalid TTS handle";return ORTTS_INVALID;}
  ortts_exec_policy derived_policy{};
  bool has_derived_policy=false;
+ float req_speed=0.0f;
  try{
-  require(r&&out&&r->struct_size==sizeof(*r)&&present(r->text)&&(r->seed_set==0||r->seed_set==1),"Invalid TTS request");
+  require(r&&out&&(r->struct_size==ORTTS_TTS_REQUEST_V1_SIZE||r->struct_size==sizeof(*r))&&present(r->text)&&(r->seed_set==0||r->seed_set==1),"Invalid TTS request");
   require(!cb||e->h.streaming,"Callbacks require a streaming TTS handle");
   parse_tts_request_policy(r,derived_policy,has_derived_policy);
+  if(r->struct_size==sizeof(*r))req_speed=r->speed;
+  if(req_speed!=0.0f){
+   require(std::isfinite(req_speed)&&req_speed>=0.5f&&req_speed<=2.0f,"Speech speed must be finite within 0.5..=2.0 (or 0 for default)");
+   for(size_t i=0;i<r->option_count;++i){
+    require(std::string(r->options[i].key)!="speed","Specify speed in either struct field or options, not both");
+   }
+  }
  }catch(...){return failure();}
  const ortts_exec_policy*effective_policy=policy?policy:(has_derived_policy?&derived_policy:nullptr);
  ortts_status lock_status=ORTTS_BUSY;
@@ -292,6 +330,10 @@ ortts_status ortts_tts_synthesize_ex(ortts_tts*e,const ortts_tts_request*r,const
   CancelScope cancellation(&e->h.cancelled,token?&token->cancelled:nullptr);
   cancellation_checkpoint(token);
   auto start=Clock::now();Request q;check(audiocpp_request_set_text(q.p,r->text,nullptr));language(e->h,q.p,r->language);if(present(r->voice_id)){require(e->h.family!="piper_tts"&&e->h.family!="zipvoice","This adapter has no named presets for this family");check(audiocpp_request_set_voice_id(q.p,r->voice_id));}if(r->seed_set)check(audiocpp_request_set_option(q.p,"seed",std::to_string(r->seed).c_str()));
+  if(req_speed!=0.0f&&(e->h.family=="kokoro_tts"||e->h.family=="piper_tts"||e->h.family=="kitten_tts"||e->h.family=="zipvoice")){
+   std::ostringstream ss;ss.imbue(std::locale::classic());ss<<std::fixed<<std::setprecision(4)<<req_speed;
+   check(audiocpp_request_set_option(q.p,"speed",ss.str().c_str()));
+  }
   bool has_text_chunk_size=false;
   for(size_t i=0;i<r->option_count;++i){
    std::string k=r->options[i].key;
@@ -394,7 +436,7 @@ uint32_t ortts_asr_stream_abi_version(void){return ORTTS_WITH_SPEECH?ORTTS_ASR_S
 ortts_status ortts_asr_stream_create(const ortts_speech_config*c,const ortts_asr_stream_config*s,ortts_asr_stream**out){
  if(out)*out=nullptr;error.clear();try{
  require(ORTTS_WITH_SPEECH,"Speech feature disabled; rebuild with --speech");
- require(out&&c&&c->struct_size==sizeof(*c)&&present(c->family)&&(std::string(c->family)=="moonshine_asr"||(ORTTS_WITH_SHERPA_ASR&&(std::string(c->family)=="zipformer_bilingual"||std::string(c->family)=="streaming_paraformer")))&&present(c->model_path)&&c->threads>=1&&c->threads<=8&&c->streaming==1,"Incremental ASR family unavailable or invalid configuration");
+ require(out&&c&&c->struct_size==sizeof(*c)&&present(c->family)&&(std::string(c->family)=="moonshine_asr"||std::string(c->family)=="sense_asr"||(ORTTS_WITH_SHERPA_ASR&&(std::string(c->family)=="zipformer_bilingual"||std::string(c->family)=="streaming_paraformer")))&&present(c->model_path)&&c->threads>=1&&c->threads<=8&&c->streaming==1,"Incremental ASR family unavailable or invalid configuration");
  require(!c->session_option_count&&!present(c->espeak_library)&&!present(c->espeak_data)&&!c->max_input_frames,"Use typed incremental ASR settings, not offline/session options");
  require(std::filesystem::is_regular_file(c->model_path)||std::filesystem::is_directory(c->model_path),"Missing ASR model package");
  ortts_asr_stream_config v{sizeof(v),400,1000,15000,800,0.003F};
@@ -412,6 +454,10 @@ ortts_status ortts_asr_stream_create(const ortts_speech_config*c,const ortts_asr
  }
 #endif
 #if ORTTS_WITH_SPEECH
+ if(std::string(c->family)=="sense_asr"){
+  e->sense=std::make_unique<OrTTSSenseAsrStream>(c->model_path,c->threads,v.max_segment_ms,v.update_ms,v.min_partial_ms,v.silence_ms,v.energy_threshold);
+  *out=e.release();return ORTTS_OK;
+ }
  engine::models::moonshine_asr::MoonshineIncrementalConfig settings;
  settings.update_samples=size_t(v.update_ms)*16;settings.min_partial_samples=size_t(v.min_partial_ms)*16;
  settings.max_segment_samples=size_t(v.max_segment_ms)*16;settings.endpoint_silence_samples=size_t(v.silence_ms)*16;settings.energy_threshold=v.energy_threshold;
@@ -439,6 +485,11 @@ ortts_status incremental_operation(ortts_asr_stream*e,const float*p,size_t n,boo
  }
 #endif
 #if ORTTS_WITH_SPEECH
+ if(e->sense){
+  auto sink=[&](const ortts_asr_stream_event&v){if(cb(user,&v))e->cancelled=true;return e->cancelled.load();};auto cancel=[&](){return e->cancelled.load();};started=true;
+  bool ok=finish?e->sense->finish(sink,cancel):e->sense->accept(p,n,sink,cancel);
+  if(!ok||e->cancelled){e->cancelled=true;error="ASR stream cancelled; reset before reuse";return ORTTS_CANCELLED;}return ORTTS_OK;
+ }
  auto sink=[&](const engine::models::moonshine_asr::MoonshineIncrementalEvent&v){
   ortts_asr_stream_event event{sizeof(event),v.endpoint,v.segment,v.start,v.end,v.revision,v.text.c_str(),"en"};
   if(cb(user,&event))e->cancelled=true;return e->cancelled.load();
@@ -463,6 +514,7 @@ ortts_status ortts_asr_stream_reset(ortts_asr_stream*e){if(!e){error="Invalid in
  if(e->zipformer){e->zipformer->reset();e->faulted=false;e->cancelled=false;return ORTTS_OK;}
 #endif
 #if ORTTS_WITH_SPEECH
+ if(e->sense){e->sense->reset();e->faulted=false;e->cancelled=false;return ORTTS_OK;}
  e->native->reset();e->faulted=false;e->cancelled=false;
 #endif
  return ORTTS_OK;}catch(...){return failure();}}
@@ -472,6 +524,7 @@ ortts_status ortts_asr_stream_get_stats(ortts_asr_stream*e,ortts_asr_stream_stat
  if(e->zipformer){e->zipformer->stats(out);return ORTTS_OK;}
 #endif
 #if ORTTS_WITH_SPEECH
+ if(e->sense){e->sense->stats(out);return ORTTS_OK;}
  auto s=e->native->stats();*out={sizeof(*out),s.received,s.processed,s.encoded,s.updates,s.buffered,s.cached_frames,s.segment_samples,s.peak_buffered,s.peak_cached_frames,s.encoder_ms,s.decoder_ms};
 #endif
  return ORTTS_OK;}catch(...){return failure();}}

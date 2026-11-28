@@ -1,140 +1,63 @@
 # 构建
 
-需要已有的 Python（准备源码建议3.12+）、CMake、Ninja；Android 另需 JDK17、Android SDK、NDK27 和 Gradle。
+需要已有的 Python（3.12+）、CMake、Ninja；Android 另需 JDK17、Android SDK、NDK27 和 Gradle（本机离线构建使用 8.9）。
 
-将 OrTTS 作为应用模块使用，见[CPU 引擎与 Rust 接口](../runtime/README.md)，提供 Linux、Android、macOS 与 iOS 构建入口。
+OrTTS 运行时核心已独立为 [ortts-engine](../third_party/ortts-engine)（内置 `ggml`、精简 `LiquidCodec`、`P3 four_round`、热切说话人与 `cpu-opt v3`），**不再需要多层级 `vendor/` 补丁或本地 `audio.cpp` / `llama.cpp` 子模块**。将 OrTTS 作为应用模块使用，见 [CPU 引擎与 Rust 接口](../runtime/README.md)。
 
-## 准备运行时
+## 两种构建模式
 
-```bash
-python3 tools/prepare_runtime.py --source-repo /path/to/audio.cpp --out _work/runtime
-```
+1. **子模块源码直编（默认）**：直接编译 `third_party/ortts-engine`（可通过 `--engine-source` 指定外部 `ortts-engine` 仓库路径）。
+2. **继承预编译运行时（`--engine-dir`）**：在外部 `ortts-engine` 编译或 `--install` 后，通过 `--engine-dir /path/to/ortts-engine/build/<target>` 直接继承现成的 `libortts.so`（与 `--cpu-auto` 下的 `libggml*.so`），`OrTTS-demo` 仅编 `ortts_jni` / `ortts_device` / `ortts-tts`。
 
-该脚本使用本地已有的上游源码和本仓库补丁，不修改源仓库。
+## Linux
 
-如需构建带统一 ggml、多模型语音扩展（`--speech`）与协作式取消（桌面端 / 移动完整 Demo）的运行时源码，请继续按顺序执行：
-
-```bash
-python3 tools/prepare_unified_runtime.py \
-  --audio-source _work/runtime --llama-source /path/to/llama.cpp-v0.8.0 \
-  --out _work/unified --release-compat
-python3 tools/prepare_speech_runtime.py --source _work/unified/audio.cpp \
-  --out _work/demo-release/audio.cpp
-python3 tools/prepare_cancellable_runtime.py --source _work/demo-release/audio.cpp \
-  --out _work/cancellable-runtime
-python3 tools/prepare_explicit_options.py --source _work/cancellable-runtime \
-  --out _work/desktop-runtime
-```
-
-## Android
-
-先按 [手机 G2P](MOBILE_G2P.md) 准备固定版本 eSpeak 库与字典，以下 `--g2p-install` 指向其 mobile 输出。
+### 从子模块直接构建
 
 ```bash
-python3 tools/prepare_unified_runtime.py \
-  --audio-source _work/runtime --llama-source /path/to/llama.cpp-v0.8.0 \
-  --out _work/unified --release-compat
-python3 tools/prepare_speech_runtime.py --source _work/unified/audio.cpp \
-  --out _work/demo-release/audio.cpp
-python3 tools/build_android.py --source _work/demo-release/audio.cpp --liquidcodec --speech \
-  --g2p-install build/g2p-android/mobile \
-  --ndk /path/to/android-ndk --ninja /path/to/ninja \
-  --gradle /path/to/gradle --sdk /path/to/android-sdk --java /path/to/jdk17
+# 构建 CLI（ortts-tts）
+python3 tools/build.py --platform linux-x86_64 --profile x86_64-avx2 --out build/linux-cli --jobs 8
+
+# 构建与安装独立共享库插件（libortts.so）
+python3 tools/build_engine.py --target linux-x86_64 --profile x86_64-avx2 --out build/linux-engine --jobs 8
 ```
 
-多模型手机 Demo 使用统一 ggml、LiquidCodec 与 speech 构建；`--release-compat` 应用已锁定的原生 P3、模型维度与 Q8 查表补丁。llama.cpp 必须匹配 vendor/unified/lock.json 的源码指纹（v0.8.0，commit 8642541b255bfb5dc39cd351a178be09013a55d6）。多模型源码输出必须是新目录下的 audio.cpp，同级 mtmd 和探针源码也会校验、复制。不要复用先前配置为其他源码/功能组合的构建目录。
-
-Android 使用 AGP 8.7.2、JDK 17；Gradle 至少 8.9，本机离线构建使用 8.14.3。无权重 APK 可独立编译，模型由菜单按固定版本下载。
-
-默认构建不含权重的 APK。调试时可将包含 `bundled/model.json` 及清单模型文件（或 `model.zip`）的目录传入 `--model-assets`，在 APK 内携带权重。
-
-## 原生命令行
+### 直接继承外部 `ortts-engine` 产物
 
 ```bash
-python3 tools/build.py --platform android-arm64 --source _work/runtime --ndk /path/to/android-ndk
-python3 tools/build.py --platform linux-aarch64 --source _work/runtime \
-  --cc aarch64-linux-gnu-gcc --cxx aarch64-linux-gnu-g++
+python3 tools/build_engine.py --target linux-x86_64 --profile x86_64-avx2 \
+  --engine-dir /path/to/ortts-engine/build/linux-x86_64-x86_64-avx2 \
+  --out build/linux-engine --jobs 8
 ```
 
-工具链与目标系统须匹配；Android NDK 不能替代 Linux GNU 工具链。模型不随源码构建自动下载。
+运行 Linux 桌面前端：
 
-加 `--release` 可构建未签名 release APK，再使用自己的签名密钥签名。
-
-## 桌面端（macOS / Linux）
-
-桌面端共享三标签页 GUI 依赖已完成取消与选项补丁的运行时源码（即上面的 `_work/desktop-runtime`）。若需在「语音识别」中启用 Paraformer 流式实验档，可额外传入 `--sherpa-asr-prefix /path/to/sherpa-prefix`。
-
-### macOS 桌面端（`.app` / DMG）
-
-```sh
-python3.12 tools/build_engine.py --target macos-arm64 --profile arm64-baseline \
-  --source _work/desktop-runtime --liquidcodec --speech --out build/pc-engine-macos
-python3.12 -m venv local/desktop-venv
-local/desktop-venv/bin/python -m pip install -r desktop/packaging/requirements-macos.txt
-local/desktop-venv/bin/python desktop/packaging/build_macos.py --engine-build build/pc-engine-macos
-local/desktop-venv/bin/python desktop/packaging/build_dmg.py
-```
-
-默认打包脚本仅生成 ad-hoc 签名的 `.app` 与未公证 DMG；如需公开分发，请另行使用 Developer ID 证书与 `notarytool` 签名公证。
-
-### Linux 桌面端
-
-```sh
-python3 tools/build_engine.py --target linux-x86_64 --profile x86_64-baseline \
-  --source _work/desktop-runtime --liquidcodec --speech --out build/linux-engine
-```
-
-ARM64 Linux 将 `--target` 与 `--profile` 改为 `linux-aarch64` / `arm64-baseline`。编译产物位于 `build/linux-engine/install/lib/libortts.so`，之后可直接源码启动或组装可移动文件夹包：
-
-```sh
+```bash
 python3 -m linux.app --library build/linux-engine/install/lib/libortts.so
-# 或组装文件夹包：
+# 或组装可移动文件夹包：
 python3 -m linux.build --library build/linux-engine/install/lib/libortts.so --output /path/to/OrTTS-Linux
 ```
 
-## Apple
+## Android APK
 
-- [CPU 平台、编译档位与实测限制](CPU_PROFILES.md)
-- [iOS Demo / macOS CLI 构建与使用](../apple/README.md)
+```bash
+# 方式 A：从 submodule 源码全量构建（--cpu-auto 打包 baseline/dotprod/i8mm 三模块）
+python3 tools/build_android.py --cpu-auto \
+  --ndk /path/to/android-ndk --ninja /path/to/ninja \
+  --gradle /path/to/gradle --sdk /path/to/android-sdk --java /path/to/jdk17 --jobs 8
 
-
-先完成上面的运行时准备。Apple 需要完整 Xcode，以下使用 CPU baseline；优化版将引擎 `--profile` 与应用 `ORTTS_APP_CPU_PROFILE` 同时改为匹配档位，见 [CPU 参数](CPU_PROFILES.md)。
-
-### macOS
-
-```sh
-python3.12 tools/build_engine.py --target macos-arm64 --profile arm64-baseline \
-  --source _work/runtime --out build/engine-macos
-cmake -S apple -B build/apple-mac -G Ninja \
-  -DORTTS_ENGINE_INSTALL="$PWD/build/engine-macos/install"
-cmake --build build/apple-mac
+# 方式 B：直接继承外部 ortts-engine 预编译产物构建 APK
+python3 tools/build_android.py --cpu-auto \
+  --engine-dir /path/to/ortts-engine/build/android-arm64-auto \
+  --ndk /path/to/android-ndk --ninja /path/to/ninja \
+  --gradle /path/to/gradle --sdk /path/to/android-sdk --java /path/to/jdk17 --jobs 8
 ```
 
-Intel Mac 将引擎目标改为 `macos-x86_64`、profile 改为 `x86_64-baseline`。本轮实测覆盖 Apple Silicon。
+如需单 ISA 构建，将 `--cpu-auto` 替换为 `--android-isa armv8.2-a+dotprod+i8mm+fp16`、`armv8.2-a+dotprod+fp16`（`arm64-dotprod`）或 `armv8-a`（`arm64-baseline`）。加 `--release` 可生成未签名 release APK，调试时可通过 `--model-assets` 在 APK 内携带权重；加 `--p3-four-preview-id` 可使用 `com.orient.ortts.p3fourfeature` 并装包名。
 
-### iOS 真机
+## Apple（macOS / iOS）
 
-```sh
-python3.12 tools/build_engine.py --target ios-arm64 --profile arm64-baseline \
-  --source _work/demo-release/audio.cpp --out build/engine-iphone --speech --liquidcodec
-cmake -S apple -B build/apple-iphone -G Ninja \
-  -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos \
-  -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 \
-  -DORTTS_ENGINE_INSTALL="$PWD/build/engine-iphone/install" \
-  -DORTTS_G2P_INSTALL="$PWD/build/g2p-ios/mobile" \
-  -DORTTS_APP_CPU_PROFILE=arm64-baseline
-cmake --build build/apple-iphone
+```bash
+python3.12 tools/build_engine.py --target ios-arm64 --profile arm64-i8mm --out build/engine-iphone-i8mm --jobs 8
 ```
 
-产物为 `build/apple-iphone/ortts-apple.app`，默认未签名。安装到真机前须自行使用匹配 Bundle ID 和设备的开发描述文件，签名嵌入的 `OrTTS.framework` 和应用。仓库不提供个人证书、描述文件或可通用安装的 IPA。最低 iOS 16.3、macOS 13.3；实际验证设备见 [基准](BENCHMARKS.md)。
-
-### iOS 模拟器
-
-引擎 target 改为 `ios-simulator-arm64`，输出改为 `build/engine-simulator`。应用用独立目录 `build/apple-sim`，sysroot 改为 `iphonesimulator`，`ORTTS_ENGINE_INSTALL` 指向模拟器框架，其他参数不变。
-
-```sh
-xcrun simctl install booted build/apple-sim/ortts-apple.app
-xcrun simctl launch booted com.orient.ortts.prototype
-```
-
-需先在 Xcode 安装匹配 runtime 并启动模拟器；模拟器速度不代表 iPhone。独立引擎的 XCFramework 打包见 [运行时](../runtime/README.md#build)。
+`OrTTS-demo` 与 `ortts-engine` 使用一致的纯 `ggml` + CPU 后端配置；macOS / iOS 构建步骤详见 [CPU 档位说明](CPU_PROFILES.md) 与 [Apple 说明](../apple/README.md)。

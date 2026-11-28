@@ -40,7 +40,9 @@ fn run(model_root: &str, manifest_sha: &str) -> Result<(), Error> {
 - **Speech `Task` 取消与防误卸**：`speech::Tts` 与 `speech::Asr` 提供 `new_cancellable`、`synthesize_cancellable` / `stream_cancellable`、`run_cancellable` / `finish_cancellable`；`speech::cache::TtsCache` 的 `synthesize_cancellable` / `stream_cancellable` 在协作 `Error::Cancelled` 或 `err.is_busy()` 时保留常驻权重不卸载，仅在 sink 返回 `false`、panic 或后端失败时清理。
 - **并发能力探测**：`speech::parallel_inference_version()`（或根导出 `ortts_engine::parallel_inference_version()`）符号缺失时返回 `0`，支持 per-handle 并发时返回 `2`；可用 `speech::supports_parallel_tts_asr()` 判断同进程是否至少支持 1 路 TTS + 1 路 ASR 并发。
 - **有界等待 / 抢占策略**：`ExecPolicy { timeout_ms, supersede }` 与 `Engine` / `speech::Tts` / `speech::Asr` / `TtsCache` 的 `*_ex` 接口映射到 C `ortts_exec_policy`（不支持的旧库在非默认策略时返回 `Error::UnsupportedAbi`）；`Error::is_busy()` 精确匹配 `STATUS_BUSY`（状态码 `3`）。
-- **流式 ASR 适配**：`Config::new_streaming_asr(family, model_path, threads)` 自动置空离线字段；`speech::streaming::families()` 从 `speech::catalog()` 解析启用的流式家族（如 `moonshine_asr`、`streaming_paraformer`、`zipformer_bilingual`）；`Stats::*_opt()` 将 `u64::MAX` 与非有限耗时安全转换为 `None`。
+- **单次请求热切说话人 & 语速控制**：`Engine` 新增 `engine_feature_version()`、`set_speaker*`、`set_speaker_vector*` 与 `synthesize_with_options` / `stream_with_options`（`SpeakerOverride::{Path, Vector}` + `SynthesizeOptions::with_speed`）；`speech::Request::with_speed(f32)` 在原生支持家族上透传 `0.5..=2.0` 语速（未支持家族安全忽略）。
+- **结构化能力清单与流式 ASR 统一**：`speech::runtime_capabilities()` 解析 `catalog()` 返回各 TTS/ASR 家族能力位与 `recommended_bilingual_asr`；`Config::new_streaming_asr(family, model_path, threads)` 支持 `moonshine_asr`、内建能量分段流式 `sense_asr` 以及可选 Sherpa `streaming_paraformer` / `zipformer_bilingual`；`Stats::*_opt()` 将 `u64::MAX` 与非有限耗时安全转换为 `None`。
+- **开发期 rpath 开关**：设置 `ORTTS_LIB_DIR` 并显式开启 `ORTTS_EMBED_DEV_RPATH=1` 时，`build.rs` 自动注入 `-Wl,-rpath,<ORTTS_LIB_DIR>`（Release 打包保持关闭）。
 
 原有 `new` / `synthesize` / `stream` 仍返回 `Result<_, String>`；任务级接口返回结构化 `Error`。
 Android `--cpu-auto` 与协作取消现已支持同开（准备顺序：`prepare_cancellable_runtime.py` → `prepare_explicit_options.py` → `prepare_cpu_dispatch.py`）。

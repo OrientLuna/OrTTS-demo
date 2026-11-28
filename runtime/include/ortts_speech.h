@@ -28,6 +28,22 @@ typedef struct ortts_speech_config {
  const char *espeak_data; /* Optional external eSpeak-ng data directory. */
  size_t max_input_frames; /* ASR: 0 = 60s, max 120s at 16kHz. Ignored for TTS. */
 } ortts_speech_config;
+typedef struct ortts_tts_request_v1 {
+ uint32_t struct_size;
+ const char *text;
+ const char *language; /* NULL/auto = model default; explicit unsupported language fails. */
+ const char *voice_id; /* Named preset, NULL = package default. */
+ int32_t seed_set; /* 0 omitted, 1 set. No seed is sent to ASR. */
+ uint64_t seed;
+ const ortts_speech_option *options; /* Model-specific request options. */
+ size_t option_count;
+ const float *reference_pcm; /* ZipVoice: required mono F32 reference, normalized externally. */
+ size_t reference_frames;
+ int32_t reference_sample_rate;
+ int32_t reference_channels;
+ const char *reference_text;
+} ortts_tts_request_v1;
+#define ORTTS_TTS_REQUEST_V1_SIZE ((uint32_t)sizeof(ortts_tts_request_v1))
 typedef struct ortts_tts_request {
  uint32_t struct_size;
  const char *text;
@@ -42,6 +58,8 @@ typedef struct ortts_tts_request {
  int32_t reference_sample_rate;
  int32_t reference_channels;
  const char *reference_text;
+ /* Additive v1.1 field (struct_size == sizeof(ortts_tts_request)): */
+ float speed; /* Optional speech speed multiplier (0.0f = default 1.0f; valid 0.5f..=2.0f). Unsupported families safely ignore valid values. */
 } ortts_tts_request;
 /* Synchronous on generating thread. Frames are per channel, PCM interleaved.
  * Never reenter/free any engine from callback. Return nonzero to cancel. */

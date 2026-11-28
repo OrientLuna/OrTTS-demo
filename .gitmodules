@@ -1,9 +1,6 @@
-[submodule "third_party/audio.cpp"]
-	path = third_party/audio.cpp
-	url = https://github.com/0xShug0/audio.cpp
 [submodule "third_party/sherpa-onnx"]
 	path = third_party/sherpa-onnx
 	url = https://github.com/k2-fsa/sherpa-onnx
-[submodule "third_party/llama.cpp"]
-	path = third_party/llama.cpp
-	url = https://github.com/ggml-org/llama.cpp
+[submodule "third_party/ortts-engine"]
+	path = third_party/ortts-engine
+	url = git@github.com:OrientLuna/OrTTS-engine.git

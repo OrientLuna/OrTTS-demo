@@ -4,7 +4,7 @@
 
 ## 引擎构建档位
 
-使用 `tools/build_engine.py --target TARGET --profile PROFILE --source _work/runtime --out build/NEW_DIRECTORY`。输出目录必须是新目录，构建工具不下载源码、模型或 SDK。
+使用 `tools/build_engine.py --target TARGET --profile PROFILE --out build/NEW_DIRECTORY`（可加 `--engine-dir /path/to/prebuilt/ortts-engine` 直接继承外部 `ortts-engine` 构建产物）。输出目录必须是新目录，构建工具不下载源码、模型或 SDK。
 
 | 目标 | 可选 profile | 选择依据 |
 |---|---|---|
@@ -29,7 +29,7 @@
 
 ```sh
 python3.12 tools/build_engine.py --target ios-arm64 --profile arm64-i8mm \
-  --source _work/runtime --out build/engine-iphone-i8mm
+  --out build/engine-iphone-i8mm
 cmake -S apple -B build/apple-iphone-i8mm -G Ninja \
   -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos \
   -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=16.3 \
@@ -44,9 +44,18 @@ cmake --build build/apple-iphone-i8mm
 
 ## Android 与 Linux
 
-Android APK 的既有构建入口为 `tools/build_android.py`，原生命令行为 `tools/build.py`。两者 `--android-isa` 均默认 `armv8.2-a+dotprod+i8mm+fp16`（哪怕启用 `--speech` 也不再静默降回 `armv8-a`），可显式选 `--android-isa armv8-a` 或使用 `--cpu-auto` 随包携带 baseline、DotProd/FP16、I8MM 三档动态模块按 CPU 能力自动分派；ARM64 构建默认同时启用 `ENGINE_ENABLE_NEON=ON`。此外，按 `prepare_cancellable_runtime.py → prepare_explicit_options.py → prepare_cpu_dispatch.py` 顺序准备源码时，`--cpu-auto` 可与算子级协作取消同开。此自动分派仅适用于 Android，不改变 Apple 框架的编译档位。已验证范围见主 README。
+Android APK 的既有构建入口为 `tools/build_android.py`，原生命令行为 `tools/build.py`（均默认使用 `third_party/ortts-engine` 子模块，并可通过 `--engine-dir` 直接继承外部 `ortts-engine` 产物）。两者 `--android-isa` 均默认 `armv8.2-a+dotprod+i8mm+fp16`，可显式选 `armv8.2-a+dotprod+fp16`（`arm64-dotprod`）、`armv8-a`（`arm64-baseline`）或使用 `--cpu-auto` 随包携带 baseline、DotProd/FP16、I8MM 三档动态模块按 CPU 能力自动分派，同时内置协作式取消与 `P3 four_round`。此自动分派仅适用于 Android，不改变 Apple 框架的编译档位。已验证范围见主 README。
 
 Linux ARM64 交叉编译需现有 toolchain，Android 需 NDK。Linux 指令集兼容不代表 glibc/libstdc++ 兼容，应在计划支持的旧系统工具链上构建。Intel、Linux 目标的历史支持不构成本轮 Apple 任务的重新验收。
+
+在 Forlinx OK3588 上测 Linux CPU4 时，绑 A76 大核 `4-7` 并记录 GNU OpenMP 的等待策略。Linux LiquidCodec 构建会启用 ggml 的 OpenMP。同一四轮模型、同一 DotProd/FP16 库、同一中文短句的原生接口交叉复测中，默认等待策略的热 RTF 为 2.43 和 4.48，使用被动等待时为 0.757 和 0.755，四份 WAV 的 SHA-256 一致。桌面 Demo 可用相同的进程配置启动。
+
+```sh
+OMP_WAIT_POLICY=PASSIVE GOMP_SPINCOUNT=0 taskset -c 4-7 \
+  python3 -m linux.app --library build/linux-engine/install/lib/libortts.so
+```
+
+线程数在应用里选 4。其他 RK3588 板的 CPU 编号先用 `lscpu` 和 `/sys/devices/system/cpu/cpufreq/policy*/related_cpus` 核对。此配置按进程生效，适用于使用 GNU OpenMP 的这条 CPU 路径。
 
 ## 实测与限制
 

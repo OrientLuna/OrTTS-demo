@@ -7,10 +7,20 @@ import json
 
 PACKAGES = {
     "Q4": ("0.6B · Q4量化（精简）", "v0.3.1-ptq-q4", "26cf9f79991fa38eb766541ee34a964c4521cb5130fd61034dad3302bebd0017"),
+    "FourRound": ("0.6B · 扩池四轮 P3（本地导入）", "20261109-local-not-release", "ebd5deee7981d75a9b927fc2fd0b0df404287a3c737702a09580d40d9c9cdedd"),
     "Q8": ("0.6B · Q8量化（均衡）", "v0.3.1-preview", "2b23c30f658e88ce8b3215e4ea24dacf8898ffca159a7908f61a8942e9e93720"),
     "Legacy": ("0.6B · LFM解码（历史版）", "v0.2.0-preview", "20e24b0bc7fd0e3b58e31dcb409c07102f9e0ddf33f8e70153f69073271b5f7f"),
 }
+PACKAGE_MODEL_IDS = {
+    "FourRound": "research-four-round-expanded-1235",
+}
+LOCAL_ONLY_PACKAGES = {"FourRound"}
+P3_ONLY_PACKAGES = {"Q4", "FourRound"}
 VOICE_NAMES = {"female": "女声1", "female_2": "女声2", "male": "男声1", "male_2": "男声2"}
+
+
+def available_packages(four_round_enabled=False):
+    return {k: v for k, v in PACKAGES.items() if four_round_enabled or k != "FourRound"}
 
 
 class Cancelled(Exception):
@@ -65,20 +75,21 @@ def signature(path):
 
 def verify_pack(directory, package, progress=lambda text: None, cancel=None):
     root = Path(directory).expanduser().resolve(strict=True)
-    candidates = [root / "DOWNLOAD_MANIFEST.json", root / "download-manifest.json"]
+    candidates = [root / "DOWNLOAD_MANIFEST.json", root / "download-manifest.json", root / "model.json"]
     manifest = next((p for p in candidates if p.is_file()), None)
     if manifest is None:
-        raise ValueError("请选择完整模型目录（需含 DOWNLOAD_MANIFEST.json 或 download-manifest.json）")
+        raise ValueError("请选择完整模型目录（需含 DOWNLOAD_MANIFEST.json、download-manifest.json 或 model.json）")
     if not manifest.resolve().is_relative_to(root) or manifest.stat().st_size > 2 * 1024 * 1024:
         raise ValueError("清单路径或大小无效")
     data = manifest.read_bytes()
     digest = hashlib.sha256(data).hexdigest()
     if digest != PACKAGES[package][2]:
-        raise ValueError("模型清单 SHA256 不匹配：请选择对应的 Q4 / Q8 / 历史版，勿混用模型包")
+        raise ValueError("模型清单 SHA256 不匹配：请选择对应的模型版本，勿混用模型包")
     doc = json.loads(data)
+    expected_model_id = PACKAGE_MODEL_IDS.get(package, "OrientLuna/OrTTS-Qwen3-LFM-0.6B")
     if (doc.get("schema") != "ortts-download-manifest-v1" or
             doc.get("revision") != PACKAGES[package][1] or
-            doc.get("model_id") != "OrientLuna/OrTTS-Qwen3-LFM-0.6B"):
+            doc.get("model_id") != expected_model_id):
         raise ValueError("模型清单身份不匹配")
     files = doc["files"]
     if not isinstance(files, list) or not 1 <= len(files) <= 256:
@@ -108,4 +119,4 @@ def verify_pack(directory, package, progress=lambda text: None, cancel=None):
     if not voices:
         raise ValueError("模型包没有可用音色")
     return ModelPack(root, package, digest, entries[bridge]["sha256"], voices,
-                     ("P3",) if package == "Q4" else ("P3", "P5"), tuple(signatures))
+                     ("P3",) if package in P3_ONLY_PACKAGES else ("P3", "P5"), tuple(signatures))

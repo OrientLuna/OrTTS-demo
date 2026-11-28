@@ -22,6 +22,75 @@ struct Request {
     seed: u64,
     max_tokens: i32,
 }
+#[repr(C)]
+struct RequestV1_1 {
+    struct_size: u32,
+    text: *const c_char,
+    seed: u64,
+    max_tokens: i32,
+    speaker_f32: *const c_char,
+    speaker_vector: *const f32,
+    speaker_dim: usize,
+    speed: f32,
+}
+#[repr(C)]
+struct RequestV1_2 {
+    struct_size: u32,
+    text: *const c_char,
+    seed: u64,
+    max_tokens: i32,
+    speaker_f32: *const c_char,
+    speaker_vector: *const f32,
+    speaker_dim: usize,
+    speed: f32,
+    language: *const c_char,
+}
+
+/// Optional per-request speaker override for [`Engine`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum SpeakerOverride<'a> {
+    Path(&'a str),
+    Vector(&'a [f32]),
+}
+
+/// Extended synthesis options for [`Engine::synthesize_with_options`] and [`Engine::stream_with_options`].
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct SynthesizeOptions<'a> {
+    pub speaker: Option<SpeakerOverride<'a>>,
+    pub speed: Option<f32>,
+    pub language: Option<&'a str>,
+}
+
+impl<'a> SynthesizeOptions<'a> {
+    pub const fn new() -> Self {
+        Self {
+            speaker: None,
+            speed: None,
+            language: None,
+        }
+    }
+    pub const fn with_speaker_path(mut self, path: &'a str) -> Self {
+        self.speaker = Some(SpeakerOverride::Path(path));
+        self
+    }
+    pub const fn with_speaker_vector(mut self, vector: &'a [f32]) -> Self {
+        self.speaker = Some(SpeakerOverride::Vector(vector));
+        self
+    }
+    pub const fn with_speed(mut self, speed: f32) -> Self {
+        self.speed = Some(speed);
+        self
+    }
+    pub const fn with_language(mut self, language: &'a str) -> Self {
+        self.language = Some(language);
+        self
+    }
+}
+
+/// Additive feature capability version for `ortts_engine_*` (`0`: legacy v1, `1`: v1.1 speaker/speed, `2`: v1.2 language routing & c0 guard).
+pub fn engine_feature_version() -> u32 {
+    cancellation::api().feature_version
+}
 #[derive(Clone, Copy, Debug, Default)]
 #[repr(C)]
 pub struct Metrics {
@@ -307,18 +376,118 @@ impl Engine {
         } // cancelled load drops engine safely here
         Ok(engine)
     }
+    /// Hot-switch the engine's active fixed speaker `.f32` file without reloading weights (`None` resets to `voices/female.f32`).
+    pub fn set_speaker(&mut self, speaker_f32: Option<&str>) -> Result<(), Error> {
+        self.set_speaker_ex(speaker_f32, &ExecPolicy::default())
+    }
+    /// Hot-switch the engine's active fixed speaker `.f32` file with an explicit [`ExecPolicy`].
+    pub fn set_speaker_ex(
+        &mut self,
+        speaker_f32: Option<&str>,
+        policy: &ExecPolicy,
+    ) -> Result<(), Error> {
+        Self::set_speaker_with_api(self.raw, cancellation::api(), speaker_f32, policy)
+    }
+    fn set_speaker_with_api(
+        raw: *mut c_void,
+        api: cancellation::Api,
+        speaker_f32: Option<&str>,
+        policy: &ExecPolicy,
+    ) -> Result<(), Error> {
+        validate_exec_policy(policy)?;
+        let c_path = match speaker_f32 {
+            Some(s) if s.is_empty() => {
+                return Err(Error::InvalidInput("Speaker path cannot be empty".into()))
+            }
+            Some(s) => Some(CString::new(s).map_err(|e| Error::InvalidInput(e.to_string()))?),
+            None => None,
+        };
+        let ptr = c_path.as_ref().map_or(ptr::null(), |s| s.as_ptr());
+        let raw_policy = RawExecPolicy::from(policy);
+        let status = unsafe {
+            if let Some(f) = api.set_speaker_ex {
+                f(raw, ptr, &raw_policy)
+            } else if policy.is_default() {
+                let Some(f) = api.set_speaker else {
+                    return Err(Error::UnsupportedAbi);
+                };
+                f(raw, ptr)
+            } else {
+                return Err(Error::UnsupportedAbi);
+            }
+        };
+        Error::status(status)
+    }
+    /// Hot-switch the engine's active speaker embedding from an in-memory F32 slice without reloading weights.
+    pub fn set_speaker_vector(&mut self, vector: &[f32]) -> Result<(), Error> {
+        self.set_speaker_vector_ex(vector, &ExecPolicy::default())
+    }
+    /// Hot-switch the engine's active speaker embedding from an in-memory F32 slice with an explicit [`ExecPolicy`].
+    pub fn set_speaker_vector_ex(
+        &mut self,
+        vector: &[f32],
+        policy: &ExecPolicy,
+    ) -> Result<(), Error> {
+        Self::set_speaker_vector_with_api(self.raw, cancellation::api(), vector, policy)
+    }
+    fn set_speaker_vector_with_api(
+        raw: *mut c_void,
+        api: cancellation::Api,
+        vector: &[f32],
+        policy: &ExecPolicy,
+    ) -> Result<(), Error> {
+        validate_exec_policy(policy)?;
+        validate_speaker_slice(vector)?;
+        let raw_policy = RawExecPolicy::from(policy);
+        let status = unsafe {
+            if let Some(f) = api.set_speaker_vector_ex {
+                f(raw, vector.as_ptr(), vector.len(), &raw_policy)
+            } else if policy.is_default() {
+                let Some(f) = api.set_speaker_vector else {
+                    return Err(Error::UnsupportedAbi);
+                };
+                f(raw, vector.as_ptr(), vector.len())
+            } else {
+                return Err(Error::UnsupportedAbi);
+            }
+        };
+        Error::status(status)
+    }
     pub fn synthesize(&mut self, text: &str, seed: u64, max_tokens: i32) -> Result<Audio, String> {
         let policy = ExecPolicy::default();
         self.run(RunArgs {
             text,
             seed,
             max_tokens,
+            options: &SynthesizeOptions::default(),
             cb: None,
             user: ptr::null_mut(),
             policy: &policy,
             operation: None,
         })
         .map_err(|e| e.to_string())
+    }
+    /// Synthesize with per-request options (speaker hot-switch / speed), lock policy, and optional task cancellation.
+    pub fn synthesize_with_options(
+        &mut self,
+        text: &str,
+        seed: u64,
+        max_tokens: i32,
+        options: &SynthesizeOptions<'_>,
+        policy: &ExecPolicy,
+        task: Option<&mut Task>,
+    ) -> Result<Audio, Error> {
+        let operation = task.map(Task::begin).transpose()?;
+        self.run(RunArgs {
+            text,
+            seed,
+            max_tokens,
+            options,
+            cb: None,
+            user: ptr::null_mut(),
+            policy,
+            operation: operation.as_ref(),
+        })
     }
     /// Cancel this generation only; loaded model/session remain owned by self.
     pub fn synthesize_cancellable(
@@ -330,10 +499,12 @@ impl Engine {
     ) -> Result<Audio, Error> {
         let operation = task.begin()?;
         let policy = ExecPolicy::default();
+        let options = SynthesizeOptions::default();
         self.run(RunArgs {
             text,
             seed,
             max_tokens,
+            options: &options,
             cb: None,
             user: ptr::null_mut(),
             policy: &policy,
@@ -350,10 +521,12 @@ impl Engine {
         task: Option<&mut Task>,
     ) -> Result<Audio, Error> {
         let operation = task.map(Task::begin).transpose()?;
+        let options = SynthesizeOptions::default();
         self.run(RunArgs {
             text,
             seed,
             max_tokens,
+            options: &options,
             cb: None,
             user: ptr::null_mut(),
             policy,
@@ -369,8 +542,38 @@ impl Engine {
         max_tokens: i32,
         sink: F,
     ) -> Result<Audio, String> {
-        self.stream_inner(text, seed, max_tokens, sink, &ExecPolicy::default(), None)
-            .map_err(|e| e.to_string())
+        self.stream_inner(
+            text,
+            seed,
+            max_tokens,
+            &SynthesizeOptions::default(),
+            sink,
+            &ExecPolicy::default(),
+            None,
+        )
+        .map_err(|e| e.to_string())
+    }
+    /// Stream PCM chunks with per-request options (speaker hot-switch / speed), lock policy, and optional task cancellation.
+    pub fn stream_with_options<F: FnMut(&[f32], i32) -> bool>(
+        &mut self,
+        text: &str,
+        seed: u64,
+        max_tokens: i32,
+        options: &SynthesizeOptions<'_>,
+        sink: F,
+        policy: &ExecPolicy,
+        task: Option<&mut Task>,
+    ) -> Result<Audio, Error> {
+        let operation = task.map(Task::begin).transpose()?;
+        self.stream_inner(
+            text,
+            seed,
+            max_tokens,
+            options,
+            sink,
+            policy,
+            operation.as_ref(),
+        )
     }
     pub fn stream_cancellable<F: FnMut(&[f32], i32) -> bool>(
         &mut self,
@@ -385,6 +588,7 @@ impl Engine {
             text,
             seed,
             max_tokens,
+            &SynthesizeOptions::default(),
             sink,
             &ExecPolicy::default(),
             Some(&operation),
@@ -401,13 +605,22 @@ impl Engine {
         task: Option<&mut Task>,
     ) -> Result<Audio, Error> {
         let operation = task.map(Task::begin).transpose()?;
-        self.stream_inner(text, seed, max_tokens, sink, policy, operation.as_ref())
+        self.stream_inner(
+            text,
+            seed,
+            max_tokens,
+            &SynthesizeOptions::default(),
+            sink,
+            policy,
+            operation.as_ref(),
+        )
     }
     fn stream_inner<F: FnMut(&[f32], i32) -> bool>(
         &mut self,
         text: &str,
         seed: u64,
         max_tokens: i32,
+        options: &SynthesizeOptions<'_>,
         sink: F,
         policy: &ExecPolicy,
         operation: Option<&Operation>,
@@ -441,6 +654,7 @@ impl Engine {
             text,
             seed,
             max_tokens,
+            options,
             cb: Some(invoke::<F>),
             user: &mut state as *mut _ as *mut c_void,
             policy,
@@ -503,12 +717,80 @@ impl Engine {
         if args.operation.is_some_and(Operation::requested) {
             return Err(Error::Cancelled);
         }
+        if let Some(speed) = args.options.speed {
+            validate_speed(speed)?;
+            if api.feature_version == 0 && (speed - 1.0).abs() > f32::EPSILON {
+                return Err(Error::UnsupportedAbi);
+            }
+        }
+        let speaker_cpath = match args.options.speaker {
+            Some(SpeakerOverride::Path(path)) => {
+                if path.is_empty() {
+                    return Err(Error::InvalidInput("Speaker path cannot be empty".into()));
+                }
+                if api.feature_version == 0 {
+                    return Err(Error::UnsupportedAbi);
+                }
+                Some(CString::new(path).map_err(|e| Error::InvalidInput(e.to_string()))?)
+            }
+            Some(SpeakerOverride::Vector(vec)) => {
+                validate_speaker_slice(vec)?;
+                if api.feature_version == 0 {
+                    return Err(Error::UnsupportedAbi);
+                }
+                None
+            }
+            None => None,
+        };
+        let language_cstr = match args.options.language {
+            Some(lang) => {
+                if api.feature_version < 2 {
+                    return Err(Error::UnsupportedAbi);
+                }
+                Some(CString::new(lang).map_err(|e| Error::InvalidInput(e.to_string()))?)
+            }
+            None => None,
+        };
         let text = CString::new(args.text).map_err(|e| Error::InvalidInput(e.to_string()))?;
-        let req = Request {
+        let req_v1 = Request {
             struct_size: std::mem::size_of::<Request>() as u32,
             text: text.as_ptr(),
             seed: args.seed,
             max_tokens: args.max_tokens,
+        };
+        let (speaker_vector, speaker_dim) = match args.options.speaker {
+            Some(SpeakerOverride::Vector(vec)) => (vec.as_ptr(), vec.len()),
+            _ => (ptr::null(), 0),
+        };
+        let speaker_f32 = speaker_cpath.as_ref().map_or(ptr::null(), |s| s.as_ptr());
+        let speed = args.options.speed.unwrap_or(0.0);
+        let req_v11 = RequestV1_1 {
+            struct_size: std::mem::size_of::<RequestV1_1>() as u32,
+            text: text.as_ptr(),
+            seed: args.seed,
+            max_tokens: args.max_tokens,
+            speaker_f32,
+            speaker_vector,
+            speaker_dim,
+            speed,
+        };
+        let req_v12 = RequestV1_2 {
+            struct_size: std::mem::size_of::<RequestV1_2>() as u32,
+            text: text.as_ptr(),
+            seed: args.seed,
+            max_tokens: args.max_tokens,
+            speaker_f32,
+            speaker_vector,
+            speaker_dim,
+            speed,
+            language: language_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+        };
+        let req_ptr: *const Request = if api.feature_version >= 2 {
+            (&req_v12 as *const RequestV1_2).cast()
+        } else if api.feature_version >= 1 {
+            (&req_v11 as *const RequestV1_1).cast()
+        } else {
+            &req_v1
         };
         let raw_policy = RawExecPolicy::from(args.policy);
         let mut out = ptr::null_mut();
@@ -516,7 +798,7 @@ impl Engine {
             if let Some(synthesize_ex) = api.synthesize_ex {
                 synthesize_ex(
                     raw,
-                    &req,
+                    req_ptr,
                     &raw_policy,
                     args.operation.map_or(ptr::null_mut(), Operation::token),
                     args.cb,
@@ -524,9 +806,9 @@ impl Engine {
                     &mut out,
                 )
             } else if let (Some(op), Some(synthesize)) = (args.operation, api.synthesize) {
-                synthesize(raw, &req, op.token(), args.cb, args.user, &mut out)
+                synthesize(raw, req_ptr, op.token(), args.cb, args.user, &mut out)
             } else {
-                fallback(raw, &req, args.cb, args.user, &mut out)
+                fallback(raw, req_ptr, args.cb, args.user, &mut out)
             }
         };
         if let Err(err) = Error::status(status) {
@@ -541,12 +823,34 @@ impl Engine {
         Ok(out)
     }
 }
+pub(crate) fn validate_speed(speed: f32) -> Result<(), Error> {
+    if !speed.is_finite() || !(0.5..=2.0).contains(&speed) {
+        Err(Error::InvalidInput(
+            "Speech speed must be finite within 0.5..=2.0".into(),
+        ))
+    } else {
+        Ok(())
+    }
+}
+fn validate_speaker_slice(vector: &[f32]) -> Result<(), Error> {
+    if (vector.len() != 1024 && vector.len() != 2048)
+        || !vector.iter().all(|v| v.is_finite())
+        || vector.iter().map(|&v| (v as f64) * (v as f64)).sum::<f64>() <= 0.0
+    {
+        Err(Error::InvalidInput(
+            "Speaker vector must be 1024 or 2048 finite non-zero F32 values".into(),
+        ))
+    } else {
+        Ok(())
+    }
+}
 type SynthesizeFallback =
     unsafe extern "C" fn(*mut c_void, *const Request, Callback, *mut c_void, *mut *mut c_void) -> i32;
 struct RunArgs<'a> {
     text: &'a str,
     seed: u64,
     max_tokens: i32,
+    options: &'a SynthesizeOptions<'a>,
     cb: Callback,
     user: *mut c_void,
     policy: &'a ExecPolicy,
@@ -614,6 +918,7 @@ mod tests {
         }
 
         let invalid = ExecPolicy::new(30_001, false);
+        let default_opts = SynthesizeOptions::default();
         assert!(matches!(
             Engine::run_raw(
                 ptr::null_mut(),
@@ -623,6 +928,7 @@ mod tests {
                     text: "hi",
                     seed: 1,
                     max_tokens: 8,
+                    options: &default_opts,
                     cb: None,
                     user: ptr::null_mut(),
                     policy: &invalid,
@@ -642,6 +948,7 @@ mod tests {
                     text: "hi",
                     seed: 1,
                     max_tokens: 8,
+                    options: &default_opts,
                     cb: None,
                     user: ptr::null_mut(),
                     policy: &non_default,
@@ -660,6 +967,7 @@ mod tests {
                 text: "hi",
                 seed: 1,
                 max_tokens: 8,
+                options: &default_opts,
                 cb: None,
                 user: ptr::null_mut(),
                 policy: &default_policy,
@@ -682,6 +990,7 @@ mod tests {
                 text: "hi",
                 seed: 1,
                 max_tokens: 8,
+                options: &default_opts,
                 cb: None,
                 user: ptr::null_mut(),
                 policy: &non_default,
@@ -692,6 +1001,161 @@ mod tests {
         assert_eq!(CALL_KIND.load(Ordering::SeqCst), 2);
         assert_eq!(LAST_TIMEOUT.load(Ordering::SeqCst), 500);
         assert_eq!(LAST_SUPERSEDE.load(Ordering::SeqCst), 1);
+        assert!(err.is_busy());
+    }
+
+    #[test]
+    fn speaker_override_and_speed_dispatch_validation() {
+        unsafe extern "C" fn mock_v11(
+            _: *mut c_void,
+            req: *const Request,
+            _: *const RawExecPolicy,
+            _: *mut c_void,
+            _: Callback,
+            _: *mut c_void,
+            _: *mut *mut c_void,
+        ) -> i32 {
+            let r = unsafe { &*req.cast::<RequestV1_1>() };
+            assert_eq!(r.struct_size as usize, std::mem::size_of::<RequestV1_1>());
+            assert!(!r.speaker_vector.is_null());
+            assert_eq!(r.speaker_dim, 1024);
+            assert!((r.speed - 1.25).abs() < 1e-6);
+            STATUS_BUSY
+        }
+        unsafe extern "C" fn mock_unused(
+            _: *mut c_void,
+            _: *const Request,
+            _: Callback,
+            _: *mut c_void,
+            _: *mut *mut c_void,
+        ) -> i32 {
+            0
+        }
+        let legacy_api = cancellation::Api::default();
+        let vec1024 = vec![0.1_f32; 1024];
+        let opts_vec = SynthesizeOptions::new().with_speaker_vector(&vec1024);
+        assert!(matches!(
+            Engine::run_raw(
+                ptr::null_mut(),
+                legacy_api,
+                mock_unused,
+                &RunArgs {
+                    text: "hi",
+                    seed: 1,
+                    max_tokens: 8,
+                    options: &opts_vec,
+                    cb: None,
+                    user: ptr::null_mut(),
+                    policy: &ExecPolicy::default(),
+                    operation: None,
+                }
+            ),
+            Err(Error::UnsupportedAbi)
+        ));
+        let bad_speed = SynthesizeOptions::new().with_speed(2.5);
+        assert!(matches!(
+            Engine::run_raw(
+                ptr::null_mut(),
+                legacy_api,
+                mock_unused,
+                &RunArgs {
+                    text: "hi",
+                    seed: 1,
+                    max_tokens: 8,
+                    options: &bad_speed,
+                    cb: None,
+                    user: ptr::null_mut(),
+                    policy: &ExecPolicy::default(),
+                    operation: None,
+                }
+            ),
+            Err(Error::InvalidInput(_))
+        ));
+
+        let v11_api = cancellation::Api {
+            feature_version: 1,
+            synthesize_ex: Some(mock_v11),
+            ..cancellation::Api::default()
+        };
+        let opts = SynthesizeOptions::new()
+            .with_speaker_vector(&vec1024)
+            .with_speed(1.25);
+        let err = Engine::run_raw(
+            ptr::null_mut(),
+            v11_api,
+            mock_unused,
+            &RunArgs {
+                text: "hi",
+                seed: 1,
+                max_tokens: 8,
+                options: &opts,
+                cb: None,
+                user: ptr::null_mut(),
+                policy: &ExecPolicy::default(),
+                operation: None,
+            },
+        )
+        .unwrap_err();
+        assert!(err.is_busy());
+
+        // v1.1 runtime must reject explicit v1.2 language override with UnsupportedAbi
+        let opts_lang = SynthesizeOptions::new().with_language("English");
+        assert!(matches!(
+            Engine::run_raw(
+                ptr::null_mut(),
+                v11_api,
+                mock_unused,
+                &RunArgs {
+                    text: "hi",
+                    seed: 1,
+                    max_tokens: 8,
+                    options: &opts_lang,
+                    cb: None,
+                    user: ptr::null_mut(),
+                    policy: &ExecPolicy::default(),
+                    operation: None,
+                }
+            ),
+            Err(Error::UnsupportedAbi)
+        ));
+
+        unsafe extern "C" fn mock_v12(
+            _: *mut c_void,
+            req: *const Request,
+            _: *const RawExecPolicy,
+            _: *mut c_void,
+            _: Callback,
+            _: *mut c_void,
+            _: *mut *mut c_void,
+        ) -> i32 {
+            let r = unsafe { &*req.cast::<RequestV1_2>() };
+            assert_eq!(r.struct_size as usize, std::mem::size_of::<RequestV1_2>());
+            assert!(!r.language.is_null());
+            let lang = unsafe { CStr::from_ptr(r.language) }.to_str().unwrap();
+            assert_eq!(lang, "English");
+            STATUS_BUSY
+        }
+        let v12_api = cancellation::Api {
+            feature_version: 2,
+            synthesize_ex: Some(mock_v12),
+            ..cancellation::Api::default()
+        };
+        let err = Engine::run_raw(
+            ptr::null_mut(),
+            v12_api,
+            mock_unused,
+            &RunArgs {
+                text: "hi",
+                seed: 1,
+                max_tokens: 8,
+                options: &opts_lang,
+                cb: None,
+                user: ptr::null_mut(),
+                policy: &ExecPolicy::default(),
+                operation: None,
+            },
+        )
+        .unwrap_err();
         assert!(err.is_busy());
     }
 }

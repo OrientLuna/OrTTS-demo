@@ -26,11 +26,37 @@ typedef struct ortts_config {
  int32_t threads; /* 1..8. */
  int32_t streaming; /* 0 offline, 1 incremental PCM. Fixed for this engine. */
 } ortts_config;
+typedef struct ortts_request_v1 {
+ uint32_t struct_size;
+ const char *text; /* UTF-8, nonempty. */
+ uint64_t seed;
+ int32_t max_tokens; /* 1..513. */
+} ortts_request_v1;
+#define ORTTS_REQUEST_V1_SIZE ((uint32_t)sizeof(ortts_request_v1))
+typedef struct ortts_request_v1_1 {
+ uint32_t struct_size;
+ const char *text; /* UTF-8, nonempty. */
+ uint64_t seed;
+ int32_t max_tokens; /* 1..513. */
+ /* Additive v1.1 fields (struct_size == sizeof(ortts_request_v1_1)): */
+ const char *speaker_f32; /* Optional per-request .f32 speaker path; NULL uses active engine speaker. */
+ const float *speaker_vector; /* Optional per-request F32 speaker embedding; mutually exclusive with speaker_f32. */
+ size_t speaker_dim; /* Element count (1024/2048) when speaker_vector is non-NULL; 0 otherwise. */
+ float speed; /* Optional speech speed multiplier (0.0f = default 1.0f; valid 0.5f..=2.0f). Own model declares speed_control: false and ignores valid values. */
+} ortts_request_v1_1;
+#define ORTTS_REQUEST_V1_1_SIZE ((uint32_t)sizeof(ortts_request_v1_1))
 typedef struct ortts_request {
  uint32_t struct_size;
  const char *text; /* UTF-8, nonempty. */
  uint64_t seed;
  int32_t max_tokens; /* 1..513. */
+ /* Additive v1.1 fields (struct_size >= sizeof(ortts_request_v1_1)): */
+ const char *speaker_f32; /* Optional per-request .f32 speaker path; NULL uses active engine speaker. */
+ const float *speaker_vector; /* Optional per-request F32 speaker embedding; mutually exclusive with speaker_f32. */
+ size_t speaker_dim; /* Element count (1024/2048) when speaker_vector is non-NULL; 0 otherwise. */
+ float speed; /* Optional speech speed multiplier (0.0f = default 1.0f; valid 0.5f..=2.0f). Own model declares speed_control: false and ignores valid values. */
+ /* Additive v1.2 fields (struct_size == sizeof(ortts_request)): */
+ const char *language; /* Optional language override ("Chinese", "English", "Japanese", "Korean", ..., or "auto"); NULL/empty/"auto" routes via Unicode script. */
 } ortts_request;
 typedef struct ortts_metrics {
  double api_ms; /* Includes client callback time. */
@@ -51,6 +77,14 @@ typedef int (*ortts_pcm_callback)(void *user, const float *pcm, size_t samples, 
 ORTTS_API uint32_t ortts_abi_version(void);
 ORTTS_API const char *ortts_last_error(void); /* Borrowed, thread-local. */
 ORTTS_API ortts_status ortts_engine_create(const ortts_config*, ortts_engine**);
+/* Additive capability version for incremental features (2: v1.2 language routing + c0 plateau guard; 1: v1.1 per-request speaker switching & speed). */
+ORTTS_API uint32_t ortts_engine_feature_version(void);
+/* Lightweight hot speaker switching without reloading weights (uses ExecPolicy handle lock).
+ * Passing NULL speaker_f32 resets to default voices/female.f32 under asset_root. */
+ORTTS_API ortts_status ortts_engine_set_speaker(ortts_engine*, const char *speaker_f32);
+ORTTS_API ortts_status ortts_engine_set_speaker_ex(ortts_engine*, const char *speaker_f32, const ortts_exec_policy*);
+ORTTS_API ortts_status ortts_engine_set_speaker_vector(ortts_engine*, const float *vector, size_t dim);
+ORTTS_API ortts_status ortts_engine_set_speaker_vector_ex(ortts_engine*, const float *vector, size_t dim, const ortts_exec_policy*);
 /* Additive capability: 1 means cooperative Qwen CPU graph/step cancellation.
  * 0 retains legacy compute-then-discard behavior. ABI1 structs are unchanged. */
 ORTTS_API uint32_t ortts_cooperative_cancel_version(void);

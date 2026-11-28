@@ -48,7 +48,7 @@
 | 语音合成 | Kokoro、PocketTTS、Piper、Kitten | Android / iOS / 桌面端（macOS、Linux） |
 | 语音合成 | MOSS-TTS-Nano | Android |
 | 语音合成 | ZipVoice | C / Rust SDK |
-| 语音识别 | SenseVoice（中/英离线） | Android / iOS / 桌面端 |
+| 语音识别 | SenseVoice（中/英离线及内建分段流式） | Android / iOS / 桌面端 |
 | 语音识别 | Moonshine（英语流式增量） | Android / iOS / 桌面端 |
 | 语音识别 | Paraformer（中/英流式实验档，Sherpa） | Android / iOS / 桌面端 |
 
@@ -57,6 +57,7 @@
 - [x] Android / iOS 本地语音 Demo、模型下载与导入、多模型 TTS / ASR 接入。
 - [x] macOS / Linux 共享三标签页桌面端（统一 iOS 风格主题）、断点续传下载与本地模型复用。
 - [x] 任务级协作式取消，以及 ggml 域内 / Sherpa 跨域并发推理。
+- [x] SDK 增量运行时能力：单引擎热切说话人（文件/内存向量）、请求级 `speed` 语速调节、结构化能力自描述与 `runtime.json` 契约、SenseVoice 内建分段流式、`ORTTS_EMBED_DEV_RPATH=1` 开发开关。
 - [x] macOS Developer ID 正式签名与公证 DMG 发布。
 - [ ] Windows 原生运行库与桌面客户端；Linux 发行版通用打包（AppImage / `.deb`）。
 - [ ] Apple Core ML / Metal、高通 QNN 等硬件加速路线。
@@ -66,7 +67,7 @@
 - [构建与开发环境](docs/BUILD.md)
 - [桌面端说明（macOS / Linux）](desktop/README.md) · [Linux 专属说明](linux/README.md)
 - [Apple（iOS / macOS CLI）说明](apple/README.md) · [多模型 Demo 使用指南](docs/MOBILE_SPEECH_DEMO.md)
-- [C ABI 集成](runtime/README.md) · [Rust SDK](runtime/rust/README.md) · [多模型语音 SDK](runtime/SPEECH.md)
+- [C ABI 集成](runtime/README.md) · [Rust SDK](runtime/rust/README.md) · [多模型语音 SDK](runtime/SPEECH.md) · [SDK 增量实现记录](docs/development/sdk-incremental-requirements-2026-11-27.md)
 - [模型准备](docs/MODEL_ASSETS.md) · [CPU 构建档位](docs/CPU_PROFILES.md) · [完整文档索引](docs/README.md)
 
 ## 致谢与许可

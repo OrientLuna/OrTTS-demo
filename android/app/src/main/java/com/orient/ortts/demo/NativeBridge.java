@@ -4,7 +4,11 @@ final class NativeBridge {
  static synchronized void ensureLoaded()throws java.io.IOException{
   if(loaded)return;
   try{
-    if(!BuildConfig.NATIVE_CPU_PROFILE.equals("arm64-auto")&&!BuildConfig.NATIVE_CPU_PROFILE.equals("arm64-baseline")&&!DeviceSupport.supportsCurrentRuntime())throw new java.io.IOException("当前设备不支持此安装包需要的CPU指令集（DotProd、I8MM、FP16）。");
+   String profile=BuildConfig.NATIVE_CPU_PROFILE;
+   if(!profile.equals("arm64-auto")&&!profile.equals("arm64-baseline")&&!DeviceSupport.supportsCurrentRuntime()){
+    String required=profile.equals("arm64-dotprod")?"DotProd、FP16":"DotProd、I8MM、FP16";
+    throw new java.io.IOException("当前设备不支持此安装包需要的 CPU 指令集（"+required+"）。");
+   }
    System.loadLibrary("ortts_jni");loaded=true;
   }catch(LinkageError e){throw new java.io.IOException("无法加载语音引擎："+e.getMessage(),e);}
  }

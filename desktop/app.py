@@ -15,7 +15,8 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from desktop.audio import Player
-from desktop.models import PACKAGES, VOICE_NAMES
+from desktop.models import available_packages, LOCAL_ONLY_PACKAGES, P3_ONLY_PACKAGES, PACKAGES, VOICE_NAMES
+from desktop.engine import supports_four_round
 from desktop.worker import Worker
 from desktop.download import CHANNELS
 from desktop.theme import PALETTE, brand, configure
@@ -103,10 +104,11 @@ class App:
         ttk.Label(model, text="模型与音色", style="Section.TLabel").grid(row=0, column=0, sticky="w", pady=(0, 12))
         ttk.Label(model, textvariable=self.model_status, style="CardMuted.TLabel").grid(row=0, column=1, columnspan=3, sticky="e", pady=(0, 12))
         ttk.Label(model, text="模型版本", style="Card.TLabel").grid(row=1, column=0, sticky="w", padx=(0, 12))
+        self.packages = available_packages(supports_four_round(library))
         package = config.get("package", "Q4")
-        package = package if isinstance(package, str) and package in PACKAGES else "Q4"
-        self.package = tk.StringVar(value=PACKAGES[package][0])
-        self.package_box = ttk.Combobox(model, textvariable=self.package, values=[p[0] for p in PACKAGES.values()], state="readonly")
+        package = package if isinstance(package, str) and package in self.packages else "Q4"
+        self.package = tk.StringVar(value=self.packages[package][0])
+        self.package_box = ttk.Combobox(model, textvariable=self.package, values=[p[0] for p in self.packages.values()], state="readonly")
         self.package_box.grid(row=1, column=1, columnspan=3, sticky="ew")
         self.package_box.bind("<<ComboboxSelected>>", self.invalidate)
         ttk.Label(model, text="本地目录", style="Card.TLabel").grid(row=2, column=0, sticky="w", pady=10)
@@ -130,7 +132,7 @@ class App:
         options.grid(row=4, column=0, columnspan=4, sticky="ew", pady=(14, 0))
         ttk.Label(options, text="推理版本", style="Card.TLabel").pack(side="left")
         self.variant = tk.StringVar(value="P3")
-        self.variant_box = ttk.Combobox(options, textvariable=self.variant, values=["P3"] if package == "Q4" else ["P3", "P5"], width=7, state="readonly")
+        self.variant_box = ttk.Combobox(options, textvariable=self.variant, values=["P3"] if package in P3_ONLY_PACKAGES else ["P3", "P5"], width=7, state="readonly")
         self.variant_box.pack(side="left", padx=(8, 20))
         ttk.Label(options, text="音色", style="Card.TLabel").pack(side="left")
         self.voice = tk.StringVar(value="")
@@ -190,7 +192,7 @@ class App:
         root.after(80, self.poll)
 
     def package_key(self):
-        return next(k for k, v in PACKAGES.items() if v[0] == self.package.get())
+        return next(k for k, v in self.packages.items() if v[0] == self.package.get())
 
     def change_page(self, event=None):
         selected = self.notebook.select()
@@ -235,8 +237,9 @@ class App:
         self.stop_button.configure(state="normal" if not self.closing and not self.cancelling and (self.busy or self.player.process) else "disabled",
                                    text="取消下载" if self.action == "download" else "取消校验" if self.action == "import" else "停止")
         self.release_button.configure(state="normal" if editable and self.pack else "disabled")
-        self.download_button.configure(state="normal" if editable else "disabled")
-        self.channel_box.configure(state="readonly" if editable else "disabled")
+        local_only = self.package_key() in LOCAL_ONLY_PACKAGES
+        self.download_button.configure(state="normal" if editable and not local_only else "disabled")
+        self.channel_box.configure(state="readonly" if editable and not local_only else "disabled")
         self.revalidate_button.configure(state="normal" if editable and self.directory.get() else "disabled")
         self.autoplay_button.configure(state="normal" if editable else "disabled")
 
@@ -244,6 +247,9 @@ class App:
         if self.busy or self.closing:
             return
         package = self.package_key()
+        if package in LOCAL_ONLY_PACKAGES:
+            messagebox.showinfo("本地导入模型", f"{PACKAGES[package][0]} 为本地冻结预览包，请使用 repack.py 生成模型目录后通过「导入本地模型…」加载。")
+            return
         if not messagebox.askyesno("下载模型", f"将通过 {self.channel.get()} 下载 {PACKAGES[package][0]}。\n完整包可能需要数 GB；当前网络是否计费未知。\n已有文件仅校验通过后复用，不覆盖旧文件。\n\n确认继续联网并选择存放目录？"):
             return
         initial = Path(self.download_parent) if isinstance(self.download_parent, str) and self.download_parent else self.home
@@ -290,14 +296,18 @@ class App:
     def invalidate(self, event=None):
         if self.busy or self.closing:
             return
+        package = self.package_key()
         self.pack = None
         self.voice.set("")
         self.voice_box.configure(values=[])
         self.variant.set("P3")
-        self.variant_box.configure(values=["P3"] if self.package_key() == "Q4" else ["P3", "P5"])
+        self.variant_box.configure(values=["P3"] if package in P3_ONLY_PACKAGES else ["P3", "P5"])
         self.model_status.set("尚未校验此版本")
         self._submit("release")
-        self.status.set("版本已切换，请重新选择并校验模型目录。")
+        if package in LOCAL_ONLY_PACKAGES:
+            self.status.set("已选择冻结四轮 P3 包，请通过「导入本地模型…」选择 repack.py 生成的目录。")
+        else:
+            self.status.set("版本已切换，请重新选择并校验模型目录。")
 
     def choose_directory(self):
         directory = filedialog.askdirectory(title="选择包含清单、native、voices 的完整模型目录", initialdir=self.directory.get() or str(Path.home()))

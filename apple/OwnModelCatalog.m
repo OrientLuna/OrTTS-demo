@@ -9,7 +9,11 @@ static BOOL Path(NSString*s){return Match(s,@"^[A-Za-z0-9._/-]+$")&&![s hasPrefi
 static NSString* Key(NSDictionary*m){return [NSString stringWithFormat:@"%@@%@",m[@"id"],m[@"manifest_sha256"]];}
 static NSString* SHA(NSData*d){unsigned char hash[CC_SHA256_DIGEST_LENGTH];CC_SHA256(d.bytes,(CC_LONG)d.length,hash);NSMutableString*s=[NSMutableString new];for(NSUInteger i=0;i<sizeof(hash);i++)[s appendFormat:@"%02x",hash[i]];return s;}
 BOOL OrTTSValidOwnCatalogEntry(NSDictionary*m){
- if(![m isKindOfClass:NSDictionary.class]||![m[@"manifest_url"]isKindOfClass:NSString.class]||!Repo(m[@"id"])||!Match(m[@"manifest_sha256"],@"^[a-f0-9]{64}$")||!Match(m[@"revision"],@"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"))return NO;
+ if(![m isKindOfClass:NSDictionary.class])return NO;
+ if([m[@"source"] isEqual:@"local-import"]){
+  return [m[@"id"] isEqual:@"research-four-round-expanded-1235"]&&[m[@"revision"] isEqual:@"20261109-local-not-release"]&&[m[@"manifest_sha256"] isEqual:@"ebd5deee7981d75a9b927fc2fd0b0df404287a3c737702a09580d40d9c9cdedd"]&&[m[@"manifest_url"] isEqual:@""]&&[m[@"decoder"] isEqual:@"liquidcodec"]&&[m[@"supported_variants"] isEqual:@[@"P3"]]&&[m[@"voices"] isKindOfClass:NSArray.class]&&[m[@"voices"] count];
+ }
+ if(![m[@"manifest_url"]isKindOfClass:NSString.class]||!Repo(m[@"id"])||!Match(m[@"manifest_sha256"],@"^[a-f0-9]{64}$")||!Match(m[@"revision"],@"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"))return NO;
  NSArray*variants=m[@"supported_variants"],*voices=m[@"voices"];if(![variants isKindOfClass:NSArray.class]||!variants.count||variants.count>2||![voices isKindOfClass:NSArray.class]||!voices.count||voices.count>4||![@[@"qwen_lfm",@"liquidcodec"]containsObject:m[@"decoder"]])return NO;for(NSString*v in variants)if(![@[@"P3",@"P5"]containsObject:v])return NO;for(NSString*v in voices)if(![@[@"female",@"female_2",@"male",@"male_2"]containsObject:v])return NO;
  if([m[@"source"] isEqual:@"modelscope"]){NSString*p=m[@"manifest_path"],*c=m[@"source_commit"];if(!Path(p)||!Match(c,@"^[a-f0-9]{40}$")||!([p isEqual:@"DOWNLOAD_MANIFEST.json"]||[p hasSuffix:@"/DOWNLOAD_MANIFEST.json"]))return NO;return [m[@"manifest_url"] isEqual:[NSString stringWithFormat:@"%@%@/resolve/%@/%@",Root,m[@"id"],c,p]];}
  NSURL*u=[NSURL URLWithString:m[@"manifest_url"]?:@""];return [u.scheme isEqual:@"https"]&&[u.host isEqual:@"modelscope.cn"]&&!u.user&&!u.password&&[u.path hasPrefix:[NSString stringWithFormat:@"/models/%@/resolve/",m[@"id"]]];
@@ -38,6 +42,7 @@ NSArray *OrTTSLoadOwnCatalog(NSURL*file){NSNumber*size=nil;[file getResourceValu
 BOOL OrTTSSaveOwnCatalog(NSURL*file,NSArray*models,NSError**error){NSData*b=[NSJSONSerialization dataWithJSONObject:@{@"schema":@"ortts-own-catalog-v1",@"updated_at":@([NSDate date].timeIntervalSince1970),@"models":models} options:0 error:error];return b&&[b writeToURL:file options:NSDataWritingAtomic error:error];}
 
 NSString *OrTTSOwnModelTitle(NSDictionary*entry){
+ if([entry[@"id"]isEqual:@"research-four-round-expanded-1235"])return @"0.6B · 扩池四轮 P3（本地导入）";
  if([entry[@"p3_only"]boolValue])return @"0.6B · Q4量化（精简）";
  if([entry[@"decoder"]isEqual:@"qwen_lfm"])return @"0.6B · LFM解码（历史版）";
  if([entry[@"id"]hasSuffix:@"-1.7B"])return @"1.7B · Q8量化（增强）";
